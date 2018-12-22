@@ -11,6 +11,8 @@ import ProfileScreen from '../../screens/Profile/Profile';
 import { createBottomTabNavigator, BottomTabBar } from 'react-navigation-tabs';
 import { createStackNavigator } from 'react-navigation';
 
+export const HOME_ROUTE_KEY = 'HOME_ROUTE_KEY'
+
 const WalletStack = createStackNavigator(
   {
     WalletScreen: WalletScreen,
