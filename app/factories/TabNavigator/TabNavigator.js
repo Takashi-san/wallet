@@ -152,6 +152,7 @@ const LoggedInScreenNavigator = createBottomTabNavigator({
 LoggedInScreenNavigator.navigationOptions = {
   // Hide the header from AppNavigator stack
   header: null,
+  title: 'Home'
 };
 
 export default LoggedInScreenNavigator
