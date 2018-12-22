@@ -11,6 +11,8 @@ import ProfileScreen from '../../screens/Profile/Profile';
 import { createBottomTabNavigator, BottomTabBar } from 'react-navigation-tabs';
 import { createStackNavigator } from 'react-navigation';
 
+export const HOME_ROUTE_KEY = 'HOME_ROUTE_KEY'
+
 const WalletStack = createStackNavigator(
   {
     WalletScreen: WalletScreen,
@@ -150,6 +152,7 @@ const LoggedInScreenNavigator = createBottomTabNavigator({
 LoggedInScreenNavigator.navigationOptions = {
   // Hide the header from AppNavigator stack
   header: null,
+  title: 'Home'
 };
 
 export default LoggedInScreenNavigator
