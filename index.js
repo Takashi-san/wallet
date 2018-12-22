@@ -12,7 +12,7 @@ import EditProfile from './app/screens/Profile/EditProfile';
 import PublicProfile from './app/screens/Profile/PublicProfile';
 // import WalletScreen from './app/screens/Wallet/Wallet';
 import React, { Component } from 'react';
-import LoggedInScreenNavigator from './app/factories/TabNavigator/TabNavigator';
+import LoggedInScreenNavigator from './app/factories/MainDrawerNavigator';
 
 AppRegistry.registerComponent('shockwallet', () => ShockWallet);
 
