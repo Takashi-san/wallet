@@ -4,6 +4,7 @@ import React, { Component } from 'react';
 import { Button, Dimensions, Image, Keyboard, StyleSheet, Text, TextInput, TouchableHighlight, WebView, TouchableWithoutFeedback, View, ScrollView } from 'react-native';
 import { Icon } from 'react-native-elements'
 import EntypoIcons from 'react-native-vector-icons/Entypo';
+import { withNavigation } from 'react-navigation'
 //import {  } from "react-native-webview";
 
 // import { Button, Icon } from 'react-native-elements';
@@ -14,16 +15,20 @@ import EntypoIcons from 'react-native-vector-icons/Entypo';
 // const AsyncStorage = require('react-native').AsyncStorage;
 const { width, height } = Dimensions.get('window');
 
+
+
 type Props = {};
-let renderLeftHeader = (callback) => {
-  return (
-    <TouchableHighlight underlayColor={'transparent'} onPress={callback}>
+let renderLeftHeader = () => (
+  withNavigation(({ navigation }) => (
+    <TouchableHighlight underlayColor={'transparent'} onPress={() => {
+      navigation.toggleDrawer()
+    }}>
       <View style={{marginLeft: 15}}>
         <EntypoIcons size={22} reverseColor={'white'} color={'white'} name='menu'/>
       </View>
     </TouchableHighlight>
-  );
-};
+  ))
+)
 let renderRightHeader = (callback) => {
   return (
     <TouchableHighlight underlayColor={'transparent'} onPress={callback}>
