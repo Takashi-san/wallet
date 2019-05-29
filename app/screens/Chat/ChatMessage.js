@@ -1,20 +1,20 @@
 /**
  * @prettier
  */
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React from 'react'
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 
 import moment from 'moment'
 
 import { Colors } from '../../css'
 
 interface Props {
-  body: string,
-  id: string,
-  onPress?: (id: string) => void,
-  outgoing?: boolean,
-  senderName: string,
-  timestamp: number,
+  body: string;
+  id: string;
+  onPress?: (id: string) => void;
+  outgoing?: boolean;
+  senderName: string;
+  timestamp: number;
 }
 
 const ChatMessage: React.FunctionComponent<Props> = ({
@@ -23,7 +23,7 @@ const ChatMessage: React.FunctionComponent<Props> = ({
   onPress,
   outgoing,
   senderName,
-  timestamp
+  timestamp,
 }) => {
   return (
     <TouchableOpacity onPress={() => onPress && onPress(id)}>
@@ -32,22 +32,18 @@ const ChatMessage: React.FunctionComponent<Props> = ({
           {senderName}
         </Text>
 
-        <Text style={styles.timestamp}>
-          {moment(timestamp).fromNow()}
-        </Text>
+        <Text style={styles.timestamp}>{moment(timestamp).fromNow()}</Text>
 
-        <Text style={styles.body}>
-          {body}
-        </Text>
+        <Text style={styles.body}>{body}</Text>
       </View>
     </TouchableOpacity>
-  );
+  )
 }
 
 const name = {
   color: Colors.TEXT_STANDARD,
   fontSize: 14,
-  fontWeight: 'bold'
+  fontWeight: 'bold',
 }
 
 const CONTAINER_HORIZONTAL_PADDING = 12
@@ -83,8 +79,8 @@ const styles = StyleSheet.create({
   },
   timestamp: {
     fontSize: 12,
-    color: Colors.TEXT_LIGHT
-  }
-});
+    color: Colors.TEXT_LIGHT,
+  },
+})
 
-export default React.memo(ChatMessage);
+export default React.memo(ChatMessage)
