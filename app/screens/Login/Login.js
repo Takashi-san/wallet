@@ -7,6 +7,8 @@ import { NavigationActions } from 'react-navigation';
 // import { Button, Icon } from 'react-native-elements';
 // import config from '../../dev.config';
 // const AsyncStorage = require('react-native').AsyncStorage;
+import ShockButton from '../../components/ShockButton';
+import { Colors } from '../../css';
 
 const { width, height } = Dimensions.get('window');
 const storage = require('../../services/localStorage');
@@ -170,14 +172,11 @@ export default class LoginScreen extends Component<Props> {
             </Text>
           </View>
           <View style={styles.actionOptionsContainer}>
-            <TouchableHighlight underlayColor={'transparent'} onPress={() => this.openExisitingWallet()}>
-              <View style={styles.openExistingWalletButton}>
-                <Text
-                  underlayColor={'transparent'}
-                  style={{color: '#ffffff', fontWeight: 'bold', fontSize: 16}}
-                >Open Existing Wallet</Text>
-              </View>
-            </TouchableHighlight>
+            <ShockButton
+              color={Colors.BLUE_GRAY} 
+              fullWidth 
+              title={'Open Existing Wallet'} 
+              />
             <TouchableHighlight underlayColor={'transparent'} onPress={() => this.createNewWallet()}>
               <View style={styles.createNewWalletButton}>
                 <Text
@@ -230,14 +229,14 @@ const styles = StyleSheet.create({
     marginBottom: 15
   },
   createNewWalletButton: {
-    height: 50,
-    width: width / 1.3,
-    borderWidth: 0.5,
+    alignItems: 'center',
     backgroundColor: '#50668F',
     borderColor: '#50668F',
     borderRadius: 5,
+    borderWidth: 0.5,
+    height: 50,
     justifyContent: 'center',
-    alignItems: 'center',
+    width: width / 1.3
   },
   submitBtnText: {
     color: 'white',
