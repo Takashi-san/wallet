@@ -41,7 +41,13 @@ const ShockButton: React.FunctionComponent<Props> = ({
 
   return (
     <TouchableHighlight
-      onPress={() => onPress && !disabled && onPress()}
+      onPress={
+        disabled
+          ? undefined
+          : () => {
+              onPress && onPress()
+            }
+      }
       style={[rootStyles, disabled && styles.disabled]}
       underlayColor={color}
     >
