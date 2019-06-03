@@ -1,6 +1,7 @@
 import { AppRegistry } from 'react-native';
-// import App from './App';
 import { createStackNavigator } from 'react-navigation';
+import moment from 'moment';
+
 import LoginScreen from './app/screens/Login/Login';
 import ConnectToHost from './app/screens/Login/connectToHost';
 import ConnectToWallet from './app/screens/Login/connectToWallet';
@@ -13,6 +14,27 @@ import PublicProfile from './app/screens/Profile/PublicProfile';
 // import WalletScreen from './app/screens/Wallet/Wallet';
 import React, { Component } from 'react';
 import LoggedInScreenNavigator from './app/factories/MainDrawerNavigator';
+
+
+// https://github.com/moment/moment/issues/2781#issuecomment-160739129
+moment.locale('en', {
+  relativeTime: {
+    future: 'in %s',
+    past: '%s',
+    s: 'seconds',
+    ss: '%ss',
+    m: '1m',
+    mm: '%dm',
+    h: '1h',
+    hh: '%dh',
+    d: '1d',
+    dd: '%dd',
+    M: 'a month',
+    MM: '%dM',
+    y: 'a year',
+    yy: '%dY',
+  },
+})
 
 AppRegistry.registerComponent('shockwallet', () => ShockWallet);
 
