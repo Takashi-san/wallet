@@ -3,7 +3,12 @@
  **/
 import React from 'react'
 
-import { Modal, SafeAreaView, View } from 'react-native'
+import {
+  Modal,
+  SafeAreaView,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native'
 
 import ShockButton from './ShockButton'
 
@@ -21,16 +26,17 @@ const ShockModal = ({ children, onDismiss, onRequestClose, visible }) => (
     transparent
     visible={visible}
   >
-    <SafeAreaView style={styles.modalHolder}>
-      <View style={styles.modal}>{children}</View>
-    </SafeAreaView>
+    <TouchableWithoutFeedback onPress={onRequestClose}>
+      <SafeAreaView style={styles.modalHolder}>
+        <View style={styles.modal}>{children}</View>
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
   </Modal>
 )
 
 const styles = {
   modal: {
     backgroundColor: 'white',
-    flex: 1,
     marginBottom: 80,
     marginLeft: 30,
     marginRight: 30,
@@ -39,10 +45,12 @@ const styles = {
     paddingRight: 15,
     paddingTop: 20,
     paddingBottom: 20,
+    borderRadius: 5,
   },
 
   modalHolder: {
     backgroundColor: 'rgba(36, 36, 36, 0.84)',
+    justifyContent: 'center',
     flex: 1,
   },
 }
