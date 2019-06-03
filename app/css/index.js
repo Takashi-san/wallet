@@ -14,3 +14,5 @@ export const Colors = {
   TEXT_STANDARD: '#404040',
   TEXT_WHITE: '#FFFFFF',
 }
+
+export const SCREEN_PADDING = 30
