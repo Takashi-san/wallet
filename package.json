@@ -19,6 +19,7 @@
     "react-native-elements": "^0.19.1",
     "react-native-keyboard-aware-scroll-view": "^0.6.0",
     "react-native-qrcode": "^0.2.7",
+    "react-native-smart-carousel": "^1.1.0",
     "react-native-vector-icons": "^4.6.0",
     "react-native-webview": "^2.14.0",
     "react-navigation": "^2.18.3",
