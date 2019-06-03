@@ -9,21 +9,36 @@ import {
   TouchableHighlight,
   View,
 } from 'react-native'
+import { Icon } from 'react-native-elements'
 
 import { Colors } from '../css'
+
+interface IconProps {
+  name: string;
+  color?: string;
+  size?: number;
+  type: string;
+  iconStyle?: React.CSSProperties;
+}
 
 interface Props {
   color?: string;
   disabled?: boolean;
   fullWidth?: boolean;
+  icon: IconProps;
   onPress?: () => void;
   title: string;
 }
+
+const DEFAULT_ICON_SIZE = 17
+const DEFAULT_ICON_COLOR = Colors.TEXT_WHITE
+const DEFAULT_ICON_STYLE = { marginRight: 8 }
 
 const ShockButton: React.FunctionComponent<Props> = ({
   color,
   disabled,
   fullWidth,
+  icon,
   onPress,
   title,
 }) => {
@@ -51,7 +66,20 @@ const ShockButton: React.FunctionComponent<Props> = ({
       style={[rootStyles, disabled && styles.disabled]}
       underlayColor={color}
     >
-      <Text style={styles.text}>{title}</Text>
+      <View style={styles.row}>
+        <View>
+          {icon && (
+            <Icon
+              name={icon.name}
+              type={icon.type}
+              size={icon.size ? icon.size : DEFAULT_ICON_SIZE}
+              color={icon.color ? icon.color : DEFAULT_ICON_COLOR}
+              iconStyle={icon.iconStyle ? icon.iconStyle : DEFAULT_ICON_STYLE}
+            />
+          )}
+        </View>
+        <Text style={styles.text}>{title}</Text>
+      </View>
     </TouchableHighlight>
   )
 }
@@ -80,6 +108,10 @@ const styles = StyleSheet.create({
 
   fullWidth: {
     width: '100%',
+  },
+
+  row: {
+    flexDirection: 'row',
   },
 })
 
