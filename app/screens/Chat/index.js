@@ -62,7 +62,11 @@ const MOCK_MESSAGES = [
   },
 ]
 
-const Loading = () => <Text>Loading</Text>
+const Loading = () => (
+  <View style={styles.loading}>
+    <Text>Loading</Text>
+  </View>
+)
 
 const SendRenderer = props => (
   <Send {...props}>
@@ -152,6 +156,12 @@ const styles = StyleSheet.create({
 
   alignFlexStart: {
     alignItems: 'flex-start',
+  },
+
+  loading: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
   },
 
   maxWidth: {
