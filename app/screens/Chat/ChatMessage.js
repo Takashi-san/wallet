@@ -51,7 +51,7 @@ export default class ChatMessage extends React.PureComponent<Props> {
 }
 
 const name = {
-  color: Colors.TEXT_STANDARD,
+  color: Colors.BLUE_DARK,
   fontSize: 14,
   fontWeight: 'bold',
 }
@@ -61,7 +61,7 @@ const CONTAINER_VERTICAL_PADDING = 18
 
 const container = {
   alignItems: 'flex-start',
-  backgroundColor: Colors.GRAY_MEDIUM,
+  backgroundColor: Colors.BLUE_LIGHTEST,
   borderRadius: 10,
   justifyContent: 'center',
   margin: 15,
@@ -80,12 +80,12 @@ const styles = StyleSheet.create({
   container,
   containerOutgoing: {
     ...container,
-    backgroundColor: Colors.BLUE_LIGHTEST,
+    backgroundColor: Colors.GRAY_MEDIUM,
   },
   name,
   nameOutgoing: {
     ...name,
-    color: Colors.BLUE_DARK,
+    color: Colors.TEXT_STANDARD,
   },
   timestamp: {
     fontSize: 12,
