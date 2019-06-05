@@ -17,27 +17,37 @@ interface Props {
   timestamp: number;
 }
 
-const ChatMessage: React.FunctionComponent<Props> = ({
-  body,
-  id,
-  onPress,
-  outgoing,
-  senderName,
-  timestamp,
-}) => {
-  return (
-    <TouchableOpacity onPress={() => onPress && onPress(id)}>
-      <View style={outgoing ? styles.container : styles.containerOutgoing}>
-        <Text style={outgoing ? styles.name : styles.nameOutgoing}>
-          {senderName}
-        </Text>
+export default class ChatMessage extends React.PureComponent<Props> {
+  componentDidMount() {
+    /**
+     * Force-updates every minute so moment-formatted dates refresh.
+     */
+    this.intervalID = setInterval(() => {
+      this.forceUpdate()
+    }, 60000)
+  }
 
-        <Text style={styles.timestamp}>{moment(timestamp).fromNow()}</Text>
+  componentWillUnmount() {
+    clearInterval(this.intervalID)
+  }
 
-        <Text style={styles.body}>{body}</Text>
-      </View>
-    </TouchableOpacity>
-  )
+  render() {
+    const { body, id, onPress, outgoing, senderName, timestamp } = this.props
+
+    return (
+      <TouchableOpacity onPress={() => onPress && onPress(id)}>
+        <View style={outgoing ? styles.container : styles.containerOutgoing}>
+          <Text style={outgoing ? styles.name : styles.nameOutgoing}>
+            {senderName}
+          </Text>
+
+          <Text style={styles.timestamp}>{moment(timestamp).fromNow()}</Text>
+
+          <Text style={styles.body}>{body}</Text>
+        </View>
+      </TouchableOpacity>
+    )
+  }
 }
 
 const name = {
@@ -82,5 +92,3 @@ const styles = StyleSheet.create({
     color: Colors.TEXT_LIGHT,
   },
 })
-
-export default React.memo(ChatMessage)
