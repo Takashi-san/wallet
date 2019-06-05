@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
   container,
   containerOutgoing: {
     ...container,
-    backgroundColor: Colors.BLUE_LIGHT,
+    backgroundColor: Colors.BLUE_LIGHTEST,
   },
   name,
   nameOutgoing: {
