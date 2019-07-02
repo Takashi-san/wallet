@@ -434,7 +434,9 @@ export default class MockGun {
     }
 
     if (this.nodeType === 'leaf') {
-      throw new Error()
+      throw new Error(
+        'Tried to call map() on a node already determined to be used as a leaf node',
+      )
     }
 
     if (isObject(this.graph) || typeof this.graph === 'undefined') {
