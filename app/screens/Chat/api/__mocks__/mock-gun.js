@@ -461,6 +461,9 @@ export default class MockGun {
     }
   }
 
+  /**
+   * @returns {void}
+   */
   off() {
     if (typeof this.key === 'undefined') {
       throw new Error()
