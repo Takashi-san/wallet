@@ -497,19 +497,24 @@ export default class MockGun {
       throw new Error()
     }
 
-    // we ignore the typings, let other code fail/crash if it tries to access
-    // missing functions which shouldn't actually been accessed when using the
-    // return value of once() on our app
-
     if (cb) {
       this._graphToRegularListenerIfGraphExists(cb)
 
       // @ts-ignore
       return {}
     } else {
+      if (this.nodeType === 'leaf') {
+        throw new Error(
+          'Tried to call once() without a cb on a leaf node, calling once() without a cb is most commonly used on set nodes.',
+        )
+      }
+
       // this behaviour conforms to this node being used as a set
       this.nodeType === 'set'
 
+      // we ignore the typings, let other code fail/crash if it tries to access
+      // missing functions which shouldn't actually been accessed when using the
+      // return value of once() without a callback on our app
       // @ts-ignore
       return {
         // @ts-ignore
