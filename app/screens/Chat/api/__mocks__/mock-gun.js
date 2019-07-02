@@ -88,7 +88,6 @@ const isValidGunData = data => {
 }
 
 /**
- *
  * @param {any} o
  * @returns {o is GUNNode}
  */
@@ -120,7 +119,7 @@ export default class MockGun {
    * been called and the graph is undefined this property will be set to 'set'.
    * If put() has successfuly been called, this property will be set to
    * 'leaf'.
-   * @type {'leaf'|'set'|'undefined'}
+   * @type {'edge'|'leaf'|'set'|'undefined'}
    */
   nodeType = 'undefined'
 
