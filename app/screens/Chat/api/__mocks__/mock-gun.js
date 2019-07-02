@@ -544,7 +544,7 @@ export default class MockGun {
       throw new Error()
     }
 
-    if (isGunNode(newData)) {
+    if (newData instanceof MockGun) {
       throw new TypeError('No Edges for now')
     }
 
