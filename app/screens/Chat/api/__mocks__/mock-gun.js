@@ -533,6 +533,7 @@ export default class MockGun {
     }
 
     if (cb) {
+      this.nodeType = 'leaf'
       this._graphToRegularListenerIfGraphExists(cb)
 
       // @ts-ignore
