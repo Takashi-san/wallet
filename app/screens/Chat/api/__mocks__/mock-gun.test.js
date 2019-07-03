@@ -804,7 +804,9 @@ describe('MockGun', () => {
 
   describe('set()', () => {
     it('accepts edges', () => {
-      const gun = createMockGun().get(Math.random().toString())
+      const gun = createMockGun()
+        .get(Math.random().toString())
+        .get(Math.random().toString())
 
       const anotherNode = createMockGun().get(Math.random().toString())
 

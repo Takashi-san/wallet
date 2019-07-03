@@ -748,6 +748,8 @@ export default class MockGun {
 
       // Warning: gun behaviour is to call listeners before the callback
       newSubNode.on(this._subNodeOn)
+      // allow for the return value to be defined before calling the callback
+      // as per gun behaviour
       setImmediate(() => {
         cb && cb({ err: undefined })
       })
