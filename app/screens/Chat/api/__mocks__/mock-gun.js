@@ -721,7 +721,9 @@ export default class MockGun {
     }
 
     if (this.nodeType === 'leaf') {
-      throw new Error()
+      throw new Error(
+        'Tried to call set on a node already determined to be used as a leaf node',
+      )
     }
 
     if (typeof this.graph === 'undefined') {
