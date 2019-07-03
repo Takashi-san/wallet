@@ -707,17 +707,13 @@ export default class MockGun {
   }
 
   /**
-   * @param {ValidDataValue} newItem
+   * @param {ValidDataValue|MockGun} newItem
    * @param {Callback=} cb
    * @returns {GUNNode}
    */
   set(newItem, cb) {
     if (typeof this.key === 'undefined') {
       throw new Error()
-    }
-
-    if (isGunNode(newItem)) {
-      throw new TypeError('No edges for now')
     }
 
     if (!isValidGunData(newItem)) {
@@ -735,12 +731,23 @@ export default class MockGun {
     const graph = this.graph
 
     if (graphIsObject(graph)) {
-      const key = Math.random().toString()
+      const key =
+        newItem instanceof MockGun
+          ? /** @type {string} */ (newItem.key)
+          : Math.random().toString()
 
       const newSubNode = new MockGun({
-        initialData: newItem,
+        initialData: newItem instanceof MockGun ? undefined : newItem,
         key,
       })
+
+      if (newItem instanceof MockGun) {
+        newSubNode.put(newItem, ack => {
+          if (ack.err) {
+            console.warn(ack.err)
+          }
+        })
+      }
 
       graph[key] = newSubNode
 

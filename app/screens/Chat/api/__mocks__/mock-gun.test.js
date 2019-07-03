@@ -1023,5 +1023,100 @@ describe('MockGun', () => {
 
       expect(spy).toHaveBeenCalledTimes(0)
     })
+
+    it('accepts edges on set()', done => {
+      expect.assertions(1)
+
+      const mySet = createMockGun().get(Math.random().toString())
+
+      const nodeKey = Math.random().toString()
+      const myNode = createMockGun().get(nodeKey)
+      const myNodeData = {
+        [Math.random().toString()]: Math.random().toString(),
+      }
+
+      myNode.put(myNodeData, ack => {
+        if (ack.err) {
+          console.error(ack.err)
+          return
+        }
+
+        mySet.set(myNode, ack => {
+          if (ack.err) {
+            console.error(ack.err)
+            return
+          }
+
+          mySet
+            .once()
+            .map()
+            .once(data => {
+              expect(data).toEqual({
+                ...myNodeData,
+                _: { '#': nodeKey },
+              })
+
+              done()
+            })
+        })
+      })
+    })
+
+    it("gives data to listeners as a set()'ed edge is updated", done => {
+      expect.assertions(2)
+
+      const mySet = createMockGun().get('Math.random().toString()')
+
+      const nodeKey = Math.random().toString()
+      const myNode = createMockGun().get(nodeKey)
+      const dataKey = Math.random().toString()
+
+      const myNodeData = {
+        [dataKey]: Math.random().toString(),
+      }
+
+      const mySecondNodeData = {
+        [dataKey]: Math.random().toString(),
+      }
+
+      let firstCall = true
+
+      mySet.map().on(data => {
+        if (firstCall) {
+          firstCall = false
+
+          expect(data).toEqual({
+            ...myNodeData,
+            _: { '#': nodeKey },
+          })
+
+          myNode.put(mySecondNodeData, ack => {
+            if (ack.err) {
+              console.warn(ack.err)
+            }
+          })
+        } else {
+          expect(data).toEqual({
+            ...mySecondNodeData,
+            _: { '#': nodeKey },
+          })
+
+          done()
+        }
+      })
+
+      mySet.set(myNode, ack => {
+        if (ack.err) {
+          console.error(ack.err)
+          return
+        }
+
+        myNode.put(myNodeData, ack2 => {
+          if (ack2.err) {
+            console.error(ack2.err)
+          }
+        })
+      })
+    })
   })
 })
