@@ -31,7 +31,7 @@ export interface Soul {
   put: Primitive | null | object | undefined
 }
 
-interface UserSoul extends Soul {
+export interface UserSoul extends Soul {
   sea?: string
 }
 
