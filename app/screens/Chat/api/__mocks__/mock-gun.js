@@ -10,7 +10,7 @@
  * @typedef {import('../SimpleGUN').ValidDataValue} ValidDataValue
  * @typedef {import('../SimpleGUN').ListenerData} ListenerData
  * @typedef {import('../SimpleGUN').ListenerObj} ListenerObj
- * @typedef {import('../SimpleGUN').Soul} Soul
+ * @typedef {import('../SimpleGUN').UserSoul} UserSoul
  */
 
 /**
@@ -164,7 +164,6 @@ export default class MockGun {
 
     this.failUserAuth = failUserAuth
     this.failUserCreation = failUserCreation
-    this.isAuth = isAuth
 
     this.is = isAuth
       ? {
@@ -190,7 +189,7 @@ export default class MockGun {
   }
 
   /**
-   * @returns {Soul}
+   * @returns {UserSoul}
    */
   get _() {
     return {
@@ -199,6 +198,7 @@ export default class MockGun {
         typeof this.graph === 'object' && this.graph !== null
           ? { '#': this.key }
           : this.graph,
+      sea: this.is ? Math.random().toString() : undefined,
     }
   }
 
