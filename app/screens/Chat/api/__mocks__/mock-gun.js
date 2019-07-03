@@ -27,7 +27,7 @@
 
 /**
  * @typedef {Record<string, MockGun | boolean | number | string | null>} ObjectGraph
- * @typedef {boolean | number | string | ObjectGraph | null | undefined} Graph
+ * @typedef {boolean | number | string | ObjectGraph | null | undefined | MockGun} Graph
  */
 
 /**
@@ -213,9 +213,9 @@ export default class MockGun {
       return
     }
 
-    if (this.nodeType === 'undefined') {
+    if (this.nodeType === 'undefined' && this.graph !== null) {
       throw new Error(
-        "Assertion Error: MockGun.prototype._notifyListeners() shouldn't have been called if node type is undefined",
+        `Assertion Error: MockGun.prototype._notifyListeners() shouldn't have been called if node type is undefined and the graph is not 'null' -- node key: ${this.key}`,
       )
     }
 
@@ -238,7 +238,19 @@ export default class MockGun {
       return
     }
 
-    const listenerData = this._getListenerData()
+    let listenerData
+
+    if (this.graph instanceof MockGun) {
+      const edge = this.graph
+
+      if (typeof edge.graph === 'undefined') {
+        return
+      }
+
+      listenerData = edge._getListenerData()
+    } else {
+      listenerData = this._getListenerData()
+    }
 
     listener(listenerData, this.key)
   }
@@ -265,12 +277,17 @@ export default class MockGun {
   }
 
   /**
-   * @type {Listener}
+   * @param {any} _
+   * @param {string=} key
    */
   _subNodeOn = (_, key) => {
     // we discriminate between set and leaf because we don't expect to use a
     // node as both in our app
     if (this.nodeType === 'set') {
+      if (typeof key !== 'string') {
+        throw new Error('Called _subNodeOn without a key on a set node')
+      }
+
       this.setListeners.forEach(cb => {
         const graph = this.graph
 
@@ -278,7 +295,7 @@ export default class MockGun {
           throw new Error('Assertion Error')
         }
 
-        const subNode = (graph[key])
+        const subNode = graph[key]
 
         if (!(subNode instanceof MockGun)) {
           throw new Error('Assertion Error')
@@ -286,8 +303,10 @@ export default class MockGun {
 
         subNode._graphToRegularListenerIfGraphExists(cb)
       })
-    } else if (this.nodeType === 'leaf') {
-      this._notifyListeners()
+    } else {
+      if (typeof this.key === 'string') {
+        this._notifyListeners()
+      }
     }
   }
 
@@ -299,6 +318,16 @@ export default class MockGun {
 
     if (typeof graph === 'undefined') {
       throw new Error()
+    }
+
+    if (graph instanceof MockGun) {
+      throw new Error(
+        "Called _getListenerData() on an edge node. Call the reference node's _getListenerData() instead",
+      )
+    }
+
+    if (graph === null) {
+      return null
     }
 
     if (graphIsObject(graph)) {
@@ -399,6 +428,10 @@ export default class MockGun {
       throw new Error('Tried to get a subkey of a primitive graph node')
     }
 
+    if (this.graph instanceof MockGun) {
+      return this.graph.get(key)
+    }
+
     if (typeof this.graph === 'undefined') {
       this.graph = {}
     }
@@ -408,6 +441,8 @@ export default class MockGun {
     if (subGraph instanceof MockGun) {
       return subGraph
     } else {
+      // accessing a non existing key must belong to leaf behaviour
+      this.nodeType = 'leaf'
       const newNode = new MockGun({
         initialData: subGraph,
         key,
@@ -538,24 +573,59 @@ export default class MockGun {
   }
 
   /**
-   *
-   * @param {ValidDataValue} newData
-   * @param {Callback=} cb
+   * @param {ValidDataValue|MockGun} newData
+   * @param {(Callback|undefined)=} cb
+   * @returns {void}
    */
   put(newData, cb) {
     // TODO; Data saved to the root level of the graph must be a node (an
     // object), not a string of "{ a: 4 }"!
     const isRootNode = typeof this.key === 'undefined'
     if (isRootNode) {
-      throw new Error()
+      throw new Error('Tried to put to root node')
     }
 
     if (this.nodeType === 'set') {
-      throw new Error()
+      throw new Error('Tried to put to a set node')
     }
 
     if (newData instanceof MockGun) {
-      throw new TypeError('No Edges for now')
+      const edge = newData
+
+      if (this.nodeType === 'leaf') {
+        throw new Error('Tried to edge put to a leaf node')
+      }
+
+      if (this.graph === edge) {
+        throw new Error('Trying to put same edge on a node')
+      }
+
+      this.graph = edge
+      this.nodeType = 'edge'
+
+      // We keep track of the edge being assigned to this node. If in the future
+      // this assignment is nulled out or switched for another edge we don't
+      // listen to it anymore. We don't call off() on the edge as that would
+      // remove all listeners including those set from elsewhere
+      edge.on(data => {
+        if (edge === this.graph) {
+          this._subNodeOn(data)
+        }
+      })
+
+      cb && cb({ err: undefined })
+
+      return
+    }
+
+    if (this.nodeType === 'edge') {
+      if (newData !== null) {
+        throw new Error('Tried to put a primitive or object to an edge node')
+      }
+
+      this.graph = null
+
+      this._notifyListeners()
     }
 
     if (!isValidGunData(newData)) {
@@ -613,6 +683,7 @@ export default class MockGun {
           } else {
             graph[k] = subData
           }
+
           completedSubPuts++
 
           if (completedSubPuts === numPuts) {
@@ -623,8 +694,12 @@ export default class MockGun {
         }
       }
     } else {
-      this.nodeType = 'leaf'
       this.graph = newData
+      // we might be seeing a null being put to a node intended to be used as an
+      // edge, which can accept null too.
+      if (newData !== null) {
+        this.nodeType = 'leaf'
+      }
       // Warning: gun behaviour is to call listeners before the callback
       this._notifyListeners()
       cb && cb({ err: undefined })

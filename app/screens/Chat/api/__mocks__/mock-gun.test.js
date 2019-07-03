@@ -696,6 +696,24 @@ describe('MockGun', () => {
   })
 
   describe('put()', () => {
+    it('throws if trying to put a primitive to a child of the root node', () => {
+      expect.assertions(3)
+
+      const gun = createMockGun().get(Math.random().toString())
+
+      expect(() => {
+        gun.put(Math.random())
+      }).toThrow()
+
+      expect(() => {
+        gun.put(Math.random().toString())
+      }).toThrow()
+
+      expect(() => {
+        gun.put(Math.random() > 0.5)
+      }).toThrow()
+    })
+
     it('throws an error if the node was already determined as being used as a set', done => {
       expect.assertions(1)
 
@@ -862,6 +880,146 @@ describe('MockGun', () => {
           }
         },
       )
+    })
+  })
+
+  describe('edges', () => {
+    it('throws an invalid graph error on putting to node child of the root', () => {
+      expect.assertions(1)
+
+      const gun = createMockGun()
+
+      const badEdge = gun.get(Math.random().toString())
+
+      const anotherNode = gun.get(Math.random().toString())
+
+      expect(() => {
+        badEdge.put(anotherNode)
+      }).toThrow()
+    })
+
+    it('does not throw an invalid graph error on putting to node child of the user root', () => {
+      const user = createMockGun({ isAuth: true })
+
+      const notActuallyABadEdge = user.get(Math.random().toString())
+
+      const anotherNode = user.get(Math.random().toString())
+
+      notActuallyABadEdge.put(anotherNode)
+    })
+
+    it('listen to changes on an edge', done => {
+      expect.assertions(6)
+
+      const gun = createMockGun()
+
+      const edgeKey = 'edge'
+      const edge = gun.get('edgeParent').get(edgeKey)
+
+      const anotherNodeKey = 'anotherNode'
+      const anotherNode = gun.get(anotherNodeKey)
+
+      edge.put(anotherNode)
+
+      const dataKey = Math.random().toString()
+      const data = {
+        [dataKey]: Math.random(),
+      }
+
+      const secondData = {
+        [dataKey]: Math.random(),
+      }
+
+      let calls = 0
+
+      edge.on((dataReceived, key) => {
+        if (calls === 0) {
+          calls++
+
+          expect({
+            // @ts-ignore let it crash if not an object
+            ...dataReceived,
+            _: undefined,
+          }).toEqual(data)
+
+          expect(key).toMatch(edgeKey)
+
+          // @ts-ignore
+          expect(dataReceived['_']['#']).toMatch(anotherNodeKey)
+        } else if (calls === 1) {
+          expect({
+            // @ts-ignore let it crash if not an object
+            ...dataReceived,
+            _: undefined,
+          }).toEqual(secondData)
+
+          expect(key).toMatch(edgeKey)
+
+          // @ts-ignore
+          expect(dataReceived['_']['#']).toMatch(anotherNodeKey)
+
+          done()
+        } else {
+          throw new Error('unexpected')
+        }
+      })
+
+      anotherNode.put(data)
+      anotherNode.put(secondData)
+    })
+
+    it('stop listening to changes on a edge after nulling it out', () => {
+      expect.assertions(2)
+
+      const gun = createMockGun()
+
+      const edgeKey = Math.random().toString()
+      const edge = gun.get(Math.random().toString()).get(edgeKey)
+
+      const anotherNode = gun.get(Math.random().toString())
+
+      anotherNode.put({ [Math.random().toString()]: Math.random() })
+
+      edge.put(anotherNode)
+
+      const spy = jest.fn()
+
+      edge.put(null)
+
+      edge.on(spy)
+
+      anotherNode.put({ [Math.random().toString()]: Math.random() }, ack => {
+        if (!ack.err) {
+          expect(spy).toHaveBeenCalledTimes(1)
+          expect(spy).lastCalledWith(null, edgeKey)
+        }
+      })
+    })
+
+    it('stop listening to changes on a edge after swapping it out for another one', () => {
+      expect.assertions(1)
+
+      const gun = createMockGun()
+
+      const edgeKey = Math.random().toString()
+      const edge = gun.get(edgeKey)
+
+      const anotherNode = gun.get(Math.random().toString())
+      const aThirdNode = gun.get(Math.random().toString())
+
+      anotherNode.put({ [Math.random().toString()]: Math.random() })
+
+      edge.put(anotherNode)
+
+      const spy = jest.fn()
+
+      edge.put(aThirdNode)
+
+      edge.on(spy)
+
+      anotherNode.put({ [Math.random().toString()]: Math.random() })
+
+      expect(spy).toHaveBeenCalledTimes(0)
     })
   })
 })
