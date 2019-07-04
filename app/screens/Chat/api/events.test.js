@@ -335,9 +335,11 @@ describe('onOutgoing()', () => {
     Events.onOutgoing(spy, fakeGun, fakeOnOutgoingMessage)
 
     const [call] = spy.mock.calls
+    // @ts-ignore
     const [data] = call
 
     expect(
+      // @ts-ignore
       Object.values(data).every(og =>
         someOutgoings.some(og2 => og.with === og2.with),
       ),
