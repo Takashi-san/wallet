@@ -176,7 +176,16 @@ export default class MockGun {
         this.set(item)
       }
     } else if (typeof initialData !== 'undefined') {
-      this.put(initialData)
+      this.put(initialData, ack => {
+        if (ack.err) {
+          throw new Error(ack.err)
+        } else {
+          // let's not assume this node will be used as a leaf type simply
+          // because of initial data, there's an special case in our app where
+          // we initialize an empty set via giving that set node an unused prop
+          this.nodeType = 'undefined'
+        }
+      })
     }
 
     //https://github.com/Microsoft/TypeScript/issues/17498#issuecomment-399439654
