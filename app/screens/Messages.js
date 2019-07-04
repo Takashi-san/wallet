@@ -9,7 +9,10 @@ import { Divider, Icon } from 'react-native-elements'
 import UserDetail from '../components/UserDetail'
 import { Colors, SCREEN_PADDING } from '../css'
 
-const FAKE_CHATS: Array<Chat> = [
+/**
+ * @type {Chat[]}
+ */
+const FAKE_CHATS = [
   {
     get id() {
       return this.lastMessage + this.name
@@ -56,19 +59,24 @@ const NoMessages = React.memo(() => (
 
 const keyExtractor = (item: Chat): React.Key => item.id
 
-interface Chat {
-  id: string;
-  lastMessage: string;
-  name: string;
-  timestamp: number;
-  unread: string;
-}
+/**
+ * @typedef {object} Chat
+ * @prop {string} id
+ * @prop {string} lastMessage
+ * @prop {string} name
+ * @prop {string} timestamp
+ * @prop {string} unread
+ */
 
-interface State {
-  chats: Array<Chat>;
-}
+/**
+ * @typedef {object} State
+ * @prop {Chat[]} chats
+ */
 
-export default class Messages extends React.PureComponent<{}, State> {
+/**
+ * @augments React.PureComponent<{}, State>
+ */
+export default class Messages extends React.PureComponent {
   state = {
     chats: [],
   }
