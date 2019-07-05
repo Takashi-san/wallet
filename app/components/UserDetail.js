@@ -7,23 +7,27 @@ import { Avatar } from 'react-native-elements'
 
 import { Colors } from '../css'
 
-interface Props {
-  alternateText?: string;
-  alternateTextBold?: Boolean;
-  lowerText: string;
-  lowerTextStyle?: React.CSSProperties;
-  image: string;
-  id?: number | string;
-  name: string;
-  nameBold?: boolean;
-  onPress: (id: number | string) => void;
-  title?: string;
-}
+/**
+ * @typedef {object} Props
+ * @prop {string=} alternateText
+ * @prop {boolean=} alternateTextBold
+ * @prop {string} lowerText
+ * @prop {import('react-native').ViewStyle=} lowerTextStyle
+ * @prop {string} image
+ * @prop {string} id
+ * @prop {string} name
+ * @prop {boolean=} nameBold
+ * @prop {((id: string) => void)=} onPress
+ * @prop {string=} title
+ */
 
 const SAMPLE_IMAGE =
   'https://s3.amazonaws.com/uifaces/faces/twitter/ladylexy/128.jpg'
 
-const UserDetail: React.FunctionComponent<Props> = ({
+/**
+ * @type {React.SFC<Props>}
+ */
+const UserDetail = ({
   alternateText,
   alternateTextBold,
   image,
@@ -35,7 +39,7 @@ const UserDetail: React.FunctionComponent<Props> = ({
   onPress,
   title,
 }) => {
-  return (
+  return ((
     <TouchableOpacity
       onPress={() => {
         onPress && onPress(id)
@@ -66,17 +70,14 @@ const UserDetail: React.FunctionComponent<Props> = ({
           </Text>
 
           {lowerText && (
-            <Text
-              numberOfLines={2}
-              style={[styles.lowerText, lowerTextStyle && lowerTextStyle]}
-            >
+            <Text numberOfLines={2} style={lowerTextStyle && lowerTextStyle}>
               {lowerText}
             </Text>
           )}
         </View>
       </View>
     </TouchableOpacity>
-  )
+  ))
 }
 
 const nameTextStyle = {
@@ -84,6 +85,9 @@ const nameTextStyle = {
   fontSize: 16,
 }
 
+/**
+ * @type {import('react-native').ViewStyle}
+ */
 const alternateTextStyle = {
   color: Colors.TEXT_LIGHT,
   fontSize: 14,
