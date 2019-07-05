@@ -28,7 +28,6 @@ describe('isHandshakeRequest()', () => {
   /** @type {HandshakeRequest} */
   const req = {
     from: Math.random().toString(),
-    requestorFeedID: Math.random().toString(),
     response: Math.random().toString(),
     timestamp: Math.random(),
     to: Math.random().toString(),
@@ -100,7 +99,8 @@ describe('isPartialOutgoing()', () => {
    * @type {PartialOutgoing}
    */
   const partialOutgoing = {
-    with: 'aksjdlkajsd',
+    recipientOutgoingID: Math.random() > 0.5 ? null : Math.random().toString(),
+    with: Math.random().toString(),
   }
 
   it('correctly identifies a valid partial outgoing', () => {

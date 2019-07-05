@@ -119,6 +119,7 @@ export const onOutgoing = (
 
       outgoings[key] = {
         messages: outgoings[key] ? outgoings[key].messages : {},
+        recipientOutgoingID: data.recipientOutgoingID,
         with: data.with,
       }
 
