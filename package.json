@@ -34,6 +34,7 @@
     "@types/jest": "23.x.x",
     "@types/react": "^16.8.22",
     "@types/react-native": "0.57.7",
+    "@types/react-navigation": "^2.13.10",
     "babel-jest": "23.0.1",
     "babel-preset-react-native": "4.0.0",
     "flow-bin": "^0.78.0",
