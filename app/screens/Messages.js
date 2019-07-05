@@ -57,15 +57,20 @@ const NoMessages = React.memo(() => (
   <Text>'insert something here about there being no chats'</Text>
 ))
 
-const keyExtractor = (item: Chat): React.Key => item.id
+/**
+ *
+ * @param {Chat} item
+ * @returns {string}
+ */
+const keyExtractor = item => item.id
 
 /**
  * @typedef {object} Chat
  * @prop {string} id
  * @prop {string} lastMessage
  * @prop {string} name
- * @prop {string} timestamp
- * @prop {string} unread
+ * @prop {number} timestamp
+ * @prop {boolean} unread
  */
 
 /**
@@ -87,10 +92,16 @@ export default class Messages extends React.PureComponent {
     })
   }
 
-  onPressMessage = (id: string) => {
+  /**
+   * @param {string} id
+   */
+  onPressMessage = id => {
     console.warn(id)
   }
 
+  /**
+   * @param {{ item: Chat }} args
+   */
   itemRenderer = ({ item }) => (
     <View style={styles.itemContainer}>
       <View style={styles.userDetailContainer}>
