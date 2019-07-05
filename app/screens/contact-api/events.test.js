@@ -191,7 +191,6 @@ describe('onCurrentHandshakeNode()', () => {
     /** @type {HandshakeRequest} */
     const someHandshakeRequest = {
       from: Math.random().toString(),
-      requestorFeedID: Math.random().toString(),
       response: Math.random().toString(),
       timestamp: Math.random(),
       to: Math.random().toString(),
@@ -361,11 +360,11 @@ describe('onOutgoing()', () => {
 
     /** @type {PartialOutgoing} */
     const sampleOutgoing = {
+      recipientOutgoingID: Math.random().toString(),
       with: Math.random().toString(),
     }
 
     const sampleOutgoingNode = outgoingsNode.set(sampleOutgoing)
-    const key = /** @type {string} */ (sampleOutgoingNode._.get)
 
     sampleOutgoingNode.get(Key.MESSAGES).set(sampleMsg)
 
@@ -415,14 +414,12 @@ describe('onSentRequests()', () => {
     const someSentRequests = [
       {
         from: Math.random().toString(),
-        requestorFeedID: Math.random().toString(),
         response: Math.random().toString(),
         timestamp: Math.random(),
         to: Math.random().toString(),
       },
       {
         from: Math.random().toString(),
-        requestorFeedID: Math.random().toString(),
         response: Math.random().toString(),
         timestamp: Math.random(),
         to: Math.random().toString(),

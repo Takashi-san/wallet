@@ -4,11 +4,9 @@
 /**
  * @typedef {object} HandshakeRequest
  * @prop {string} from Public key of the requestor.
- * @prop {string} requestorFeedID Feed id where the requestor's messages (in its
- * user node) will be put, so the receiver can know to which requestor node to
- * subscribe.
  * @prop {string} response Encrypted string where, if the recipient accepts the
- * request, his outgoing feed id will be put.
+ * request, his outgoing feed id will be put. Before that the sender's outgoing
+ * feed ID will be placed here, encrypted so only the recipient can access it.
  * @prop {number} timestamp Unix time.
  * @prop {string} to Public key of the receiver of the handshake request. Used
  * by the requestor to know to which user's feed id (which the receiver will
@@ -25,11 +23,15 @@
  * @typedef {object} Outgoing
  * @prop {Record<string, Message>} messages
  * @prop {string} with Public key for whom the outgoing messages are intended.
+ * @prop {string|null} recipientOutgoingID Outgoing id of the recipient from
+ * which to listen messages from.
  */
 
 /**
  * @typedef {object} PartialOutgoing
  * @prop {string} with Public key for whom the outgoing messages are intended.
+ * @prop {string|null} recipientOutgoingID Outgoing id of the recipient from
+ * which to listen messages from.
  */
 
 /**
@@ -46,10 +48,6 @@ export const isHandshakeRequest = o => {
   }
 
   const obj = /** @type {HandshakeRequest} */ (o)
-
-  if (typeof obj.requestorFeedID !== 'string') {
-    return false
-  }
 
   if (typeof obj.from !== 'string') {
     return false
@@ -103,5 +101,7 @@ export const isPartialOutgoing = o => {
 
   const obj = /** @type {PartialOutgoing} */ (o)
 
-  return typeof obj.with === 'string'
+  return (
+    typeof obj.with === 'string' && typeof obj.recipientOutgoingID === 'string'
+  )
 }
