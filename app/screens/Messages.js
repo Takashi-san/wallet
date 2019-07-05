@@ -9,56 +9,11 @@ import { Divider, Icon } from 'react-native-elements'
 import UserDetail from '../components/UserDetail'
 import { Colors, SCREEN_PADDING } from '../css'
 
-/**
- * @type {Chat[]}
- */
-const FAKE_CHATS = [
-  {
-    get id() {
-      return this.lastMessage + this.name
-    },
-    lastMessage:
-      'Hey Pete, just wondering what you’d want for those cool pairs of shoes!',
-    name: 'Mel Winters',
-    timestamp: moment()
-      .subtract(1, 'minutes')
-      .toDate()
-      .getTime(),
-    unread: true,
-  },
-  {
-    get id() {
-      return this.lastMessage + this.name
-    },
-    lastMessage: 'Hey, how much would you want?',
-    name: 'Michael Farrington',
-    timestamp: moment()
-      .subtract(1, 'minutes')
-      .toDate()
-      .getTime(),
-    unread: false,
-  },
-  {
-    get id() {
-      return this.lastMessage + this.name
-    },
-    lastMessage:
-      'Hi, anything interested? I would sell it for quite a cheap price.',
-    name: 'Tom Wallace',
-    timestamp: moment()
-      .subtract(3, 'hours')
-      .toDate()
-      .getTime(),
-    unread: false,
-  },
-]
-
 const NoMessages = React.memo(() => (
   <Text>'insert something here about there being no chats'</Text>
 ))
 
 /**
- *
  * @param {Chat} item
  * @returns {string}
  */
@@ -84,12 +39,6 @@ const keyExtractor = item => item.id
 export default class Messages extends React.PureComponent {
   state = {
     chats: [],
-  }
-
-  componentDidMount() {
-    this.setState({
-      chats: FAKE_CHATS,
-    })
   }
 
   /**
@@ -145,6 +94,9 @@ export default class Messages extends React.PureComponent {
 const ITEM_CONTAINER_HORIZONTAL_PADDING = SCREEN_PADDING / 2
 const ITEM_CONTAINER_VERTICAL_PADDING = 15
 
+/**
+ * @type {Record<string, import('react-native').ViewStyle>}
+ */
 const styles = {
   boldFont: {
     fontWeight: 'bold',
