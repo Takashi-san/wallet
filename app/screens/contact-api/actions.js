@@ -98,23 +98,35 @@ export const __encryptAndPutResponseToRequest = (
  * outgoing feed.
  * @param {string} withPublicKey Public key of the intended recipient of the
  * outgoing feed that will be created.
+ * @param {string|null} recipientOutgoingID The id of the outgoing feed of the
+ * user we will be talking with. This should be obtained from the encrypted
+ * response prop of the request. If, instead, an outgoing feed is being created
+ * alongside a request, pass null.
  * @throws {Error} If the outgoing feed cannot be created or if the initial
  * message for it also cannot be created. These errors aren't coded as they are
  * not meant to be caught outside of this module.
  * @param {UserGUNNode} user
  * @returns {Promise<string>}
  */
-export const __createOutgoingFeed = (withPublicKey, user) =>
+export const __createOutgoingFeed = (
+  withPublicKey,
+  recipientOutgoingID,
+  user,
+) =>
   new Promise((resolve, reject) => {
     if (!user.is) {
       throw new Error(ErrorCode.NOT_AUTH)
     }
 
-    const outgoingFeed = user.get(Key.OUTGOINGS).set(
-      {
-        with: withPublicKey,
-      },
-      outgoingFeedAck => {
+    /** @type {PartialOutgoing} */
+    const newPartialOutgoingFeed = {
+      recipientOutgoingID: recipientOutgoingID,
+      with: withPublicKey,
+    }
+
+    const outgoingFeed = user
+      .get(Key.OUTGOINGS)
+      .set(newPartialOutgoingFeed, outgoingFeedAck => {
         if (outgoingFeedAck.err) {
           reject(new Error())
         } else {
@@ -133,8 +145,7 @@ export const __createOutgoingFeed = (withPublicKey, user) =>
               }
             })
         }
-      },
-    )
+      })
   })
 
 /**
@@ -177,7 +188,10 @@ export const acceptRequest = (
         return
       }
 
-      outgoingFeedCreator(handshakeRequest.from, user)
+      // TODO: Encryption
+      const requestorOutgoingFeedID = handshakeRequest.response
+
+      outgoingFeedCreator(handshakeRequest.from, requestorOutgoingFeedID, user)
         .then(outgoingFeedID => {
           return responseToRequestEncryptorAndPutter(
             requestID,
@@ -190,7 +204,7 @@ export const acceptRequest = (
           resolve()
         })
         .catch(() => {
-          reject(ErrorCode.COULDNT_ACCEPT_REQUEST)
+          reject(new Error(ErrorCode.COULDNT_ACCEPT_REQUEST))
         })
     })
   })
@@ -376,7 +390,7 @@ export const sendHandshakeRequest = (
       throw new Error()
     }
 
-    __createOutgoingFeed(recipientPublicKey, user)
+    __createOutgoingFeed(recipientPublicKey, null, user)
       .then(outgoingFeedID => {
         if (typeof user.is === 'undefined') {
           reject(new TypeError())
@@ -385,9 +399,8 @@ export const sendHandshakeRequest = (
 
         /** @type {HandshakeRequest} */
         const handshakeRequestData = {
-          requestorFeedID: outgoingFeedID,
           // TODO: Encrypt, make it indistinguishable from a non-response
-          response: Math.random().toString(),
+          response: outgoingFeedID,
           to: recipientPublicKey,
           from: user.is.pub,
           timestamp: Math.random(),
@@ -443,7 +456,7 @@ export const setAvatar = (avatar, user = userGun) =>
       .get(Key.AVATAR)
       .put(avatar, ack => {
         if (ack.err) {
-          reject(ack.err)
+          reject(new Error(ack.err))
         } else {
           resolve()
         }
