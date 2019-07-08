@@ -3,10 +3,11 @@
  */
 import * as ErrorCode from './errorCode'
 import * as Key from './key'
-import { gun, user as userGun } from './gun'
+import { gun as origGun, user as userGun } from './gun'
 import { isHandshakeRequest, isMessage, isPartialOutgoing } from './schema'
 /**
  * @typedef {import('./SimpleGUN').UserGUNNode} UserGUNNode
+ * @typedef {import('./SimpleGUN').GUNNode} GUNNode
  * @typedef {import('./schema').HandshakeRequest} HandshakeRequest
  * @typedef {import('./schema').Message} Message
  * @typedef {import('./schema').Outgoing} Outgoing
@@ -78,6 +79,47 @@ const __onOutgoingMessage = (outgoingKey, cb, user) => {
       if (isMessage(data)) {
         cb(data, key)
       }
+    })
+}
+
+/**
+ * @param {(messages: Record<string, Message>) => void} cb
+ * @param {string} userPK Public key of the user from whom the incoming
+ * messages will be obtained.
+ * @param {string} outgoingFeedID ID of the outgoing feed from which the
+ * incoming messages will be obtained.
+ * @param {GUNNode=} gun (Pass only for testing purposes)
+ * @returns {void}
+ */
+export const onIncomingMessages = (
+  cb,
+  userPK,
+  outgoingFeedID,
+  gun = origGun,
+) => {
+  const user = gun.user(userPK)
+
+  /**
+   * @type {Record<string, Message>}
+   */
+  const messages = {}
+
+  user
+    .get(Key.OUTGOINGS)
+    .get(outgoingFeedID)
+    .get(Key.MESSAGES)
+    .map()
+    .on((data, key) => {
+      if (!isMessage(data)) {
+        console.warn('non-message received')
+        return
+      }
+
+      const msg = data
+
+      messages[key] = msg
+
+      cb(messages)
     })
 }
 
