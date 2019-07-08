@@ -280,6 +280,8 @@ describe('onDisplayName()', () => {
   })
 })
 
+describe('onIncomingMessages()', () => {})
+
 describe('onOutgoing()', () => {
   it('throws a NOT_AUTH error if supplied with a non authenticated node', done => {
     const fakeGun = createMockGun()
