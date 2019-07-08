@@ -4,7 +4,7 @@
 import * as ErrorCode from './errorCode'
 import * as Key from './key'
 import { gun as origGun, user as userGun } from './gun'
-import { isHandshakeRequest, isMessage, isPartialOutgoing } from './schema'
+import * as Schema from './schema'
 /**
  * @typedef {import('./SimpleGUN').UserGUNNode} UserGUNNode
  * @typedef {import('./SimpleGUN').GUNNode} GUNNode
@@ -76,7 +76,7 @@ const __onOutgoingMessage = (outgoingKey, cb, user) => {
     .get(Key.MESSAGES)
     .map()
     .on((data, key) => {
-      if (isMessage(data)) {
+      if (Schema.isMessage(data)) {
         cb(data, key)
       }
     })
@@ -110,7 +110,7 @@ export const onIncomingMessages = (
     .get(Key.MESSAGES)
     .map()
     .on((data, key) => {
-      if (!isMessage(data)) {
+      if (!Schema.isMessage(data)) {
         console.warn('non-message received')
         return
       }
@@ -153,7 +153,7 @@ export const onOutgoing = (
   u.get(Key.OUTGOINGS)
     .map()
     .on((data, key) => {
-      if (!isPartialOutgoing(data)) {
+      if (!Schema.isPartialOutgoing(data)) {
         console.warn('not partial outgoing')
         console.warn(JSON.stringify(data))
         return
@@ -236,7 +236,7 @@ export const onCurrentHandshakeNode = (cb, user = userGun) => {
         .once()
         .map()
         .once((handshakeReq, key) => {
-          if (isHandshakeRequest(handshakeReq)) {
+          if (Schema.isHandshakeRequest(handshakeReq)) {
             handshakes[key] = handshakeReq
           }
 
@@ -266,7 +266,7 @@ export const onSentRequests = (cb, user = userGun) => {
   u.get(Key.SENT_REQUESTS)
     .map()
     .on((data, key) => {
-      if (isHandshakeRequest(data)) {
+      if (Schema.isHandshakeRequest(data)) {
         sentRequests[key] = data
 
         cb(sentRequests)
