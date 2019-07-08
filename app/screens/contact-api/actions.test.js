@@ -133,7 +133,6 @@ describe('__encryptAndPutResponseToRequest', () => {
     /** @type {HandshakeRequest} */
     const theRequest = {
       from: Math.random().toString(),
-      requestorFeedID: Math.random().toString(),
       response: Math.random().toString(),
       timestamp: Math.random(),
       to: Math.random().toString(),
@@ -179,6 +178,7 @@ describe('__createOutgoingFeed()', () => {
 
     Actions.__createOutgoingFeed(
       Math.random().toString(),
+      null,
       createMockGun(),
     ).catch((/** @type {any} */ e) => {
       expect(e.message).toBe(ErrorCode.NOT_AUTH)
@@ -195,7 +195,7 @@ describe('__createOutgoingFeed()', () => {
 
     const pk = Math.random().toString()
 
-    Actions.__createOutgoingFeed(pk, mockGun).then(outgoingID => {
+    Actions.__createOutgoingFeed(pk, null, mockGun).then(outgoingID => {
       mockGun
         .get(Key.OUTGOINGS)
         .get(outgoingID)
@@ -208,6 +208,30 @@ describe('__createOutgoingFeed()', () => {
     })
   })
 
+  it("it creates the outgoing feed with the 'recipientOutgoingID' provided", done => {
+    expect.assertions(1)
+
+    const mockGun = createMockGun({
+      isAuth: true,
+    })
+
+    const recipientOutgoingID = Math.random().toString()
+
+    Actions.__createOutgoingFeed(Math.random().toString(), null, mockGun).then(
+      outgoingID => {
+        mockGun
+          .get(Key.OUTGOINGS)
+          .get(outgoingID)
+          .once(data => {
+            // @ts-ignore
+            const outgoing = /** @type {PartialOutgoing} */ (data)
+            expect(outgoing.recipientOutgoingID).toBe(recipientOutgoingID)
+            done()
+          })
+      },
+    )
+  })
+
   it('creates a messages set sub-node with an initial special acceptance message', done => {
     expect.assertions(1)
 
@@ -217,7 +241,7 @@ describe('__createOutgoingFeed()', () => {
 
     const pk = Math.random().toString()
 
-    Actions.__createOutgoingFeed(pk, mockGun).then(outgoingID => {
+    Actions.__createOutgoingFeed(pk, null, mockGun).then(outgoingID => {
       mockGun
         .get(Key.OUTGOINGS)
         .get(outgoingID)
@@ -240,7 +264,7 @@ describe('__createOutgoingFeed()', () => {
       isAuth: true,
     })
 
-    Actions.__createOutgoingFeed(Math.random().toString(), mockGun)
+    Actions.__createOutgoingFeed(Math.random().toString(), null, mockGun)
       .then(id => {
         expect(typeof id).toBe('string')
         expect(id.length).toBeGreaterThan(0)
@@ -291,7 +315,6 @@ describe('acceptRequest()', () => {
     /** @type {HandshakeRequest} */
     const someRequest = {
       from: requestorPK,
-      requestorFeedID: Math.random().toString(),
       response: Math.random().toString(),
       timestamp: Math.random(),
       to: Math.random().toString(),
