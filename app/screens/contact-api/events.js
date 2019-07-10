@@ -273,3 +273,90 @@ export const onSentRequests = (cb, user = userGun) => {
       }
     })
 }
+
+/**
+ * @param {(requestToUser: Record<string, string>) => void} cb
+ * @param {UserGUNNode=} user Pass only for testing purposes.
+ * @returns {void}
+ */
+export const __onRequestToUser = (cb, user = userGun) => {
+  /** @type {Record<string, string>} */
+  const requestToUser = {}
+
+  user
+    .get(Key.REQUEST_TO_USER)
+    .map()
+    .on((data, key) => {
+      if (typeof data !== 'string') {
+        console.error('got a non string value')
+        return
+      }
+
+      if (data.length === 0) {
+        console.error('got an empty string value')
+        return
+      }
+
+      requestToUser[key] = data
+
+      cb(requestToUser)
+    })
+}
+
+/**
+ * @param {(outgoingToUser: Record<string, string>) => void} cb
+ * @param {UserGUNNode=} user Pass only for testing purposes.
+ * @returns {void}
+ */
+export const __onOutgoingToUser = (cb, user = userGun) => {
+  /** @type {Record<string, string>} */
+  const outgoingToUser = {}
+
+  user
+    .get(Key.OUTGOING_TO_USER)
+    .map()
+    .on((data, key) => {
+      if (typeof data !== 'string') {
+        console.error('got a non string value')
+        return
+      }
+
+      if (data.length === 0) {
+        console.error('got an empty string value')
+        return
+      }
+
+      outgoingToUser[key] = data
+
+      cb(outgoingToUser)
+    })
+}
+
+/**
+ * @param {(userToOutgoing: Record<string, string>) => void} cb
+ * @param {UserGUNNode=} user Pass only for testing purposes.
+ * @returns {void}
+ */
+export const __onUserToOutgoing = (cb, user = userGun) => {
+  /** @type {Record<string, string>} */
+  const userToOutgoing = {}
+
+  user
+    .get(Key.USER_TO_OUTGOING)
+    .map()
+    .on((data, key) => {
+      if (typeof data !== 'string') {
+        console.error('got a non string value')
+        return
+      }
+
+      if (data.length === 0) {
+        console.error('got an empty string value')
+        return
+      }
+
+      userToOutgoing[key] = data
+
+      cb(userToOutgoing)
+    })
+}
