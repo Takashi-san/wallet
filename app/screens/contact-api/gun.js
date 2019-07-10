@@ -3,16 +3,23 @@
  */
 // @ts-ignore
 import Gun from 'gun/gun'
-import 'gun/sea'
+
+// @ts-ignore
+const runningInJest = process.env.JEST_WORKER_ID !== undefined
+
+if (!runningInJest) {
+  // @ts-ignore
+  require('gun/sea')
+}
 
 /**
- * @typedef {import('./SimpleGUN').GUNNode} GUNNode
- */
-
-/**
- * @type {GUNNode}
+ * @type {import('./SimpleGUN').GUNNode}
  */
 // @ts-ignore force cast
 export const gun = Gun('http://localhost:8080/gun')
 
-export const user = gun.user()
+/**
+ * @type {import('./SimpleGUN').UserGUNNode}
+ */
+// @ts-ignore
+export const user = runningInJest ? null : gun.user()
