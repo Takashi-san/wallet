@@ -265,12 +265,15 @@ export const onSentRequests = (cb, user = userGun) => {
 
   u.get(Key.SENT_REQUESTS)
     .map()
-    .on((data, key) => {
-      if (Schema.isHandshakeRequest(data)) {
-        sentRequests[key] = data
-
-        cb(sentRequests)
+    .on((req, reqKey) => {
+      if (!Schema.isHandshakeRequest(req)) {
+        console.error('non-handshakerequest received')
+        return
       }
+
+      sentRequests[reqKey] = req
+
+      cb(sentRequests)
     })
 }
 
