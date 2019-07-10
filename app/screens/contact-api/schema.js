@@ -20,18 +20,43 @@
  */
 
 /**
+ * @typedef {object} ChatMessage
+ * @prop {string} body
+ * @prop {string} id
+ * @prop {boolean} outgoing True if the message is an outgoing message,
+ * otherwise it is an incoming message.
+ * @prop {number} timestamp
+ */
+
+/**
+ * A simpler representation of a conversation between two users than the
+ * outgoing/incoming feed paradigm. It combines both the outgoing and incoming
+ * messages into one data structure plus metada about the chat.
+ * @typedef {object} Chat
+ * @prop {string} id
+ * @prop {ChatMessage[]} messages Sorted from most recent to least recent.
+ * @prop {string} recipientDisplayName
+ * @prop {boolean} recipientHasAccepted True if the recipient still has not
+ * accepted the request to chat.
+ */
+
+/**
  * @typedef {object} Outgoing
  * @prop {Record<string, Message>} messages
  * @prop {string} with Public key for whom the outgoing messages are intended.
  * @prop {string|null} recipientOutgoingID Outgoing id of the recipient from
- * which to listen messages from.
+ * which to listen messages from. This is null if the user to which the outgoing
+ * belongs is the requestor of a handshake and the recipient has not accepted
+ * and relayed his own outgoing feed's id to the recipient.
  */
 
 /**
  * @typedef {object} PartialOutgoing
  * @prop {string} with Public key for whom the outgoing messages are intended.
  * @prop {string|null} recipientOutgoingID Outgoing id of the recipient from
- * which to listen messages from.
+ * which to listen messages from. This is null if the user to which the outgoing
+ * belongs is the requestor of a handshake and the recipient has not accepted
+ * and relayed his own outgoing feed's id to the recipient.
  */
 
 /**
