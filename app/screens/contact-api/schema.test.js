@@ -30,7 +30,6 @@ describe('isHandshakeRequest()', () => {
     from: Math.random().toString(),
     response: Math.random().toString(),
     timestamp: Math.random(),
-    to: Math.random().toString(),
   }
 
   it('correctly identifies a valid handshake req', () => {

@@ -8,9 +8,6 @@
  * request, his outgoing feed id will be put. Before that the sender's outgoing
  * feed ID will be placed here, encrypted so only the recipient can access it.
  * @prop {number} timestamp Unix time.
- * @prop {string} to Public key of the receiver of the handshake request. Used
- * by the requestor to know to which user's feed id (which the receiver will
- * write to the receiver of this handshake request) to subscribe.
  */
 
 /**
@@ -83,10 +80,6 @@ export const isHandshakeRequest = o => {
   }
 
   if (typeof obj.timestamp !== 'number') {
-    return false
-  }
-
-  if (typeof obj.to !== 'string') {
     return false
   }
 

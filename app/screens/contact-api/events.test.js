@@ -193,7 +193,6 @@ describe('onCurrentHandshakeNode()', () => {
       from: Math.random().toString(),
       response: Math.random().toString(),
       timestamp: Math.random(),
-      to: Math.random().toString(),
     }
 
     const fakeGun = createMockGun({
@@ -418,13 +417,11 @@ describe('onSentRequests()', () => {
         from: Math.random().toString(),
         response: Math.random().toString(),
         timestamp: Math.random(),
-        to: Math.random().toString(),
       },
       {
         from: Math.random().toString(),
         response: Math.random().toString(),
         timestamp: Math.random(),
-        to: Math.random().toString(),
       },
     ]
 

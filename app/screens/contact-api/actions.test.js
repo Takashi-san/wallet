@@ -135,7 +135,6 @@ describe('__encryptAndPutResponseToRequest', () => {
       from: Math.random().toString(),
       response: Math.random().toString(),
       timestamp: Math.random(),
-      to: Math.random().toString(),
     }
 
     /**
@@ -317,7 +316,6 @@ describe('acceptRequest()', () => {
       from: requestorPK,
       response: Math.random().toString(),
       timestamp: Math.random(),
-      to: Math.random().toString(),
     }
 
     const requestNode = currentHandshakeNode.set(someRequest, ack => {
@@ -636,7 +634,7 @@ describe('sendHandshakeRequest()', () => {
   })
 
   it('places the handshake request on the handshake node of the given address', done => {
-    expect.assertions(2)
+    expect.assertions(1)
 
     const gun = createMockGun()
     const user = createMockGun({ isAuth: true })
@@ -661,7 +659,6 @@ describe('sendHandshakeRequest()', () => {
             const theRequest = /** @type {HandshakeRequest} */ (data)
 
             expect(theRequest.from).toMatch(requestorEpub)
-            expect(theRequest.to).toMatch(recipientEpub)
 
             done()
           })

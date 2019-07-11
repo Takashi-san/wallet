@@ -401,7 +401,6 @@ export const sendHandshakeRequest = (
         const handshakeRequestData = {
           // TODO: Encrypt, make it indistinguishable from a non-response
           response: outgoingFeedID,
-          to: recipientPublicKey,
           from: user.is.pub,
           timestamp: Math.random(),
         }
