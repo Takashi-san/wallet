@@ -393,10 +393,7 @@ export const sendHandshakeRequest = (
           timestamp: Math.random(),
         }
 
-        /** @type {GUNNode} */
-        let handshakeRequestNode
-
-        handshakeRequestNode = gun
+        const handshakeRequestNode = gun
           .get(Key.HANDSHAKE_NODES)
           .get(handshakeAddress)
           .set(handshakeRequestData, ack => {
@@ -407,7 +404,16 @@ export const sendHandshakeRequest = (
                 if (ack.err) {
                   reject(new Error(ack.err))
                 } else {
-                  resolve()
+                  user
+                    .get(Key.REQUEST_TO_USER)
+                    .get(/** @type {string} */ (handshakeRequestNode._.get))
+                    .put(recipientPublicKey, ack => {
+                      if (ack.err) {
+                        reject(new Error(ack.err))
+                      } else {
+                        resolve()
+                      }
+                    })
                 }
               })
             }
