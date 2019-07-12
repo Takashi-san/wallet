@@ -80,7 +80,7 @@ export const __encryptAndPutResponseToRequest = (
     currentHandshakeNode.put(
       {
         // TODO: encrypt
-        response: responseBody,
+        response: '$$_TEST_' + responseBody,
       },
       ack => {
         if (ack.err) {

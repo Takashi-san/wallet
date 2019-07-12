@@ -43,7 +43,7 @@ export const __onAcceptedRequests = (
     for (const [reqKey, req] of Object.entries(sentRequests)) {
       // TODO: check here if the response of the handshake request has been
       // overwritten by the recipient.
-      if (req.response === '$$_TEST_OUTGOING_ID') {
+      if (req.response.indexOf('$$_TEST_') === 0) {
         user
           .get(Key.REQUEST_TO_USER)
           .get(reqKey)
