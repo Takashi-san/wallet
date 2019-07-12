@@ -1,8 +1,6 @@
 /**
  * @prettier
  */
-// @ts-ignore
-import Gun from 'gun/gun'
 
 // @ts-ignore
 const runningInJest = process.env.JEST_WORKER_ID !== undefined
@@ -15,8 +13,15 @@ if (!runningInJest) {
 /**
  * @type {import('./SimpleGUN').GUNNode}
  */
-// @ts-ignore force cast
-export const gun = Gun('http://localhost:8080/gun')
+export let gun
+
+if (runningInJest) {
+  // @ts-ignore Let it crash if actually trying to access the real gun in jest
+  gun = null
+} else {
+  // @ts-ignore force cast
+  gun = require('gun/gun')()
+}
 
 /**
  * @type {import('./SimpleGUN').UserGUNNode}
