@@ -306,35 +306,6 @@ export const __onRequestToUser = (cb, user = userGun) => {
 }
 
 /**
- * @param {(outgoingToUser: Record<string, string>) => void} cb
- * @param {UserGUNNode=} user Pass only for testing purposes.
- * @returns {void}
- */
-export const __onOutgoingToUser = (cb, user = userGun) => {
-  /** @type {Record<string, string>} */
-  const outgoingToUser = {}
-
-  user
-    .get(Key.OUTGOING_TO_USER)
-    .map()
-    .on((data, key) => {
-      if (typeof data !== 'string') {
-        console.error('got a non string value')
-        return
-      }
-
-      if (data.length === 0) {
-        console.error('got an empty string value')
-        return
-      }
-
-      outgoingToUser[key] = data
-
-      cb(outgoingToUser)
-    })
-}
-
-/**
  * @param {(userToOutgoing: Record<string, string>) => void} cb
  * @param {UserGUNNode=} user Pass only for testing purposes.
  * @returns {void}
