@@ -361,7 +361,6 @@ describe('onOutgoing()', () => {
 
     /** @type {PartialOutgoing} */
     const sampleOutgoing = {
-      recipientOutgoingID: Math.random().toString(),
       with: Math.random().toString(),
     }
 
