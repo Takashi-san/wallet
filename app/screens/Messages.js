@@ -9,80 +9,48 @@ import { Divider, Icon } from 'react-native-elements'
 import UserDetail from '../components/UserDetail'
 import { Colors, SCREEN_PADDING } from '../css'
 
-const FAKE_CHATS: Array<Chat> = [
-  {
-    get id() {
-      return this.lastMessage + this.name
-    },
-    lastMessage:
-      'Hey Pete, just wondering what you’d want for those cool pairs of shoes!',
-    name: 'Mel Winters',
-    timestamp: moment()
-      .subtract(1, 'minutes')
-      .toDate()
-      .getTime(),
-    unread: true,
-  },
-  {
-    get id() {
-      return this.lastMessage + this.name
-    },
-    lastMessage: 'Hey, how much would you want?',
-    name: 'Michael Farrington',
-    timestamp: moment()
-      .subtract(1, 'minutes')
-      .toDate()
-      .getTime(),
-    unread: false,
-  },
-  {
-    get id() {
-      return this.lastMessage + this.name
-    },
-    lastMessage:
-      'Hi, anything interested? I would sell it for quite a cheap price.',
-    name: 'Tom Wallace',
-    timestamp: moment()
-      .subtract(3, 'hours')
-      .toDate()
-      .getTime(),
-    unread: false,
-  },
-]
-
 const NoMessages = React.memo(() => (
   <Text>'insert something here about there being no chats'</Text>
 ))
 
-const keyExtractor = (item: Chat): React.Key => item.id
+/**
+ * @param {Chat} item
+ * @returns {string}
+ */
+const keyExtractor = item => item.id
 
-interface Chat {
-  id: string;
-  lastMessage: string;
-  name: string;
-  timestamp: number;
-  unread: string;
-}
+/**
+ * @typedef {object} Chat
+ * @prop {string} id
+ * @prop {string} lastMessage
+ * @prop {string} name
+ * @prop {number} timestamp
+ * @prop {boolean} unread
+ */
 
-interface State {
-  chats: Array<Chat>;
-}
+/**
+ * @typedef {object} State
+ * @prop {Chat[]} chats
+ */
 
-export default class Messages extends React.PureComponent<{}, State> {
+/**
+ * @augments React.PureComponent<{}, State>
+ */
+export default class Messages extends React.PureComponent {
   state = {
     chats: [],
   }
 
-  componentDidMount() {
-    this.setState({
-      chats: FAKE_CHATS,
-    })
-  }
-
-  onPressMessage = (id: string) => {
+  /**
+   * @param {string} id
+   */
+  onPressMessage = id => {
     console.warn(id)
   }
 
+  /**
+   * @param {{ item: Chat }} args
+   */
   itemRenderer = ({ item }) => (
     <View style={styles.itemContainer}>
       <View style={styles.userDetailContainer}>
@@ -126,6 +94,9 @@ export default class Messages extends React.PureComponent<{}, State> {
 const ITEM_CONTAINER_HORIZONTAL_PADDING = SCREEN_PADDING / 2
 const ITEM_CONTAINER_VERTICAL_PADDING = 15
 
+/**
+ * @type {Record<string, import('react-native').ViewStyle>}
+ */
 const styles = {
   boldFont: {
     fontWeight: 'bold',

@@ -17,31 +17,41 @@ interface Props {
   timestamp: number;
 }
 
-const ChatMessage: React.FunctionComponent<Props> = ({
-  body,
-  id,
-  onPress,
-  outgoing,
-  senderName,
-  timestamp,
-}) => {
-  return (
-    <TouchableOpacity onPress={() => onPress && onPress(id)}>
-      <View style={outgoing ? styles.container : styles.containerOutgoing}>
-        <Text style={outgoing ? styles.name : styles.nameOutgoing}>
-          {senderName}
-        </Text>
+export default class ChatMessage extends React.PureComponent<Props> {
+  componentDidMount() {
+    /**
+     * Force-updates every minute so moment-formatted dates refresh.
+     */
+    this.intervalID = setInterval(() => {
+      this.forceUpdate()
+    }, 60000)
+  }
 
-        <Text style={styles.timestamp}>{moment(timestamp).fromNow()}</Text>
+  componentWillUnmount() {
+    clearInterval(this.intervalID)
+  }
 
-        <Text style={styles.body}>{body}</Text>
-      </View>
-    </TouchableOpacity>
-  )
+  render() {
+    const { body, id, onPress, outgoing, senderName, timestamp } = this.props
+
+    return (
+      <TouchableOpacity onPress={() => onPress && onPress(id)}>
+        <View style={outgoing ? styles.container : styles.containerOutgoing}>
+          <Text style={outgoing ? styles.name : styles.nameOutgoing}>
+            {senderName}
+          </Text>
+
+          <Text style={styles.timestamp}>{moment(timestamp).fromNow()}</Text>
+
+          <Text style={styles.body}>{body}</Text>
+        </View>
+      </TouchableOpacity>
+    )
+  }
 }
 
 const name = {
-  color: Colors.TEXT_STANDARD,
+  color: Colors.BLUE_DARK,
   fontSize: 14,
   fontWeight: 'bold',
 }
@@ -51,7 +61,7 @@ const CONTAINER_VERTICAL_PADDING = 18
 
 const container = {
   alignItems: 'flex-start',
-  backgroundColor: Colors.GRAY_MEDIUM,
+  backgroundColor: Colors.BLUE_LIGHTEST,
   borderRadius: 10,
   justifyContent: 'center',
   margin: 15,
@@ -70,17 +80,15 @@ const styles = StyleSheet.create({
   container,
   containerOutgoing: {
     ...container,
-    backgroundColor: Colors.BLUE_LIGHT,
+    backgroundColor: Colors.GRAY_MEDIUM,
   },
   name,
   nameOutgoing: {
     ...name,
-    color: Colors.BLUE_DARK,
+    color: Colors.TEXT_STANDARD,
   },
   timestamp: {
     fontSize: 12,
     color: Colors.TEXT_LIGHT,
   },
 })
-
-export default React.memo(ChatMessage)
