@@ -1,7 +1,7 @@
 /**
  * @prettier
  */
-import { isHandshakeRequest, isMessage, isPartialOutgoing } from './schema'
+import * as Schema from './schema'
 /**
  * @typedef {import('./schema').HandshakeRequest} HandshakeRequest
  * @typedef {import('./schema').Message} Message
@@ -33,15 +33,15 @@ describe('isHandshakeRequest()', () => {
   }
 
   it('correctly identifies a valid handshake req', () => {
-    expect(isHandshakeRequest(req)).toBe(true)
+    expect(Schema.isHandshakeRequest(req)).toBe(true)
   })
 
   it('correctly rejects an empty object', () => {
-    expect(isHandshakeRequest({})).toBe(false)
+    expect(Schema.isHandshakeRequest({})).toBe(false)
   })
 
   it('correctly rejects non-objects', () => {
-    expect(NOT_OBJECTS.some(isHandshakeRequest)).toBe(false)
+    expect(NOT_OBJECTS.some(o => Schema.isHandshakeRequest(o))).toBe(false)
   })
 
   it('correctly rejects a request with at least one missing key', () => {
@@ -53,7 +53,7 @@ describe('isHandshakeRequest()', () => {
       // @ts-ignore
       delete partialReq[k]
 
-      expect(isHandshakeRequest(partialReq)).toBe(false)
+      expect(Schema.isHandshakeRequest(partialReq)).toBe(false)
     }
   })
 })
@@ -68,15 +68,15 @@ describe('isMessage()', () => {
   }
 
   it('correctly identifies a valid message', () => {
-    expect(isMessage(msg)).toBe(true)
+    expect(Schema.isMessage(msg)).toBe(true)
   })
 
   it('correctly rejects an empty object', () => {
-    expect(isMessage({})).toBe(false)
+    expect(Schema.isMessage({})).toBe(false)
   })
 
   it('correctly rejects non-objects', () => {
-    expect(NOT_OBJECTS.every(isMessage)).toBe(false)
+    expect(NOT_OBJECTS.every(o => Schema.isMessage(o))).toBe(false)
   })
 
   it('correctly rejects a message with at least one missing key', () => {
@@ -84,11 +84,11 @@ describe('isMessage()', () => {
       const partialMsg = {
         ...msg,
       }
-      isPartialOutgoing
+
       // @ts-ignore
       delete partialMsg[k]
 
-      expect(isMessage(partialMsg)).toBe(false)
+      expect(Schema.isMessage(partialMsg)).toBe(false)
     }
   })
 })
@@ -98,19 +98,38 @@ describe('isPartialOutgoing()', () => {
    * @type {PartialOutgoing}
    */
   const partialOutgoing = {
-    recipientOutgoingID: Math.random() > 0.5 ? null : Math.random().toString(),
     with: Math.random().toString(),
   }
 
   it('correctly identifies a valid partial outgoing', () => {
-    expect(isPartialOutgoing(partialOutgoing)).toBe(true)
+    expect(Schema.isPartialOutgoing(partialOutgoing)).toBe(true)
   })
 
   it('correctly rejects non-objects', () => {
-    expect(NOT_OBJECTS.every(isPartialOutgoing)).toBe(false)
+    expect(NOT_OBJECTS.every(o => Schema.isPartialOutgoing(o))).toBe(false)
   })
 
   it('correctly rejects an empty object', () => {
-    expect(isPartialOutgoing({})).toBe(false)
+    expect(Schema.isPartialOutgoing({})).toBe(false)
+  })
+})
+
+describe('isOutgoing()', () => {
+  /** @type {Outgoing} */
+  const anOutgoing = {
+    messages: {},
+    with: Math.random().toString(),
+  }
+
+  it('correctly identifies a valid partial outgoing', () => {
+    expect(Schema.isPartialOutgoing(anOutgoing)).toBe(true)
+  })
+
+  it('correctly rejects non-objects', () => {
+    expect(NOT_OBJECTS.every(o => Schema.isPartialOutgoing(o))).toBe(false)
+  })
+
+  it('correctly rejects an empty object', () => {
+    expect(Schema.isPartialOutgoing({})).toBe(false)
   })
 })

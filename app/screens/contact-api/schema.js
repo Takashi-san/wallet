@@ -41,19 +41,12 @@
  * @typedef {object} Outgoing
  * @prop {Record<string, Message>} messages
  * @prop {string} with Public key for whom the outgoing messages are intended.
- * @prop {string|null} recipientOutgoingID Outgoing id of the recipient from
- * which to listen messages from. This is null if the user to which the outgoing
- * belongs is the requestor of a handshake and the recipient has not accepted
- * and relayed his own outgoing feed's id to the recipient.
  */
 
 /**
  * @typedef {object} PartialOutgoing
- * @prop {string} with Public key for whom the outgoing messages are intended.
- * @prop {string|null} recipientOutgoingID Outgoing id of the recipient from
- * which to listen messages from. This is null if the user to which the outgoing
- * belongs is the requestor of a handshake and the recipient has not accepted
- * and relayed his own outgoing feed's id to the recipient.
+ * @prop {string} with (Encrypted) Public key for whom the outgoing messages are
+ * intended.
  */
 
 /**
@@ -119,7 +112,28 @@ export const isPartialOutgoing = o => {
 
   const obj = /** @type {PartialOutgoing} */ (o)
 
-  return (
-    typeof obj.with === 'string' && typeof obj.recipientOutgoingID === 'string'
+  return typeof obj.with === 'string'
+}
+
+/**
+ *
+ * @param {any} o
+ * @returns {o is Outgoing}
+ */
+export const isOutgoing = o => {
+  if (typeof o !== 'object') {
+    return false
+  }
+
+  if (o === null) {
+    return false
+  }
+
+  const obj = /** @type {Outgoing} */ (o)
+
+  const messagesAreMessages = Object.values(obj.messages).every(item =>
+    isMessage(item),
   )
+
+  return typeof obj.with === 'string' && messagesAreMessages
 }

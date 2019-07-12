@@ -98,21 +98,13 @@ export const __encryptAndPutResponseToRequest = (
  * outgoing feed.
  * @param {string} withPublicKey Public key of the intended recipient of the
  * outgoing feed that will be created.
- * @param {string|null} recipientOutgoingID The id of the outgoing feed of the
- * user we will be talking with. This should be obtained from the encrypted
- * response prop of the request. If, instead, an outgoing feed is being created
- * alongside a request, pass null.
  * @throws {Error} If the outgoing feed cannot be created or if the initial
  * message for it also cannot be created. These errors aren't coded as they are
  * not meant to be caught outside of this module.
  * @param {UserGUNNode} user
  * @returns {Promise<string>}
  */
-export const __createOutgoingFeed = (
-  withPublicKey,
-  recipientOutgoingID,
-  user,
-) =>
+export const __createOutgoingFeed = (withPublicKey, user) =>
   new Promise((resolve, reject) => {
     if (!user.is) {
       throw new Error(ErrorCode.NOT_AUTH)
@@ -120,7 +112,6 @@ export const __createOutgoingFeed = (
 
     /** @type {PartialOutgoing} */
     const newPartialOutgoingFeed = {
-      recipientOutgoingID: recipientOutgoingID,
       with: withPublicKey,
     }
 
@@ -188,10 +179,7 @@ export const acceptRequest = (
         return
       }
 
-      // TODO: Encryption
-      const requestorOutgoingFeedID = handshakeRequest.response
-
-      outgoingFeedCreator(handshakeRequest.from, requestorOutgoingFeedID, user)
+      outgoingFeedCreator(handshakeRequest.from, user)
         .then(outgoingFeedID => {
           return responseToRequestEncryptorAndPutter(
             requestID,
@@ -390,7 +378,7 @@ export const sendHandshakeRequest = (
       throw new Error()
     }
 
-    __createOutgoingFeed(recipientPublicKey, null, user)
+    __createOutgoingFeed(recipientPublicKey, user)
       .then(outgoingFeedID => {
         if (typeof user.is === 'undefined') {
           reject(new TypeError())
