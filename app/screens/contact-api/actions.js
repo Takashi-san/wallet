@@ -119,7 +119,7 @@ export const __createOutgoingFeed = (withPublicKey, user) =>
       .get(Key.OUTGOINGS)
       .set(newPartialOutgoingFeed, outgoingFeedAck => {
         if (outgoingFeedAck.err) {
-          reject(new Error())
+          reject(new Error(outgoingFeedAck.err))
         } else {
           outgoingFeed
             .get(Key.MESSAGES)
