@@ -137,8 +137,8 @@ android {
 }
 
 dependencies {
-    compile project(':react-native-webview')
-    compile project(':react-native-vector-icons')
+    implementation project(':react-native-webview')
+    implementation project(':react-native-vector-icons')
     implementation project(':react-native-vector-icons')
     implementation project(':react-native-webview')
     implementation fileTree(dir: "libs", include: ["*.jar"])
