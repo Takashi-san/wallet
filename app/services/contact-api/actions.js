@@ -205,19 +205,19 @@ export const acceptRequest = (
 export const authenticate = (user, pass, userNode = userGun) =>
   new Promise((resolve, reject) => {
     if (typeof user !== 'string') {
-      throw new TypeError()
+      throw new TypeError('expected user to be of type string')
     }
 
     if (typeof pass !== 'string') {
-      throw new TypeError()
+      throw new TypeError('expected pass to be of type string')
     }
 
     if (user.length === 0) {
-      throw new TypeError()
+      throw new TypeError('expected user to have length greater than zero')
     }
 
     if (pass.length === 0) {
-      throw new TypeError()
+      throw new TypeError('expected pass to have length greater than zero')
     }
 
     if (!!userNode.is) {
@@ -228,7 +228,7 @@ export const authenticate = (user, pass, userNode = userGun) =>
       if (ack.err) {
         reject(new Error(ack.err))
       } else if (!userNode.is) {
-        reject(new Error())
+        reject(new Error('authentication failed'))
       } else {
         resolve()
       }
@@ -273,11 +273,11 @@ export const generateNewHandshakeNode = (gun = mainGun, user = userGun) =>
       .get(Key.HANDSHAKE_NODES)
       .set({ unused: 0 }, ack => {
         if (ack.err) {
-          reject(ack.err)
+          reject(new Error(ack.err))
         } else {
           user.get(Key.CURRENT_HANDSHAKE_NODE).put(newHandshakeNode, ack => {
             if (ack.err) {
-              reject(ack.err)
+              reject(new Error(ack.err))
             } else {
               resolve()
             }
@@ -482,7 +482,7 @@ export const setDisplayName = (displayName, user = userGun) =>
       .get(Key.DISPLAY_NAME)
       .put(displayName, ack => {
         if (ack.err) {
-          reject(ack.err)
+          reject(new Error(ack.err))
         } else {
           resolve()
         }
