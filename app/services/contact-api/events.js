@@ -277,11 +277,12 @@ export const onSentRequests = (cb, user = userGun) => {
 }
 
 /**
+ * Maps a sent request ID to the public key of the user it was sent to.
  * @param {(requestToUser: Record<string, string>) => void} cb
  * @param {UserGUNNode=} user Pass only for testing purposes.
  * @returns {void}
  */
-export const __onRequestToUser = (cb, user = userGun) => {
+export const __onSentRequestToUser = (cb, user = userGun) => {
   /** @type {Record<string, string>} */
   const requestToUser = {}
 
@@ -310,12 +311,12 @@ export const __onRequestToUser = (cb, user = userGun) => {
  * @param {UserGUNNode=} user Pass only for testing purposes.
  * @returns {void}
  */
-export const __onUserToOutgoing = (cb, user = userGun) => {
+export const __onUserToIncoming = (cb, user = userGun) => {
   /** @type {Record<string, string>} */
   const userToOutgoing = {}
 
   user
-    .get(Key.USER_TO_OUTGOING)
+    .get(Key.USER_TO_INCOMING)
     .map()
     .on((data, key) => {
       if (typeof data !== 'string') {
