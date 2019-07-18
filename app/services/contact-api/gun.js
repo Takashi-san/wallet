@@ -1,13 +1,11 @@
-/**
- * @prettier
- */
+/** @prettier */
+import * as Testing from './testing'
 
 // @ts-ignore
 const runningInJest = process.env.JEST_WORKER_ID !== undefined
 
-if (!runningInJest) {
-  // @ts-ignore
-  require('gun/sea')
+if (runningInJest) {
+  Testing.mockGun()
 }
 
 /**
@@ -15,16 +13,24 @@ if (!runningInJest) {
  */
 export let gun
 
-if (runningInJest) {
-  // @ts-ignore Let it crash if actually trying to access the real gun in jest
-  gun = null
-} else {
-  // @ts-ignore force cast
-  gun = require('gun/gun')()
-}
-
 /**
  * @type {import('./SimpleGUN').UserGUNNode}
  */
-// @ts-ignore
-export const user = runningInJest ? null : gun.user()
+export let user
+
+export const setupGun = () => {
+  if (Testing.__shouldMockGun()) {
+    // @ts-ignore Let it crash if actually trying to access fow
+    gun = null
+    // in the future mock the whole thing
+  } else {
+    // @ts-ignore module does not exist error?
+    gun = require('gun/gun')()
+
+    if (Testing.__shouldMockSea()) {
+      Testing.injectSeaMockToGun(gun)
+    }
+
+    user = gun.user()
+  }
+}
