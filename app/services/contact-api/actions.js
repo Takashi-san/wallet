@@ -189,7 +189,16 @@ export const acceptRequest = (
           )
         })
         .then(() => {
-          resolve()
+          user
+            .get(Key.USER_TO_INCOMING)
+            .get(handshakeRequest.from)
+            .put(handshakeRequest.response, ack => {
+              if (ack.err) {
+                reject(new Error(ack.err))
+              } else {
+                resolve()
+              }
+            })
         })
         .catch(() => {
           reject(new Error(ErrorCode.COULDNT_ACCEPT_REQUEST))
