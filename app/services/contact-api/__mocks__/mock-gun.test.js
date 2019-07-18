@@ -409,27 +409,6 @@ describe('MockGun', () => {
       }).toThrow()
     })
 
-    it('throws if it was already determined that the node is being used as a leaf node and not a set node', done => {
-      expect.assertions(1)
-
-      const gun = createMockGun().get(Math.random().toString())
-
-      // the node is being used as a leaf node
-      gun.put(
-        {
-          [Math.random().toString()]: Math.random().toString(),
-        },
-        ack => {
-          if (!ack.err) {
-            expect(() => {
-              gun.map()
-            }).toThrow()
-            done()
-          }
-        },
-      )
-    })
-
     describe('map().on()', () => {
       it('calls the listener with existing data', done => {
         expect.assertions(1)

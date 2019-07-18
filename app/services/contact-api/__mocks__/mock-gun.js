@@ -224,7 +224,9 @@ export default class MockGun {
 
     if (this.nodeType === 'undefined' && this.graph !== null) {
       throw new Error(
-        `Assertion Error: MockGun.prototype._notifyListeners() shouldn't have been called if node type is undefined and the graph is not 'null' -- node key: ${this.key}`,
+        `Assertion Error: MockGun.prototype._notifyListeners() shouldn't have been called if node type is undefined and the graph is not 'null' -- node key: ${
+          this.key
+        }`,
       )
     }
 
@@ -478,8 +480,8 @@ export default class MockGun {
     }
 
     if (this.nodeType === 'leaf') {
-      throw new Error(
-        'Tried to call map() on a node already determined to be used as a leaf node',
+      console.warn(
+        'Tried to call map() on a node already determined to be used as a leaf node. Ignore this warning if using this node as a map',
       )
     }
 
@@ -549,8 +551,8 @@ export default class MockGun {
       return {}
     } else {
       if (this.nodeType === 'leaf') {
-        throw new Error(
-          'Tried to call once() without a cb on a leaf node, calling once() without a cb is most commonly used on set nodes.',
+        console.warn(
+          'Tried to call once() without a cb on a leaf node, calling once() without a cb is most commonly used on set nodes. Ignore this warning if using this node as a map.',
         )
       }
 
