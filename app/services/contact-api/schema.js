@@ -30,11 +30,10 @@
  * outgoing/incoming feed paradigm. It combines both the outgoing and incoming
  * messages into one data structure plus metada about the chat.
  * @typedef {object} Chat
- * @prop {string} id
+ * @prop {string} recipientAvatar Base64 encoded image.
+ * @prop {string} recipientPublicKey A way to uniquely identify each chat.
  * @prop {ChatMessage[]} messages Sorted from most recent to least recent.
  * @prop {string} recipientDisplayName
- * @prop {boolean} recipientHasAccepted True if the recipient still has not
- * accepted the request to chat.
  */
 
 /**
