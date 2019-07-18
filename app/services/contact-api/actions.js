@@ -17,13 +17,13 @@ import { isHandshakeRequest } from './schema'
 /**
  * An special message signaling the acceptance.
  */
-export const INITIAL_ACCEPTANCE_MSG = '$$__SHOCKWALLET__INITIAL__MESSAGE'
+export const INITIAL_MSG = '$$__SHOCKWALLET__INITIAL__MESSAGE'
 
 /**
  * @returns {Message}
  */
 const __createInitialMessage = () => ({
-  body: INITIAL_ACCEPTANCE_MSG,
+  body: INITIAL_MSG,
   timestamp: Date.now(),
 })
 

@@ -225,7 +225,7 @@ describe('__createOutgoingFeed()', () => {
         .once(data => {
           // @ts-ignore
           const msg = /** @type {Message} */ (data)
-          expect(msg.body).toBe(Actions.INITIAL_ACCEPTANCE_MSG)
+          expect(msg.body).toBe(Actions.INITIAL_MSG)
           done()
         })
     })
