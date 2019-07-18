@@ -58,15 +58,15 @@ export const __onAcceptedRequests = (
               return
             }
 
-            const userToOutgoing = user.get(Key.USER_TO_OUTGOING)
+            const userToIncoming = user.get(Key.USER_TO_INCOMING)
 
-            userToOutgoing.get(userPubKey).once(outgoingID => {
+            userToIncoming.get(userPubKey).once(outgoingID => {
               const receivedOutgoingID = req.response
 
               // only set it once. Also prevents attacks if an attacker
               // modifies old requests
               if (typeof outgoingID === 'undefined') {
-                userToOutgoing.get(userPubKey).put(receivedOutgoingID)
+                userToIncoming.get(userPubKey).put(receivedOutgoingID)
 
                 return
               }
