@@ -12,6 +12,8 @@ import * as Schema from './schema'
  * @typedef {import('./schema').Message} Message
  * @typedef {import('./schema').Outgoing} Outgoing
  * @typedef {import('./schema').PartialOutgoing} PartialOutgoing
+ * @typedef {import('./schema').Chat} Chat
+ * @typedef {import('./schema').ChatMessage} ChatMessage
  */
 
 /**
@@ -333,4 +335,155 @@ export const __onUserToIncoming = (cb, user = userGun) => {
 
       cb(userToOutgoing)
     })
+}
+
+/**
+ * Massages all of the more primitive data structures into a more manageable
+ * 'Chat' paradigm.
+ * @param {(chats: Chat[]) => void} cb
+ * @param {GUNNode} gun
+ * @param {UserGUNNode} user
+ * @returns {void}
+ */
+export const onChats = (cb, gun = origGun, user = userGun) => {
+  /**
+   * @type {Record<string, Chat>}
+   */
+  const recipientPKToChat = {}
+
+  /**
+   * Keep track of the users for which we already set up avatar listeners.
+   * @type {string[]}
+   */
+  const usersWithAvatarListeners = []
+
+  /**
+   * Keep track of the users for which we already set up display name listeners.
+   * @type {string[]}
+   */
+  const usersWithDisplayNameListeners = []
+
+  /**
+   * Keep track of the user for which we already set up incoming feed listeners.
+   * @type {string[]}
+   */
+  const usersWithIncomingListeners = []
+
+  const callCB = () => {
+    // Only provide chats that have incoming listeners which would be contacts
+    // that were actually accepted / are going on
+    const chats = Object.values(recipientPKToChat).filter(chat =>
+      usersWithIncomingListeners.includes(chat.recipientPublicKey),
+    )
+
+    // in case someone else elsewhere forgets about sorting
+    chats.forEach(chat => {
+      chat.messages = chat.messages
+        .slice(0)
+        .sort((a, b) => a.timestamp - b.timestamp)
+    })
+
+    cb(chats)
+  }
+
+  onOutgoing(outgoings => {
+    for (const outgoing of Object.values(outgoings)) {
+      const recipientPK = outgoing.with
+
+      if (!recipientPKToChat[recipientPK]) {
+        recipientPKToChat[recipientPK] = {
+          messages: [],
+          recipientAvatar: '',
+          recipientDisplayName: recipientPK,
+          recipientPublicKey: recipientPK,
+        }
+      }
+
+      const messages = recipientPKToChat[recipientPK].messages
+
+      for (const [msgK, msg] of Object.entries(outgoing.messages)) {
+        if (!messages.find(m => m.id === msgK)) {
+          messages.push({
+            body: msg.body,
+            id: msgK,
+            outgoing: true,
+            timestamp: msg.timestamp,
+          })
+        }
+      }
+    }
+
+    callCB()
+  }, user)
+
+  __onUserToIncoming(uti => {
+    for (const [recipientPK, incomingFeedID] of Object.entries(uti)) {
+      if (!recipientPKToChat[recipientPK]) {
+        recipientPKToChat[recipientPK] = {
+          messages: [],
+          recipientAvatar: '',
+          recipientDisplayName: recipientPK,
+          recipientPublicKey: recipientPK,
+        }
+      }
+
+      const chat = recipientPKToChat[recipientPK]
+
+      if (!usersWithIncomingListeners.includes(recipientPK)) {
+        usersWithIncomingListeners.push(recipientPK)
+
+        onIncomingMessages(
+          msgs => {
+            for (const [msgK, msg] of Object.entries(msgs)) {
+              const messages = chat.messages
+
+              if (!messages.find(m => m.id === msgK)) {
+                messages.push({
+                  body: msg.body,
+                  id: msgK,
+                  outgoing: false,
+                  timestamp: msg.timestamp,
+                })
+              }
+            }
+
+            callCB()
+          },
+          recipientPK,
+          incomingFeedID,
+          gun,
+        )
+      }
+
+      if (!usersWithAvatarListeners.includes(recipientPK)) {
+        usersWithAvatarListeners.push(recipientPK)
+
+        gun
+          .user(recipientPK)
+          .get(Key.PROFILE)
+          .get(Key.AVATAR)
+          .on(avatar => {
+            if (typeof avatar === 'string') {
+              chat.recipientAvatar = avatar
+              callCB()
+            }
+          })
+      }
+
+      if (!usersWithDisplayNameListeners.includes(recipientPK)) {
+        usersWithDisplayNameListeners.push(recipientPK)
+
+        gun
+          .user(recipientPK)
+          .get(Key.PROFILE)
+          .get(Key.DISPLAY_NAME)
+          .on(displayName => {
+            if (typeof displayName === 'string') {
+              chat.recipientDisplayName = displayName
+              callCB()
+            }
+          })
+      }
+    }
+  }, user)
 }

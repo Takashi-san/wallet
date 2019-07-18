@@ -1,16 +1,20 @@
 /**
  * @prettier
  */
+import * as Actions from './actions'
 import * as ErrorCode from './errorCode'
 import * as Events from './events'
 import * as Key from './key'
 import { createMockGun } from './__mocks__/mock-gun'
+import { injectSeaMockToGun, __MOCK_USER_SUPER_NODE } from './testing'
 /**
  * @typedef {import('./SimpleGUN').GUNNode} GUNNode
  * @typedef {import('./schema').HandshakeRequest} HandshakeRequest
  * @typedef {import('./schema').PartialOutgoing} PartialOutgoing
  * @typedef {import('./schema').Message} Message
  * @typedef {import('./SimpleGUN').UserGUNNode} UserGUNNode
+ * @typedef {import('./schema').Chat} Chat
+ * @typedef {import('./schema').ChatMessage} ChatMessage
  */
 
 describe('onAvatar()', () => {
@@ -450,3 +454,276 @@ describe('onSentRequests()', () => {
     Events.onSentRequests(spy, gun)
   })
 })
+
+const setUpChats = async () => {
+  const requestorPK = 'REQUESTOR_PK'
+  const recipientPK = 'RECIPIENT_PK'
+  const gun = createMockGun()
+
+  const requestorNode = gun.get(__MOCK_USER_SUPER_NODE).get(requestorPK)
+  const recipientNode = gun.get(__MOCK_USER_SUPER_NODE).get(recipientPK)
+
+  let reqOutID = ''
+  let recOutID = ''
+
+  // We hardcode a few things that should happen in both
+  // Actions.sendRequest() and Actions.acceptRequest() to avoid going
+  // through all of that mess (creating a request, spinning up the
+  // onAcceptedRequest job, etc). All of that should be covered in an
+  // integration test.
+
+  await new Promise((res, rej) => {
+    injectSeaMockToGun(gun, () => requestorPK)
+
+    const requestorUser = gun.user()
+
+    requestorUser.auth(
+      Math.random().toString(),
+      Math.random().toString(),
+      async ack => {
+        if (ack.err) {
+          rej(new Error(ack.err))
+        } else {
+          reqOutID = await Actions.__createOutgoingFeed(
+            recipientPK,
+            requestorUser,
+          )
+          res()
+        }
+      },
+    )
+  })
+
+  await new Promise((res, rej) => {
+    injectSeaMockToGun(gun, () => recipientPK)
+
+    const recipientUser = gun.user()
+
+    recipientUser.auth(
+      Math.random().toString(),
+      Math.random().toString(),
+      async ack => {
+        if (ack.err) {
+          rej(new Error(ack.err))
+        } else {
+          recOutID = await Actions.__createOutgoingFeed(
+            requestorPK,
+            recipientUser,
+          )
+          res()
+        }
+      },
+    )
+  })
+
+  // @ts-ignore
+  gun.user = null
+
+  await new Promise((res, rej) => {
+    requestorNode
+      .get(Key.USER_TO_INCOMING)
+      .get(recipientPK)
+      .put(recOutID, ack => {
+        if (ack.err) {
+          rej(ack.err)
+        } else {
+          res()
+        }
+      })
+  })
+
+  await new Promise((res, rej) => {
+    recipientNode
+      .get(Key.USER_TO_INCOMING)
+      .get(requestorPK)
+      .put(reqOutID, ack => {
+        if (ack.err) {
+          rej(ack.err)
+        } else {
+          res()
+        }
+      })
+  })
+
+  injectSeaMockToGun(gun, () => requestorPK)
+
+  const reqUser = gun.user()
+
+  await new Promise((res, rej) => {
+    reqUser.auth(Math.random().toString(), Math.random().toString(), ack => {
+      if (ack.err) {
+        rej(ack.err)
+      } else {
+        res()
+      }
+    })
+  })
+
+  return {
+    gun,
+    recipientNode,
+    requestorNode,
+    reqUser,
+  }
+}
+
+describe('onChats()', () => {
+  it("provides no chats even though there are outgoing chats but those haven't been accepted therefore no user-to-incoming records", done => {
+    expect.assertions(2)
+
+    const gun = createMockGun()
+
+    const requestorPK = Math.random().toString()
+    const recipientPK = Math.random().toString()
+
+    injectSeaMockToGun(gun, () => requestorPK)
+
+    const ownUser = gun.user()
+
+    ownUser.auth(Math.random().toString(), Math.random().toString(), ack => {
+      if (ack.err) {
+        return
+      }
+
+      Actions.__createOutgoingFeed(recipientPK, ownUser)
+        .then(() => {
+          let calls = 0
+
+          Events.onChats(
+            chats => {
+              expect(chats.length).toBe(0)
+
+              calls++
+
+              if (calls === 2) {
+                done()
+              }
+            },
+            gun,
+            ownUser,
+          )
+        })
+        .catch(e => {
+          console.warn(e)
+        })
+    })
+  })
+
+  it('provides a chat corresponding to an user-to-incoming record', async done => {
+    expect.assertions(1)
+
+    const { gun, reqUser } = await setUpChats()
+
+    let calls = 0
+
+    Events.onChats(
+      chats => {
+        calls++
+
+        // third time is the charm
+        if (calls === 3) {
+          expect(chats.length).toBe(1)
+          done()
+        }
+      },
+      gun,
+      reqUser,
+    )
+  })
+
+  it("provides the recipient's avatar if available", async done => {
+    expect.assertions(1)
+
+    const { gun, recipientNode, reqUser } = await setUpChats()
+
+    let calls = 0
+
+    const avatar = Math.random().toString()
+
+    await new Promise((res, rej) => {
+      recipientNode
+        .get(Key.PROFILE)
+        .get(Key.AVATAR)
+        .put(avatar, ack => {
+          if (ack.err) {
+            rej(ack.err)
+          } else {
+            res()
+          }
+        })
+    })
+
+    Events.onChats(
+      chats => {
+        calls++
+
+        if (calls === 4) {
+          const [chat] = chats
+
+          expect(chat.recipientAvatar).toEqual(avatar)
+          done()
+        }
+      },
+      gun,
+      reqUser,
+    )
+  })
+
+  it("provides the recipient's display name if available", async done => {
+    expect.assertions(1)
+
+    const { gun, recipientNode, reqUser } = await setUpChats()
+
+    let calls = 0
+
+    const displayName = Math.random().toString()
+
+    await new Promise((res, rej) => {
+      recipientNode
+        .get(Key.PROFILE)
+        .get(Key.DISPLAY_NAME)
+        .put(displayName, ack => {
+          if (ack.err) {
+            rej(ack.err)
+          } else {
+            res()
+          }
+        })
+    })
+
+    Events.onChats(
+      chats => {
+        calls++
+
+        if (calls === 4) {
+          const [chat] = chats
+
+          expect(chat.recipientDisplayName).toEqual(displayName)
+          done()
+        }
+      },
+      gun,
+      reqUser,
+    )
+  })
+})
+
+/*
+const requestorOutgoings = gun
+              .get(__MOCK_USER_SUPER_NODE)
+              .get(ownPK)
+              .get('outgoings')
+
+            requestorOutgoings
+              .once()
+              .map()
+              .once((_, k) => {
+                requestorOutgoings
+                  .get(k)
+                  .get('messages')
+                  .once()
+                  .map()
+                  .once(console.log)
+              })
+
+*/
