@@ -5,6 +5,7 @@ import * as Actions from './actions'
 import * as ErrorCode from './errorCode'
 import * as Events from './events'
 import * as Key from './key'
+import * as Jobs from './jobs'
 import { createMockGun } from './__mocks__/mock-gun'
 import { injectSeaMockToGun, __MOCK_USER_SUPER_NODE } from './testing'
 /**
@@ -705,6 +706,584 @@ describe('onChats()', () => {
       gun,
       reqUser,
     )
+  })
+})
+
+describe('onSimplerSentRequests()', () => {
+  it('provides sent requests that have not been accepted', async done => {
+    expect.assertions(1)
+
+    const gun = createMockGun()
+
+    // we still need this for gun.user(pk) calls inside functions
+    injectSeaMockToGun(gun)
+
+    const requestorPK = Math.round(Math.random() * 1000000000).toString()
+
+    const recipientPK = Math.round(Math.random() * 1000000000).toString()
+
+    // SEA mocker can only mock one user at a time. Get around this.
+
+    // technically wrong cast but typescript doesn't complain
+    const requestorUser = /** @type {UserGUNNode} */ (gun
+      .get(__MOCK_USER_SUPER_NODE)
+      .get(requestorPK))
+
+    // @ts-ignore
+    requestorUser.is = {
+      pub: requestorPK,
+    }
+
+    // technically wrong cast but typescript doesn't complain
+    const recipientUser = /** @type {UserGUNNode} */ (gun
+      .get(__MOCK_USER_SUPER_NODE)
+      .get(recipientPK))
+
+    // @ts-ignore
+    recipientUser.is = {
+      pub: recipientPK,
+    }
+
+    Jobs.__onAcceptedRequests(Events.onSentRequests, requestorUser)
+
+    await Actions.generateNewHandshakeNode(gun, recipientUser)
+
+    /** @type {string} */
+    const recipientHandshakeAddress = await new Promise((res, rej) => {
+      recipientUser.get(Key.CURRENT_HANDSHAKE_NODE).once(handshakeNode => {
+        if (typeof handshakeNode === 'object' && handshakeNode !== null) {
+          res(handshakeNode._['#'])
+        } else {
+          rej("typeof handshakeNode === 'object' || handshakeNode === null")
+        }
+      })
+    })
+
+    await Actions.sendHandshakeRequest(
+      recipientHandshakeAddress,
+      recipientPK,
+      gun,
+      requestorUser,
+    )
+
+    let calls = 0
+
+    Events.onSimplerSentRequests(
+      sentRequests => {
+        calls++
+
+        if (calls === 2) {
+          try {
+            expect(sentRequests.length).toBe(1)
+            done()
+          } catch (e) {
+            console.error(e)
+          }
+        }
+      },
+      gun,
+      requestorUser,
+    )
+
+    //
+  })
+
+  it('does not provide sent requests that have been accepted', async done => {
+    const gun = createMockGun()
+
+    const requestorPK = Math.random().toString()
+
+    const recipientPK = Math.random().toString()
+
+    injectSeaMockToGun(gun)
+
+    const recipientUser = gun.user()
+
+    await new Promise((res, rej) => {
+      recipientUser.auth(recipientPK, Math.random().toString(), ack => {
+        if (ack.err) {
+          rej(ack.err)
+        } else {
+          res()
+        }
+      })
+    })
+
+    await Actions.generateNewHandshakeNode(gun, recipientUser)
+
+    /** @type {string} */
+    const recipientHandshakeAddress = await new Promise((res, rej) => {
+      recipientUser.get(Key.CURRENT_HANDSHAKE_NODE).once(handshakeNode => {
+        if (typeof handshakeNode === 'object' && handshakeNode !== null) {
+          res(handshakeNode._['#'])
+        } else {
+          rej("typeof handshakeNode === 'object' || handshakeNode === null")
+        }
+      })
+    })
+
+    const requestorUser = gun.user()
+
+    await new Promise((res, rej) => {
+      requestorUser.auth(requestorPK, Math.random().toString(), ack => {
+        if (ack.err) {
+          rej(ack.err)
+        } else {
+          res()
+        }
+      })
+    })
+
+    // SEA mocker can only mock one user at a time. Get around this.
+
+    // technically wrong cast but typescript doesn't complain
+    const pseudoRequestorNode = /** @type {UserGUNNode} */ (gun
+      .get(__MOCK_USER_SUPER_NODE)
+      .get(requestorPK))
+
+    // @ts-ignore
+    pseudoRequestorNode.is = {
+      pub: requestorPK,
+    }
+
+    Jobs.__onAcceptedRequests(Events.onSentRequests, pseudoRequestorNode)
+
+    await Actions.sendHandshakeRequest(
+      recipientHandshakeAddress,
+      recipientPK,
+      gun,
+      requestorUser,
+    )
+
+    const recipientUserAgain = gun.user()
+
+    await new Promise((res, rej) => {
+      recipientUserAgain.auth(recipientPK, Math.random().toString(), ack => {
+        if (ack.err) {
+          rej(ack.err)
+        } else {
+          res()
+        }
+      })
+    })
+
+    const requestID = await new Promise(res => {
+      gun
+        .get(__MOCK_USER_SUPER_NODE)
+        .get(requestorPK)
+        .get(Key.REQUEST_TO_USER)
+        .once()
+        .map()
+        .once((_, reqID) => {
+          res(reqID)
+        })
+    })
+
+    await Actions.acceptRequest(requestID, recipientUserAgain)
+
+    const requestorUserAgain = gun.user()
+
+    await new Promise((res, rej) => {
+      requestorUserAgain.auth(requestorPK, Math.random().toString(), ack => {
+        if (ack.err) {
+          rej(ack.err)
+        } else {
+          res()
+        }
+      })
+    })
+
+    let called = false
+
+    Events.onSimplerSentRequests(
+      sentRequests => {
+        // first call will always receive an empty array
+        if (!called) {
+          called = true
+          return
+        }
+
+        expect(sentRequests.length).toBe(0)
+
+        done()
+      },
+      gun,
+      requestorUserAgain,
+    )
+
+    //
+  })
+
+  it('only provides the latest request made to a single user', async done => {
+    expect.assertions(1)
+
+    const gun = createMockGun()
+
+    // we still need this for gun.user(pk) calls inside functions
+    injectSeaMockToGun(gun)
+
+    const requestorPK = Math.round(Math.random() * 1000000000).toString()
+
+    const recipientPK = Math.round(Math.random() * 1000000000).toString()
+
+    // SEA mocker can only mock one user at a time. Get around this.
+
+    // technically wrong cast but typescript doesn't complain
+    const requestorUser = /** @type {UserGUNNode} */ (gun
+      .get(__MOCK_USER_SUPER_NODE)
+      .get(requestorPK))
+
+    // @ts-ignore
+    requestorUser.is = {
+      pub: requestorPK,
+    }
+
+    // technically wrong cast but typescript doesn't complain
+    const recipientUser = /** @type {UserGUNNode} */ (gun
+      .get(__MOCK_USER_SUPER_NODE)
+      .get(recipientPK))
+
+    // @ts-ignore
+    recipientUser.is = {
+      pub: recipientPK,
+    }
+
+    Jobs.__onAcceptedRequests(Events.onSentRequests, requestorUser)
+
+    await Actions.generateNewHandshakeNode(gun, recipientUser)
+
+    /** @type {string} */
+    const recipientHandshakeAddress = await new Promise((res, rej) => {
+      recipientUser.get(Key.CURRENT_HANDSHAKE_NODE).once(handshakeNode => {
+        if (typeof handshakeNode === 'object' && handshakeNode !== null) {
+          res(handshakeNode._['#'])
+        } else {
+          rej("typeof handshakeNode === 'object' || handshakeNode === null")
+        }
+      })
+    })
+
+    await Actions.sendHandshakeRequest(
+      recipientHandshakeAddress,
+      recipientPK,
+      gun,
+      requestorUser,
+    )
+
+    await Actions.generateNewHandshakeNode(gun, recipientUser)
+
+    /** @type {string} */
+    const secondRecipientHandshakeAddress = await new Promise((res, rej) => {
+      recipientUser.get(Key.CURRENT_HANDSHAKE_NODE).once(handshakeNode => {
+        if (typeof handshakeNode === 'object' && handshakeNode !== null) {
+          res(handshakeNode._['#'])
+        } else {
+          rej("typeof handshakeNode === 'object' || handshakeNode === null")
+        }
+      })
+    })
+
+    // ensure the second request doesnt have the same timestamp as the first one
+    await new Promise(res => {
+      setTimeout(res, 200)
+    })
+
+    await Actions.sendHandshakeRequest(
+      secondRecipientHandshakeAddress,
+      recipientPK,
+      gun,
+      requestorUser,
+    )
+
+    let calls = 0
+
+    Events.onSimplerSentRequests(
+      sentRequests => {
+        calls++
+
+        if (calls === 4) {
+          try {
+            expect(sentRequests.length).toBe(1)
+          } catch (e) {
+            console.log(e)
+          }
+
+          done()
+        }
+      },
+      gun,
+      requestorUser,
+    )
+
+    //
+  })
+
+  it('indicates when the recipient has changed the handshake address in which the request was placed', async done => {
+    expect.assertions(1)
+
+    const gun = createMockGun()
+
+    // we still need this for gun.user(pk) calls inside functions
+    injectSeaMockToGun(gun)
+
+    const requestorPK = Math.round(Math.random() * 1000000000).toString()
+
+    const recipientPK = Math.round(Math.random() * 1000000000).toString()
+
+    // SEA mocker can only mock one user at a time. Get around this.
+
+    // technically wrong cast but typescript doesn't complain
+    const requestorUser = /** @type {UserGUNNode} */ (gun
+      .get(__MOCK_USER_SUPER_NODE)
+      .get(requestorPK))
+
+    // @ts-ignore
+    requestorUser.is = {
+      pub: requestorPK,
+    }
+
+    // technically wrong cast but typescript doesn't complain
+    const recipientUser = /** @type {UserGUNNode} */ (gun
+      .get(__MOCK_USER_SUPER_NODE)
+      .get(recipientPK))
+
+    // @ts-ignore
+    recipientUser.is = {
+      pub: recipientPK,
+    }
+
+    Jobs.__onAcceptedRequests(Events.onSentRequests, requestorUser)
+
+    await Actions.generateNewHandshakeNode(gun, recipientUser)
+
+    /** @type {string} */
+    const recipientHandshakeAddress = await new Promise((res, rej) => {
+      recipientUser.get(Key.CURRENT_HANDSHAKE_NODE).once(handshakeNode => {
+        if (typeof handshakeNode === 'object' && handshakeNode !== null) {
+          res(handshakeNode._['#'])
+        } else {
+          rej("typeof handshakeNode === 'object' || handshakeNode === null")
+        }
+      })
+    })
+
+    await Actions.sendHandshakeRequest(
+      recipientHandshakeAddress,
+      recipientPK,
+      gun,
+      requestorUser,
+    )
+
+    await Actions.generateNewHandshakeNode(gun, recipientUser)
+
+    let calls = 0
+
+    Events.onSimplerSentRequests(
+      sentRequests => {
+        calls++
+
+        if (calls === 3) {
+          const [request] = sentRequests
+
+          try {
+            expect(request.recipientChangedRequestAddress).toBe(true)
+            done()
+          } catch (e) {
+            console.error(e)
+          }
+        }
+      },
+      gun,
+      requestorUser,
+    )
+
+    //
+  })
+
+  it("provides the recipient's avatar", async done => {
+    expect.assertions(1)
+
+    const gun = createMockGun()
+
+    // we still need this for gun.user(pk) calls inside functions
+    injectSeaMockToGun(gun)
+
+    const requestorPK = Math.round(Math.random() * 1000000000).toString()
+
+    const recipientPK = Math.round(Math.random() * 1000000000).toString()
+
+    const recipientAvatar = Math.random().toString()
+
+    // SEA mocker can only mock one user at a time. Get around this.
+
+    // technically wrong cast but typescript doesn't complain
+    const requestorUser = /** @type {UserGUNNode} */ (gun
+      .get(__MOCK_USER_SUPER_NODE)
+      .get(requestorPK))
+
+    // @ts-ignore
+    requestorUser.is = {
+      pub: requestorPK,
+    }
+
+    // technically wrong cast but typescript doesn't complain
+    const recipientUser = /** @type {UserGUNNode} */ (gun
+      .get(__MOCK_USER_SUPER_NODE)
+      .get(recipientPK))
+
+    // @ts-ignore
+    recipientUser.is = {
+      pub: recipientPK,
+    }
+
+    await new Promise(res => {
+      recipientUser
+        .get(Key.PROFILE)
+        .get(Key.AVATAR)
+        .put(recipientAvatar, ack => {
+          if (!ack.err) {
+            res()
+          }
+        })
+    })
+
+    Jobs.__onAcceptedRequests(Events.onSentRequests, requestorUser)
+
+    await Actions.generateNewHandshakeNode(gun, recipientUser)
+
+    /** @type {string} */
+    const recipientHandshakeAddress = await new Promise((res, rej) => {
+      recipientUser.get(Key.CURRENT_HANDSHAKE_NODE).once(handshakeNode => {
+        if (typeof handshakeNode === 'object' && handshakeNode !== null) {
+          res(handshakeNode._['#'])
+        } else {
+          rej("typeof handshakeNode === 'object' || handshakeNode === null")
+        }
+      })
+    })
+
+    await Actions.sendHandshakeRequest(
+      recipientHandshakeAddress,
+      recipientPK,
+      gun,
+      requestorUser,
+    )
+
+    let calls = 0
+
+    Events.onSimplerSentRequests(
+      sentRequests => {
+        calls++
+
+        if (calls === 3) {
+          const [request] = sentRequests
+
+          try {
+            expect(request.recipientAvatar).toMatch(recipientAvatar)
+            done()
+          } catch (e) {
+            console.error(e)
+          }
+        }
+      },
+      gun,
+      requestorUser,
+    )
+
+    //
+  })
+
+  it("provides the recipient's display name", async done => {
+    expect.assertions(1)
+
+    const gun = createMockGun()
+
+    // we still need this for gun.user(pk) calls inside functions
+    injectSeaMockToGun(gun)
+
+    const requestorPK = Math.round(Math.random() * 1000000000).toString()
+
+    const recipientPK = Math.round(Math.random() * 1000000000).toString()
+
+    const recipientDisplayName = Math.random().toString()
+
+    // SEA mocker can only mock one user at a time. Get around this.
+
+    // technically wrong cast but typescript doesn't complain
+    const requestorUser = /** @type {UserGUNNode} */ (gun
+      .get(__MOCK_USER_SUPER_NODE)
+      .get(requestorPK))
+
+    // @ts-ignore
+    requestorUser.is = {
+      pub: requestorPK,
+    }
+
+    // technically wrong cast but typescript doesn't complain
+    const recipientUser = /** @type {UserGUNNode} */ (gun
+      .get(__MOCK_USER_SUPER_NODE)
+      .get(recipientPK))
+
+    // @ts-ignore
+    recipientUser.is = {
+      pub: recipientPK,
+    }
+
+    await new Promise(res => {
+      recipientUser
+        .get(Key.PROFILE)
+        .get(Key.DISPLAY_NAME)
+        .put(recipientDisplayName, ack => {
+          if (!ack.err) {
+            res()
+          }
+        })
+    })
+
+    Jobs.__onAcceptedRequests(Events.onSentRequests, requestorUser)
+
+    await Actions.generateNewHandshakeNode(gun, recipientUser)
+
+    /** @type {string} */
+    const recipientHandshakeAddress = await new Promise((res, rej) => {
+      recipientUser.get(Key.CURRENT_HANDSHAKE_NODE).once(handshakeNode => {
+        if (typeof handshakeNode === 'object' && handshakeNode !== null) {
+          res(handshakeNode._['#'])
+        } else {
+          rej("typeof handshakeNode === 'object' || handshakeNode === null")
+        }
+      })
+    })
+
+    await Actions.sendHandshakeRequest(
+      recipientHandshakeAddress,
+      recipientPK,
+      gun,
+      requestorUser,
+    )
+
+    let calls = 0
+
+    Events.onSimplerSentRequests(
+      sentRequests => {
+        calls++
+
+        if (calls === 3) {
+          const [request] = sentRequests
+
+          try {
+            expect(request.recipientDisplayName).toMatch(recipientDisplayName)
+            done()
+          } catch (e) {
+            console.error(e)
+          }
+        }
+      },
+      gun,
+      requestorUser,
+    )
+
+    //
   })
 })
 

@@ -5,6 +5,7 @@ import * as ErrorCode from './errorCode'
 import * as Key from './key'
 import { gun as origGun, user as userGun } from './gun'
 import * as Schema from './schema'
+import * as _ from 'lodash'
 /**
  * @typedef {import('./SimpleGUN').UserGUNNode} UserGUNNode
  * @typedef {import('./SimpleGUN').GUNNode} GUNNode
@@ -14,6 +15,7 @@ import * as Schema from './schema'
  * @typedef {import('./schema').PartialOutgoing} PartialOutgoing
  * @typedef {import('./schema').Chat} Chat
  * @typedef {import('./schema').ChatMessage} ChatMessage
+ * @typedef {import('./schema').SimpleSentRequest} SimpleSentRequest
  */
 
 /**
@@ -490,5 +492,170 @@ export const onChats = (cb, gun = origGun, user = userGun) => {
           })
       }
     }
+  }, user)
+}
+
+/**
+ * @param {(sentRequests: SimpleSentRequest[]) => void} cb
+ * @param {GUNNode} gun
+ * @param {UserGUNNode} user
+ * @returns {void}
+ */
+export const onSimplerSentRequests = (cb, gun = origGun, user = userGun) => {
+  /**
+   * @type {Record<string, Omit<SimpleSentRequest, 'timestamp'> & { timestamp?: undefined|number}>}
+   **/
+  const idToPartialSimpleSentRequest = {}
+
+  /**
+   * Keep track of recipients that already have listeners for their avatars.
+   * @type {string[]}
+   */
+  const recipientsWithAvatarListener = []
+
+  /**
+   * Keep track of recipients that already have listeners for their display
+   * name.
+   * @type {string[]}
+   */
+  const recipientsWithDisplayNameListener = []
+
+  /**
+   * Keep track of recipients that already have listeners for their current
+   * handshake node.
+   * @type {string[]}
+   */
+  const recipientsWithCurrentHandshakeNodeListener = []
+
+  /**
+   * @type {Set<string>}
+   */
+  const recipientsThatHaveAcceptedRequest = new Set()
+
+  const callCB = () => {
+    // CAST: If the timestamp is a number then we already know the simple sent
+    // request is complete
+    const sentRequests = /** @type {SimpleSentRequest[]} */ (Object.values(
+      idToPartialSimpleSentRequest,
+    )
+      .filter(sr => typeof sr.timestamp === 'number')
+      .filter(
+        sr => !recipientsThatHaveAcceptedRequest.has(sr.recipientPublicKey),
+      ))
+
+    // from newest to oldest
+    sentRequests.sort((a, b) => b.timestamp - a.timestamp)
+
+    // since it is reverse sorted, uniqBy will keep the LATEST  sent request for
+    // a given recipient
+    const withoutDups = _.uniqBy(sentRequests, sr => sr.recipientPublicKey)
+
+    // sort them from oldest to newest
+    withoutDups.sort((a, b) => a.timestamp - b.timestamp)
+
+    cb(withoutDups)
+  }
+
+  user
+    .get(Key.USER_TO_INCOMING)
+    .map()
+    .on((_, userPK) => {
+      recipientsThatHaveAcceptedRequest.add(userPK)
+
+      callCB()
+    })
+
+  __onSentRequestToUser(srtu => {
+    for (const [sentRequestID, recipientPK] of Object.entries(srtu)) {
+      if (!idToPartialSimpleSentRequest[sentRequestID]) {
+        idToPartialSimpleSentRequest[sentRequestID] = {
+          id: sentRequestID,
+          recipientAvatar: '',
+          recipientChangedRequestAddress: false,
+          recipientDisplayName: '',
+          recipientPublicKey: recipientPK,
+        }
+      }
+
+      if (!recipientsWithAvatarListener.includes(recipientPK)) {
+        recipientsWithAvatarListener.push(recipientPK)
+
+        gun
+          .user(recipientPK)
+          .get(Key.PROFILE)
+          .get(Key.AVATAR)
+          .on(avatar => {
+            if (typeof avatar === 'string') {
+              idToPartialSimpleSentRequest[
+                sentRequestID
+              ].recipientAvatar = avatar
+
+              callCB()
+            }
+          })
+      }
+
+      if (!recipientsWithDisplayNameListener.includes(recipientPK)) {
+        recipientsWithDisplayNameListener.push(recipientPK)
+
+        gun
+          .user(recipientPK)
+          .get(Key.PROFILE)
+          .get(Key.DISPLAY_NAME)
+          .on(displayName => {
+            if (typeof displayName === 'string') {
+              idToPartialSimpleSentRequest[
+                sentRequestID
+              ].recipientDisplayName = displayName
+
+              callCB()
+            }
+          })
+      }
+
+      if (!recipientsWithCurrentHandshakeNodeListener.includes(recipientPK)) {
+        recipientsWithCurrentHandshakeNodeListener.push(recipientPK)
+
+        gun
+          .user(recipientPK)
+          .get(Key.CURRENT_HANDSHAKE_NODE)
+          .on(() => {
+            gun
+              .user(recipientPK)
+              .get(Key.CURRENT_HANDSHAKE_NODE)
+              .get(sentRequestID)
+              .once(data => {
+                if (typeof data === 'undefined') {
+                  idToPartialSimpleSentRequest[
+                    sentRequestID
+                  ].recipientChangedRequestAddress = true
+
+                  callCB()
+                }
+              })
+          })
+      }
+
+      if (
+        typeof idToPartialSimpleSentRequest[sentRequestID].timestamp ===
+        'undefined'
+      ) {
+        user
+          .get(Key.SENT_REQUESTS)
+          .get(sentRequestID)
+          .once(sr => {
+            if (Schema.isHandshakeRequest(sr)) {
+              idToPartialSimpleSentRequest[sentRequestID].timestamp =
+                sr.timestamp
+
+              callCB()
+            } else {
+              console.warn('non handshake request received')
+            }
+          })
+      }
+    }
+
+    callCB()
   }, user)
 }
