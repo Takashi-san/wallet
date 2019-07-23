@@ -274,7 +274,12 @@ export default class MockGun {
     const graph = this.graph
 
     if (!graphIsObject(graph)) {
-      throw new Error()
+      throw new Error('Graph is not object')
+    }
+
+    if (this.graph instanceof MockGun) {
+      this.graph._graphToSetListener(listener)
+      return
     }
 
     for (const [key, subGraph] of Object.entries(graph)) {
