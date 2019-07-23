@@ -21,7 +21,7 @@ export type ListenerObj = Record<string, ListenerSoul | Primitive | null> & {
   _: ListenerSoul
 }
 
-export type ListenerData = Primitive | null | ListenerObj
+export type ListenerData = Primitive | null | ListenerObj | undefined
 
 export type Listener = (data: ListenerData, key: string) => void
 export type Callback = (ack: Ack) => void
