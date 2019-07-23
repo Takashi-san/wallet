@@ -269,6 +269,7 @@ export const onSentRequests = (cb, user = userGun) => {
     .on((req, reqKey) => {
       if (!Schema.isHandshakeRequest(req)) {
         console.error('non-handshakerequest received')
+        console.log(req)
         return
       }
 
@@ -288,21 +289,25 @@ export const __onSentRequestToUser = (cb, user = userGun) => {
   /** @type {Record<string, string>} */
   const requestToUser = {}
 
+  if (!user.is) {
+    throw new Error(ErrorCode.NOT_AUTH)
+  }
+
   user
     .get(Key.REQUEST_TO_USER)
     .map()
-    .on((data, key) => {
-      if (typeof data !== 'string') {
+    .on((userPK, requestKey) => {
+      if (typeof userPK !== 'string') {
         console.error('got a non string value')
         return
       }
 
-      if (data.length === 0) {
+      if (userPK.length === 0) {
         console.error('got an empty string value')
         return
       }
 
-      requestToUser[key] = data
+      requestToUser[requestKey] = userPK
 
       cb(requestToUser)
     })
