@@ -616,7 +616,8 @@ describe('MockGun', () => {
             putCount++
 
             if (putCount === puts.length) {
-              expect(spy).toHaveBeenCalledTimes(0)
+              expect(spy).toHaveBeenCalledTimes(1)
+              // first time gets called with undefined
               done()
             }
           }
