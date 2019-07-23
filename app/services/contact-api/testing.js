@@ -62,12 +62,12 @@ export const __MOCK_USER_SUPER_NODE = '$$_MOCK_USER_SUPER_NODE'
 let storedPublicKey = null
 
 /**
- * @param {GUNNode} gun
- * @param {(alias: string, pass: string) => string} userPublicKeyProvider
  * Function which when called will provide an unique public key for the user
  * being authenticated. The default is to simply use the user's alias. This can
  * be enough for testing, for testing when running on  react native, provide the
  * GUID.
+ * @param {GUNNode} gun
+ * @param {(alias: string, pass: string) => string} userPublicKeyProvider
  * @returns {void}
  */
 export const injectSeaMockToGun = (
