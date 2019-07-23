@@ -236,7 +236,6 @@ export default class MockGun {
   }
 
   /**
-   *
    * @param {Listener} listener
    * @returns {void}
    */
@@ -544,7 +543,13 @@ export default class MockGun {
     }
 
     if (cb) {
-      this.nodeType = 'leaf'
+      if (typeof this.graph === 'undefined') {
+        cb(undefined, this.key)
+
+        // @ts-ignore
+        return {}
+      }
+
       this._graphToRegularListenerIfGraphExists(cb)
 
       // @ts-ignore
@@ -570,6 +575,10 @@ export default class MockGun {
             // once().map().once(cb) gets the items list once, gets each of
             // those items only once (not added ones).
             once: cb => {
+              if (typeof this.graph === 'undefined') {
+                return
+              }
+
               if (cb) {
                 this._graphToSetListener(cb)
               } else {
