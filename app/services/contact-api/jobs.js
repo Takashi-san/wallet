@@ -25,7 +25,6 @@ import { user as userGun } from './gun'
  */
 
 /**
- *
  * @param {((osr: OnSentRequest, user: UserGUNNode) => void)=} onSentRequestsFactory
  * Pass only for testing purposes.
  * @throws {Error} NOT_AUTH
@@ -49,7 +48,9 @@ export const __onAcceptedRequests = (
           .get(reqKey)
           .once(userPubKey => {
             if (typeof userPubKey !== 'string') {
-              console.error('non string received')
+              if (typeof userPubKey !== 'undefined') {
+                console.error('non string received')
+              }
               return
             }
 
