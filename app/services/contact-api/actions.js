@@ -183,7 +183,7 @@ export const acceptRequest = (
         .then(outgoingFeedID => {
           return responseToRequestEncryptorAndPutter(
             requestID,
-            handshakeRequest.from,
+            '$$_TEST',
             outgoingFeedID,
             user,
           )
@@ -399,7 +399,7 @@ export const sendHandshakeRequest = (
           // TODO: Encrypt, make it indistinguishable from a non-response
           response: outgoingFeedID,
           from: user.is.pub,
-          timestamp: Math.random(),
+          timestamp: Date.now(),
         }
 
         const handshakeRequestNode = gun
