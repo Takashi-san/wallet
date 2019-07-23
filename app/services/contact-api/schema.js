@@ -49,6 +49,17 @@
  */
 
 /**
+ * @typedef {object} SimpleSentRequest
+ * @prop {string} id
+ * @prop {string} recipientAvatar
+ * @prop {boolean} recipientChangedRequestAddress True if the recipient changed
+ * the request node address and therefore can't no longer accept the request.
+ * @prop {string} recipientDisplayName
+ * @prop {string} recipientPublicKey Fallback for when user has no display name.
+ * @prop {number} timestamp
+ */
+
+/**
  * @param {any} o
  * @returns {o is HandshakeRequest}
  */
