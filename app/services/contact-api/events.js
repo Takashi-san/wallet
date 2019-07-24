@@ -3,7 +3,7 @@
  */
 import * as ErrorCode from './errorCode'
 import * as Key from './key'
-import { gun as origGun, user as userGun, gun } from './gun'
+import { gun as origGun, user as userGun } from './gun'
 import * as Schema from './schema'
 import * as _ from 'lodash'
 /**
