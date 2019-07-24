@@ -60,6 +60,16 @@
  */
 
 /**
+ * @typedef {object} SimpleReceivedRequest
+ * @prop {string} id
+ * @prop {string} requestorAvatar
+ * @prop {string} requestorDisplayName
+ * @prop {string} requestorPK
+ * @prop {string} response
+ * @prop {number} timestamp
+ */
+
+/**
  * @param {any} o
  * @returns {o is HandshakeRequest}
  */

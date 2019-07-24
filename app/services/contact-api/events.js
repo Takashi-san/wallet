@@ -3,7 +3,7 @@
  */
 import * as ErrorCode from './errorCode'
 import * as Key from './key'
-import { gun as origGun, user as userGun } from './gun'
+import { gun as origGun, user as userGun, gun } from './gun'
 import * as Schema from './schema'
 import * as _ from 'lodash'
 /**
@@ -16,6 +16,7 @@ import * as _ from 'lodash'
  * @typedef {import('./schema').Chat} Chat
  * @typedef {import('./schema').ChatMessage} ChatMessage
  * @typedef {import('./schema').SimpleSentRequest} SimpleSentRequest
+ * @typedef {import('./schema').SimpleReceivedRequest} SimpleReceivedRequest
  */
 
 /**
@@ -658,4 +659,117 @@ export const onSimplerSentRequests = (cb, gun = origGun, user = userGun) => {
 
     callCB()
   }, user)
+}
+
+/**
+ *
+ * @param {(simpleReceivedRequests: SimpleReceivedRequest[]) => void} cb
+ * @param {GUNNode} gun
+ * @param {UserGUNNode} user
+ * @returns {void}
+ */
+export const onSimplerReceivedRequests = (cb, gun, user) => {
+  if (!user.is) {
+    throw new Error(ErrorCode.NOT_AUTH)
+  }
+
+  /** @type {Record<string, SimpleReceivedRequest>} */
+  const idToReceivedRequest = {}
+
+  /** @type {string[]} */
+  const requestorsWithAvatarListeners = []
+
+  /** @type {string[]} */
+  const requestorsWithDisplayNameListeners = []
+
+  /** @type {Set<string>} */
+  const requestorsAlreadyAccepted = new Set()
+
+  user
+    .get(Key.USER_TO_INCOMING)
+    .map()
+    .on((_, userPK) => {
+      requestorsAlreadyAccepted.add(userPK)
+    })
+
+  const callCB = () => {
+    const pendingReceivedRequests = Object.values(idToReceivedRequest)
+
+    // sort from newest to oldest
+    pendingReceivedRequests.sort((a, b) => b.timestamp - a.timestamp)
+
+    // in case the requestor mistakenly sent a dupe request, remove the oldest
+    // one
+    const withoutDups = _.uniqBy(pendingReceivedRequests, rr => rr.requestorPK)
+    // sort again from oldest to newest
+    withoutDups.sort((a, b) => a.timestamp - b.timestamp)
+
+    cb(
+      // remove already accepted requestors
+      withoutDups.filter(rr => !requestorsAlreadyAccepted.has(rr.requestorPK)),
+    )
+  }
+
+  user
+    .get(Key.CURRENT_HANDSHAKE_NODE)
+    .map()
+    .on((req, reqID) => {
+      if (!Schema.isHandshakeRequest(req)) {
+        console.warn(`non request received: ${JSON.stringify(req)}`)
+        return
+      }
+
+      if (!idToReceivedRequest[reqID]) {
+        idToReceivedRequest[reqID] = {
+          id: reqID,
+          requestorAvatar: '',
+          requestorDisplayName: '',
+          requestorPK: req.from,
+          response: req.response,
+          timestamp: req.timestamp,
+        }
+      }
+
+      if (!requestorsWithAvatarListeners.includes(req.from)) {
+        requestorsWithAvatarListeners.push(req.from)
+
+        gun
+          .user(req.from)
+          .get(Key.PROFILE)
+          .get(Key.AVATAR)
+          .on(avatar => {
+            if (typeof avatar === 'string') {
+              for (const receivedReq of Object.values(idToReceivedRequest)) {
+                if (receivedReq.requestorPK === req.from) {
+                  receivedReq.requestorAvatar = avatar
+
+                  callCB()
+                }
+              }
+            }
+          })
+      }
+
+      if (!requestorsWithDisplayNameListeners.includes(req.from)) {
+        requestorsWithDisplayNameListeners.push(req.from)
+
+        gun
+          .user(req.from)
+          .get(Key.PROFILE)
+          .get(Key.DISPLAY_NAME)
+          .on(displayName => {
+            if (typeof displayName === 'string') {
+              for (const receivedReq of Object.values(idToReceivedRequest)) {
+                if (receivedReq.requestorPK === req.from) {
+                  receivedReq.requestorDisplayName = displayName
+
+                  callCB()
+                }
+              }
+            }
+          })
+      }
+
+      callCB()
+    })
 }
