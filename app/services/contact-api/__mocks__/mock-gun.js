@@ -489,6 +489,10 @@ export default class MockGun {
       )
     }
 
+    if (this.graph instanceof MockGun) {
+      return this.graph.map()
+    }
+
     if (isObject(this.graph) || typeof this.graph === 'undefined') {
       this.nodeType = 'set'
 
@@ -560,6 +564,10 @@ export default class MockGun {
       // @ts-ignore
       return {}
     } else {
+      if (this.graph instanceof MockGun) {
+        return this.graph.once()
+      }
+
       if (this.nodeType === 'leaf') {
         console.warn(
           'Tried to call once() without a cb on a leaf node, calling once() without a cb is most commonly used on set nodes. Ignore this warning if using this node as a map.',
@@ -757,6 +765,10 @@ export default class MockGun {
     }
 
     const graph = this.graph
+
+    if (graph instanceof MockGun) {
+      return graph.set(newItem, cb)
+    }
 
     if (graphIsObject(graph)) {
       const key =
