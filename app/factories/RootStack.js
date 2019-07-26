@@ -5,7 +5,8 @@ import { createStackNavigator } from 'react-navigation'
 
 import LoggedInScreenNavigator from './MainDrawerNavigator'
 
-import Chat from '../screens/Chat'
+import Chat, { CHAT_ROUTE } from '../screens/Chat'
+import Chats, { CHATS_ROUTE } from '../screens/Chats'
 import LoginScreen from '../screens/Login/Login'
 import ConnectToHost from '../screens/Login/connectToHost'
 import ConnectToWallet from '../screens/Login/connectToWallet'
@@ -16,11 +17,12 @@ import SearchForUsers from '../screens/Search/Search'
 import EditProfile from '../screens/Profile/EditProfile'
 import PublicProfile from '../screens/Profile/PublicProfile'
 
-export const CHAT_KEY = 'CHAT_KEY'
+import FakeLogin from '../screens/FakeLogin'
 
 export default createStackNavigator(
   {
-    [CHAT_KEY]: Chat,
+    [CHAT_ROUTE]: Chat,
+    [CHATS_ROUTE]: Chats,
     ConnectToHost: ConnectToHost,
     ConfirmPhrase: ConfirmPhrase,
     ConnectToWallet: ConnectToWallet,
@@ -31,8 +33,9 @@ export default createStackNavigator(
     LoggedInScreenNavigator: LoggedInScreenNavigator,
     NewWallet: NewWallet,
     SearchForUsers: SearchForUsers,
+    FakeLogin: FakeLogin,
   },
   {
-    initialRouteName: 'Login',
+    initialRouteName: 'FakeLogin',
   },
 )
