@@ -676,7 +676,11 @@ export const onSimplerSentRequests = (cb, gun = origGun, user = userGun) => {
  * @param {UserGUNNode} user
  * @returns {void}
  */
-export const onSimplerReceivedRequests = (cb, gun, user) => {
+export const onSimplerReceivedRequests = (
+  cb,
+  gun = origGun,
+  user = userGun,
+) => {
   if (!user.is) {
     throw new Error(ErrorCode.NOT_AUTH)
   }
