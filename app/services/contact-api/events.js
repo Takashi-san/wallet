@@ -354,6 +354,10 @@ export const __onUserToIncoming = (cb, user = userGun) => {
  * @returns {void}
  */
 export const onChats = (cb, gun = origGun, user = userGun) => {
+  if (!user.is) {
+    throw new Error(ErrorCode.NOT_AUTH)
+  }
+
   /**
    * @type {Record<string, Chat>}
    */
