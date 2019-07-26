@@ -8,16 +8,20 @@ import moment from 'moment'
 
 import { Colors } from '../../css'
 
-interface Props {
-  body: string;
-  id: string;
-  onPress?: (id: string) => void;
-  outgoing?: boolean;
-  senderName: string;
-  timestamp: number;
-}
+/**
+ * @typedef {object} Props
+ * @prop {string} body
+ * @prop {string} id
+ * @prop {((id: string) => void)=} onPress
+ * @prop {boolean=} outgoing
+ * @prop {string} senderName
+ * @prop {number} timestamp
+ */
 
-export default class ChatMessage extends React.PureComponent<Props> {
+/**
+ * @augments React.PureComponent<Props>
+ */
+export default class ChatMessage extends React.PureComponent {
   componentDidMount() {
     /**
      * Force-updates every minute so moment-formatted dates refresh.
@@ -28,7 +32,7 @@ export default class ChatMessage extends React.PureComponent<Props> {
   }
 
   componentWillUnmount() {
-    clearInterval(this.intervalID)
+    typeof this.intervalID === 'number' && clearInterval(this.intervalID)
   }
 
   render() {
