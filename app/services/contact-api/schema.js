@@ -176,8 +176,8 @@ export const isSimpleSentRequest = o => {
 /**
  * @typedef {object} SimpleReceivedRequest
  * @prop {string} id
- * @prop {string} requestorAvatar
- * @prop {string} requestorDisplayName
+ * @prop {string|null} requestorAvatar
+ * @prop {string|null} requestorDisplayName
  * @prop {string} requestorPK
  * @prop {string} response
  * @prop {number} timestamp
