@@ -398,6 +398,8 @@ export const onChats = (cb, gun = origGun, user = userGun) => {
     cb(chats)
   }
 
+  callCB()
+
   onOutgoing(outgoings => {
     for (const outgoing of Object.values(outgoings)) {
       const recipientPK = outgoing.with
@@ -561,6 +563,8 @@ export const onSimplerSentRequests = (cb, gun = origGun, user = userGun) => {
     cb(withoutDups)
   }
 
+  callCB()
+
   user
     .get(Key.USER_TO_INCOMING)
     .map()
@@ -713,6 +717,8 @@ export const onSimplerReceivedRequests = (cb, gun, user) => {
       withoutDups.filter(rr => !requestorsAlreadyAccepted.has(rr.requestorPK)),
     )
   }
+
+  callCB()
 
   user
     .get(Key.CURRENT_HANDSHAKE_NODE)
