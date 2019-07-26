@@ -129,6 +129,51 @@ export const isChat = o => {
  */
 
 /**
+ * @param {any} o
+ * @returns {o is SimpleSentRequest}
+ */
+export const isSimpleSentRequest = o => {
+  if (typeof o !== 'object') {
+    return false
+  }
+
+  if (o === null) {
+    return false
+  }
+
+  const obj = /** @type {SimpleSentRequest} */ (o)
+
+  if (typeof obj.id !== 'string') {
+    return false
+  }
+
+  if (typeof obj.recipientAvatar !== 'string' && obj.recipientAvatar !== null) {
+    return false
+  }
+
+  if (typeof obj.recipientChangedRequestAddress !== 'boolean') {
+    return false
+  }
+
+  if (
+    typeof obj.recipientDisplayName !== 'string' &&
+    obj.recipientDisplayName !== null
+  ) {
+    return false
+  }
+
+  if (typeof obj.recipientPublicKey !== 'string') {
+    return false
+  }
+
+  if (typeof obj.timestamp !== 'number') {
+    return false
+  }
+
+  return true
+}
+
+/**
  * @typedef {object} SimpleReceivedRequest
  * @prop {string} id
  * @prop {string} requestorAvatar
