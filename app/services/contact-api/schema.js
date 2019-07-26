@@ -185,6 +185,51 @@ export const isSimpleSentRequest = o => {
 
 /**
  * @param {any} o
+ * @returns {o is SimpleReceivedRequest}
+ */
+export const isSimpleReceivedRequest = o => {
+  if (typeof o !== 'object') {
+    return false
+  }
+
+  if (o === null) {
+    return false
+  }
+
+  const obj = /** @type {SimpleReceivedRequest} */ (o)
+
+  if (typeof obj.id !== 'string') {
+    return false
+  }
+
+  if (typeof obj.requestorAvatar !== 'string' && obj.requestorAvatar !== null) {
+    return false
+  }
+
+  if (
+    typeof obj.requestorDisplayName !== 'string' &&
+    obj.requestorDisplayName !== null
+  ) {
+    return false
+  }
+
+  if (typeof obj.requestorPK !== 'string') {
+    return false
+  }
+
+  if (typeof obj.response !== 'string') {
+    return false
+  }
+
+  if (typeof obj.timestamp !== 'number') {
+    return false
+  }
+
+  return true
+}
+
+/**
+ * @param {any} o
  * @returns {o is HandshakeRequest}
  */
 export const isHandshakeRequest = o => {
