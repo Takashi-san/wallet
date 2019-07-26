@@ -65,11 +65,45 @@ export const isChatMessage = o => {
  * outgoing/incoming feed paradigm. It combines both the outgoing and incoming
  * messages into one data structure plus metada about the chat.
  * @typedef {object} Chat
- * @prop {string} recipientAvatar Base64 encoded image.
+ * @prop {string|null} recipientAvatar Base64 encoded image.
  * @prop {string} recipientPublicKey A way to uniquely identify each chat.
  * @prop {ChatMessage[]} messages Sorted from most recent to least recent.
- * @prop {string} recipientDisplayName
+ * @prop {string|null} recipientDisplayName
  */
+
+/**
+ * @param {any} o
+ * @returns {o is Chat}
+ */
+export const isChat = o => {
+  if (typeof o !== 'object') {
+    return false
+  }
+
+  if (o === null) {
+    return false
+  }
+
+  const obj = /** @type {Chat} */ (o)
+
+  if (typeof obj.recipientAvatar !== 'string' && obj.recipientAvatar !== null) {
+    return false
+  }
+
+  if (!Array.isArray(obj.messages)) {
+    return false
+  }
+
+  if (typeof obj.recipientPublicKey !== 'string') {
+    return false
+  }
+
+  if (obj.recipientPublicKey.length === 0) {
+    return false
+  }
+
+  return obj.messages.every(item => isChatMessage(item))
+}
 
 /**
  * @typedef {object} Outgoing
@@ -86,10 +120,10 @@ export const isChatMessage = o => {
 /**
  * @typedef {object} SimpleSentRequest
  * @prop {string} id
- * @prop {string} recipientAvatar
+ * @prop {string|null} recipientAvatar
  * @prop {boolean} recipientChangedRequestAddress True if the recipient changed
  * the request node address and therefore can't no longer accept the request.
- * @prop {string} recipientDisplayName
+ * @prop {string|null} recipientDisplayName
  * @prop {string} recipientPublicKey Fallback for when user has no display name.
  * @prop {number} timestamp
  */
