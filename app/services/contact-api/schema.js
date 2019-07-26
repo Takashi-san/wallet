@@ -26,6 +26,41 @@
  */
 
 /**
+ *
+ * @param {any} o
+ * @returns {o is ChatMessage}
+ */
+export const isChatMessage = o => {
+  if (typeof o !== 'object') {
+    return false
+  }
+
+  if (o === null) {
+    return false
+  }
+
+  const obj = /** @type {ChatMessage} */ (o)
+
+  if (typeof obj.body !== 'string') {
+    return false
+  }
+
+  if (typeof obj.id !== 'string') {
+    return false
+  }
+
+  if (typeof obj.outgoing !== 'boolean') {
+    return false
+  }
+
+  if (typeof obj.timestamp !== 'number') {
+    return false
+  }
+
+  return true
+}
+
+/**
  * A simpler representation of a conversation between two users than the
  * outgoing/incoming feed paradigm. It combines both the outgoing and incoming
  * messages into one data structure plus metada about the chat.
