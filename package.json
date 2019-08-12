@@ -23,7 +23,6 @@
     "react-native-qrcode": "^0.2.7",
     "react-native-smart-carousel": "^1.1.0",
     "react-native-vector-icons": "^4.6.0",
-    "react-native-webview": "^5.12.1",
     "react-navigation": "^2.18.3",
     "socket.io-client": "^2.2.0",
     "tslib": "^1.9.3",
