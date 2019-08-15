@@ -4,6 +4,9 @@
 
 import SocketIO from 'socket.io-client'
 
+// @ts-ignore
+const { SOCKET_PORT, SOCKET_URL } = require('../../../.config.json')
+
 /**
  * @typedef {object} SimpleSocket
  * @prop {() => void} connect
@@ -16,7 +19,7 @@ import SocketIO from 'socket.io-client'
  * @private
  * @type {SimpleSocket}
  */
-export const socket = SocketIO('http://192.168.10.89:3000', {
+export const socket = SocketIO(`http://${SOCKET_URL}:${SOCKET_PORT}`, {
   transports: ['websocket'],
   jsonp: false,
 })
