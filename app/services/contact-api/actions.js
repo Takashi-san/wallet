@@ -2,22 +2,9 @@
  * @format
  */
 
-import { socket } from './socket'
-
+import Action from './action'
 import { _authData as authData } from './events'
-
-export const Action = {
-  ACCEPT_REQUEST: 'ACCEPT_REQUEST',
-  AUTHENTICATE: 'AUTHENTICATE',
-  BLACKLIST: 'BLACKLIST',
-  GENERATE_NEW_HANDSHAKE_NODE: 'GENERATE_NEW_HANDSHAKE_NODE',
-  LOGOUT: 'LOGOUT',
-  REGISTER: 'REGISTER',
-  SEMD_HANDSHAKE_REQUEST: 'SEMD_HANDSHAKE_REQUEST',
-  SEND_MESSAGE: 'SEND_MESSAGE',
-  SET_AVATAR: 'SET_AVATAR',
-  SET_DISPLAY_NAME: 'SET_DISPLAY_NAME',
-}
+import { socket } from './socket'
 
 /**
  * @param {string} alias

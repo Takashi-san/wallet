@@ -1,20 +1,10 @@
 /**
  * @format
  */
-import { Action } from './actions'
+import Action from './action'
+import Event from './event'
 import { socket } from './socket'
 import * as Schema from './schema'
-
-const Event = {
-  ON_ALL_USERS: 'ON_ALL_USERS',
-  ON_AVATAR: 'ON_AVATAR',
-  ON_BLACKLIST: 'ON_BLACKLIST',
-  ON_CHATS: 'ON_CHATS',
-  ON_DISPLAY_NAME: 'ON_DISPLAY_NAME',
-  ON_HANDSHAKE_ADDRESS: 'ON_HANDSHAKE_ADDRESS',
-  ON_RECEIVED_REQUESTS: 'ON_RECEIVED_REQUESTS',
-  ON_SENT_REQUESTS: 'ON_SENT_REQUESTS',
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 // AUTH AND CONNECTIVITY ///////////////////////////////////////////////////////
