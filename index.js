@@ -5,12 +5,7 @@ import moment from 'moment';
 import React, { Component } from 'react';
 import RootStack from './app/factories/RootStack'
 
-import { setupGun } from './app/services/contact-api/gun'
-import { Testing } from './app/services/contact-api'
 
-Testing.mockSea()
-
-setupGun()
 
 // https://github.com/moment/moment/issues/2781#issuecomment-160739129
 moment.locale('en', {
