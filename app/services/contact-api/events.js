@@ -82,6 +82,7 @@ export const onConnection = listener => {
 }
 
 socket.on('connect', () => {
+  console.warn('socket connected')
   connectionListeners.forEach(l => {
     l(true)
   })
