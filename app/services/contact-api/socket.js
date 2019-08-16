@@ -5,7 +5,7 @@
 import SocketIO from 'socket.io-client'
 
 // @ts-ignore
-const { SOCKET_PORT, SOCKET_URL } = require('../../../.config.json')
+const { SOCKET_PORT, SOCKET_URL } = require('../../../env.json')
 
 /**
  * @typedef {object} SimpleSocket
