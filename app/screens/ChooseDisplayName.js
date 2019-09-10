@@ -19,6 +19,8 @@ import debounce from 'lodash/debounce'
 import * as API from '../services/contact-api'
 import ShockButton from '../components/ShockButton'
 
+export const CHOOSE_DISPLAY_NAME = 'CHOOSE_DISPLAY_NAME'
+
 const SHOCK_LOGO_STYLE = { width: 100, height: 100 }
 
 /** @type {number} */
