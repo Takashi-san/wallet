@@ -1,9 +1,11 @@
 /**
  * @format
  */
+import once from 'lodash/once'
+
 import Action from './action'
 import Event from './event'
-import { socket } from './socket'
+import * as Socket from './socket'
 import * as Schema from './schema'
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -47,7 +49,12 @@ export const onAuth = listener => {
 
   authListeners.push(listener)
 
-  listener(_authData)
+  setImmediate(() => {
+    // in case unsub was called before next tick
+    if (authListeners.includes(listener)) {
+      listener(_authData)
+    }
+  })
 
   return () => {
     const idx = authListeners.indexOf(listener)
@@ -68,7 +75,20 @@ export const onConnection = listener => {
     throw new Error('tried to subscribe twice')
   }
 
-  listener(socket.connected)
+  connectionListeners.push(listener)
+
+  setImmediate(() => {
+    // check listener is still subbed in case unsub is called before next tick
+    if (!connectionListeners.includes(listener)) {
+      return
+    }
+
+    if (Socket.socket) {
+      Socket.socket.on('connect', once(conn => {}))
+    } else {
+      listener(false)
+    }
+  })
 
   return () => {
     const idx = connectionListeners.indexOf(listener)
@@ -81,25 +101,25 @@ export const onConnection = listener => {
   }
 }
 
-socket.on('connect', () => {
+Socket.socket.on('connect', () => {
   console.warn('socket connected')
   connectionListeners.forEach(l => {
     l(true)
   })
 })
 
-socket.on('disconnect', reason => {
+Socket.socket.on('disconnect', reason => {
   connectionListeners.forEach(l => {
     l(false)
   })
 
   if (reason === 'io server disconnect') {
     // https://socket.io/docs/client-api/#Event-%E2%80%98disconnect%E2%80%99
-    socket.connect()
+    Socket.socket.connect()
   }
 })
 
-socket.on(Action.AUTHENTICATE, res => {
+Socket.socket.on(Action.AUTHENTICATE, res => {
   try {
     if (typeof res.msg.token !== 'string') {
       throw new TypeError('token received from server not string')
@@ -122,7 +142,7 @@ socket.on(Action.AUTHENTICATE, res => {
   }
 })
 
-socket.on(Action.LOGOUT, res => {
+Socket.socket.on(Action.LOGOUT, res => {
   if (res.ok) {
     _authData = null
 
@@ -137,7 +157,7 @@ socket.on(Action.LOGOUT, res => {
 // If when receiving a token expired response on response to any data event
 // notify auth listeners that the token expired.
 Object.values(Event).forEach(e => {
-  socket.on(e, res => {
+  Socket.socket.on(e, res => {
     if (res.msg === 'Token expired.') {
       _authData = null
 
@@ -151,7 +171,7 @@ Object.values(Event).forEach(e => {
 // If when receiving a token expired response on response to any action event
 // notify auth listeners that the token expired.
 Object.values(Action).forEach(a => {
-  socket.on(a, res => {
+  Socket.socket.on(a, res => {
     if (res.msg === 'Token expired.') {
       _authData = null
 
@@ -217,7 +237,7 @@ export const onAvatar = listener => {
 
   avatarListeners.push(listener)
 
-  socket.emit(Event.ON_AVATAR, {
+  Socket.socket.emit(Event.ON_AVATAR, {
     token: _authData.token,
   })
 
@@ -246,7 +266,7 @@ export const onChats = listener => {
 
   chatsListeners.push(listener)
 
-  socket.emit(Event.ON_CHATS, {
+  Socket.socket.emit(Event.ON_CHATS, {
     token: _authData.token,
   })
 
@@ -275,7 +295,7 @@ export const onDisplayName = listener => {
 
   displayNameListeners.push(listener)
 
-  socket.emit(Event.ON_CHATS, {
+  Socket.socket.emit(Event.ON_DISPLAY_NAME, {
     token: _authData.token,
   })
 
@@ -304,7 +324,7 @@ export const onReceivedRequests = listener => {
 
   receivedRequestsListeners.push(listener)
 
-  socket.emit(Event.ON_CHATS, {
+  Socket.socket.emit(Event.ON_RECEIVED_REQUESTS, {
     token: _authData.token,
   })
 
@@ -333,7 +353,7 @@ export const onSentRequests = listener => {
 
   sentRequestsListeners.push(listener)
 
-  socket.emit(Event.ON_CHATS, {
+  Socket.socket.emit(Event.ON_SENT_REQUESTS, {
     token: _authData.token,
   })
 
@@ -362,7 +382,7 @@ export const onUsers = listener => {
 
   usersListeners.push(listener)
 
-  socket.emit(Event.ON_ALL_USERS, {
+  Socket.socket.emit(Event.ON_ALL_USERS, {
     token: _authData.token,
   })
 
@@ -377,7 +397,7 @@ export const onUsers = listener => {
   }
 }
 
-socket.on(Event.ON_AVATAR, res => {
+Socket.socket.on(Event.ON_AVATAR, res => {
   if (res.ok) {
     avatarListeners.forEach(l => {
       l(res.msg)
@@ -385,7 +405,7 @@ socket.on(Event.ON_AVATAR, res => {
   }
 })
 
-socket.on(Event.ON_CHATS, res => {
+Socket.socket.on(Event.ON_CHATS, res => {
   if (res.ok) {
     chatsListeners.forEach(l => {
       l(res.msg)
@@ -393,7 +413,7 @@ socket.on(Event.ON_CHATS, res => {
   }
 })
 
-socket.on(Event.ON_DISPLAY_NAME, res => {
+Socket.socket.on(Event.ON_DISPLAY_NAME, res => {
   if (res.ok) {
     displayNameListeners.forEach(l => {
       l(res.msg)
@@ -401,7 +421,7 @@ socket.on(Event.ON_DISPLAY_NAME, res => {
   }
 })
 
-socket.on(Event.ON_RECEIVED_REQUESTS, res => {
+Socket.socket.on(Event.ON_RECEIVED_REQUESTS, res => {
   if (res.ok) {
     receivedRequestsListeners.forEach(l => {
       l(res.msg)
@@ -409,7 +429,7 @@ socket.on(Event.ON_RECEIVED_REQUESTS, res => {
   }
 })
 
-socket.on(Event.ON_SENT_REQUESTS, res => {
+Socket.socket.on(Event.ON_SENT_REQUESTS, res => {
   if (res.ok) {
     sentRequestsListeners.forEach(l => {
       l(res.msg)
@@ -417,7 +437,7 @@ socket.on(Event.ON_SENT_REQUESTS, res => {
   }
 })
 
-socket.on(Event.ON_ALL_USERS, res => {
+Socket.socket.on(Event.ON_ALL_USERS, res => {
   if (res.ok) {
     usersListeners.forEach(l => {
       l(res.msg)
@@ -425,47 +445,12 @@ socket.on(Event.ON_ALL_USERS, res => {
   }
 })
 
-////////////////////////////////////////////////////////////////////////////////
-// ACTION EVENTS ///////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
+//   Socket.socket.on(Action.REGISTER, res => {
 
-// We pretty much only have to notify the results of registering.
-// Everything else; their effects can be observer through the data events.
-
-/**
- * @type {Array<RegisterListener>}
- */
-const registerListeners = []
-
-/**
- * @param {RegisterListener} listener
- * @returns {Function}
- */
-export const onRegister = listener => {
-  if (registerListeners.indexOf(listener) > -1) {
-    throw new Error('tried to subscribe twice')
-  }
-
-  return () => {
-    const idx = registerListeners.indexOf(listener)
-
-    if (idx < 0) {
-      throw new Error('tried to unsubscribe twice')
-    }
-
-    registerListeners.splice(idx, 1)
-  }
-}
-
-socket.on(Action.REGISTER, res => {
-  if (res.ok) {
-    // @ts-ignore
-    const { alias, pass } = res.msg
-
-    registerListeners.forEach(l => {
-      l(alias, pass)
-    })
-  } else {
-    console.warn(res.msg)
-  }
-})
+//     registerListeners.forEach(l => {
+//       l(alias, pass)
+//     })
+//   } else {
+//     console.warn(res.msg)
+//   }
+// })
