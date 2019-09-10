@@ -40,6 +40,14 @@ const authListeners = []
 const connectionListeners = []
 
 /**
+ *
+ * @param {AuthData} ad
+ */
+export const initAuthData = ad => {
+  _authData = ad
+}
+
+/**
  * @param {AuthListener} listener
  */
 export const onAuth = listener => {
