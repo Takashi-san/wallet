@@ -84,7 +84,17 @@ export const onConnection = listener => {
     }
 
     if (Socket.socket) {
-      Socket.socket.on('connect', once(conn => {}))
+      if (Socket.socket.connected) {
+        listener(true)
+      } else {
+        // this nicely handles initial connection cases
+        Socket.socket.on(
+          'connect',
+          once(() => {
+            listener(true)
+          }),
+        )
+      }
     } else {
       listener(false)
     }
