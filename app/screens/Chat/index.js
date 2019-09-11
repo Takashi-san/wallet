@@ -2,7 +2,7 @@
  * @prettier
  */
 import React from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, View, ActivityIndicator } from 'react-native'
 import { Icon } from 'react-native-elements'
 import { GiftedChat, Send } from 'react-native-gifted-chat'
 /**
@@ -53,77 +53,89 @@ const SendRenderer = props => (
 
 /**
  * @typedef {object} State
- * @prop {API.Schema.ChatMessage[]} messages
- * @prop {string|null} recipientDisplayName
+ * @prop {API.Schema.ChatMessage[]|null} messages
  * @prop {string|null} ownDisplayName
+ * @prop {string|null} ownPublicKey
+ * @prop {string|null} recipientDisplayName
  */
 
 /**
  * @augments React.PureComponent<Props, State>
  */
 export default class Chat extends React.PureComponent {
-  mounted = false
   /**
-   * Gun has no unsubscribing. Keep track so we don't re-subscribe on re-mount
+   * @param {{ navigation: Navigation }} args
+   * @returns {import('react-navigation').NavigationStackScreenOptions}
    */
-  listenersAssigned = false
+  static navigationOptions = ({ navigation }) => {
+    // @ts-ignore
+    const title = navigation.getParam('title')
+
+    return {
+      // headerTransparent: true,
+      headerStyle: {
+        backgroundColor: 'white',
+        elevation: 0,
+      },
+
+      title,
+    }
+  }
 
   /** @type {State} */
   state = {
-    messages: [],
-    recipientDisplayName: null,
+    messages: null,
     ownDisplayName: null,
+    ownPublicKey: null,
+    recipientDisplayName: null,
   }
 
-  /**
-   * @private
-   * @returns {string|null}
-   */
-  getRecipientPublicKeyParamIfExists() {
+  componentDidUpdate() {
     const { navigation } = this.props
+    const { recipientDisplayName } = this.state
+    const recipientPK = navigation.getParam('recipientPublicKey')
+    // @ts-ignore
+    const oldTitle = navigation.getParam('title')
 
-    const recipientPublicKey = navigation.getParam('recipientPublicKey')
-
-    if (typeof recipientPublicKey !== 'string') {
-      console.error(
-        `Expected recipientPublicKey parameter to be of type string, instead got: ${typeof recipientPublicKey}`,
-      )
-      return null
+    if (typeof oldTitle === 'undefined') {
+      navigation.setParams({
+        // @ts-ignore
+        title: recipientPK,
+      })
     }
 
-    if (recipientPublicKey.length === 0) {
-      console.error(
-        `Expected recipientPublicKey parameter to have a non-zero length`,
-      )
-
-      return null
+    if (oldTitle === recipientPK && recipientDisplayName) {
+      navigation.setParams({
+        // @ts-ignore
+        title: recipientDisplayName,
+      })
     }
-
-    return recipientPublicKey
   }
+
+  componentDidMount() {
+    this.authUnsub = API.Events.onAuth(this.onAuth)
+    this.chatsUnsub = API.Events.onChats(this.onChats)
+    this.displayNameUnsub = API.Events.onDisplayName(displayName => {
+      this.setState({
+        ownDisplayName: displayName,
+      })
+    })
+  }
+
+  authUnsub = () => {}
+  chatsUnsub = () => {}
+  displayNameUnsub = () => {}
 
   /**
    * @private
-   * @returns {string|null}
+   * @param {API.Events.AuthData} authData
+   * @returns {void}
    */
-  getOwnPublicKey() {
-    const ownPublicKey = API.Gun.user._.sea && API.Gun.user._.sea
-
-    if (typeof ownPublicKey !== 'string') {
-      console.error(
-        `Expected ownPublicKey obtained from SEA to be of type string, instead got: ${typeof ownPublicKey}`,
-      )
-
-      return null
-    }
-
-    if (ownPublicKey.length === 0) {
-      console.error(`Expected ownPublicKey obtained from SEA to have a length`)
-
-      return null
-    }
-
-    return ownPublicKey
+  onAuth = authData => {
+    authData &&
+      this.setState({
+        ownPublicKey: authData.publicKey,
+      })
   }
 
   /**
@@ -136,13 +148,15 @@ export default class Chat extends React.PureComponent {
       return null
     }
 
-    const recipientPublicKey = this.getRecipientPublicKeyParamIfExists()
+    const recipientPublicKey = this.props.navigation.getParam(
+      'recipientPublicKey',
+    )
 
-    if (recipientPublicKey === null) {
+    if (!recipientPublicKey) {
       return null
     }
 
-    const ownPublicKey = this.getOwnPublicKey()
+    const ownPublicKey = this.state.ownPublicKey
 
     if (ownPublicKey === null) {
       return null
@@ -177,29 +191,6 @@ export default class Chat extends React.PureComponent {
     )
   }
 
-  componentDidMount() {
-    this.mounted = true
-
-    if (!this.listenersAssigned) {
-      this.listenersAssigned = true
-      API.Events.onChats(this.onChats)
-      API.Events.onDisplayName(this.onDisplayName)
-    }
-  }
-
-  /**
-   * @private
-   * @param {string|null} displayName
-   * @returns {void}
-   */
-  onDisplayName = displayName => {
-    if (this.mounted) {
-      this.setState({
-        ownDisplayName: displayName,
-      })
-    }
-  }
-
   /**
    * @private
    * @param {API.Schema.Chat[]} chats
@@ -210,39 +201,11 @@ export default class Chat extends React.PureComponent {
 
     const recipientPublicKey = navigation.getParam('recipientPublicKey')
 
-    if (typeof recipientPublicKey !== 'string') {
-      console.error(
-        `Expected recipientPublicKey parameter to be of type string, instead got: ${typeof recipientPublicKey}`,
-      )
-      return
-    }
-
-    if (recipientPublicKey.length === 0) {
-      console.error(
-        `Expected recipientPublicKey parameter to have a length greater than 0`,
-      )
-      return
-    }
-
-    if (chats.length === 0) {
-      console.warn(
-        'No chats found, this can happen sometimes when gun is lagging on its data, and subsequent calls should contain chats.',
-      )
-      return
-    }
-
     const theChat = chats.find(
       chat => chat.recipientPublicKey === recipientPublicKey,
     )
 
-    if (typeof theChat === 'undefined') {
-      console.warn(
-        'No chat with the recipientPublicKey parameter found, this can happen sometimes when gun is lagging on its data, and subsequent calls should contain the chat.',
-      )
-      return
-    }
-
-    if (!this.mounted) {
+    if (!theChat) {
       return
     }
 
@@ -256,19 +219,38 @@ export default class Chat extends React.PureComponent {
     })
   }
 
+  /**
+   * @private
+   * @param {GiftedChatMessage[]} msgs
+   * @returns {void}
+   */
+  onSend = msgs => {
+    const [msg] = msgs
+
+    API.Actions.sendMessage(
+      this.props.navigation.getParam('recipientPublicKey'),
+      msg.text,
+    )
+  }
+
   render() {
-    const { navigation } = this.props
-    const { messages, ownDisplayName, recipientDisplayName } = this.state
+    const {
+      messages,
+      ownDisplayName,
+      ownPublicKey,
+      recipientDisplayName,
+    } = this.state
 
-    const ownPublicKey = this.getOwnPublicKey()
-    const recipientPublicKey = this.getRecipientPublicKeyParamIfExists()
+    const recipientPublicKey = this.props.navigation.getParam(
+      'recipientPublicKey',
+    )
 
-    if (ownPublicKey === null) {
-      return <Text>ownPublicKey Error</Text>
+    if (messages === null) {
+      return <ActivityIndicator />
     }
 
-    if (recipientPublicKey === null) {
-      return <Text>recipientPublicKey error</Text>
+    if (ownPublicKey === null) {
+      return <ActivityIndicator />
     }
 
     /** @type {GiftedChatUser} */
@@ -294,17 +276,20 @@ export default class Chat extends React.PureComponent {
 
     const firstMsg = sortedMessages[0]
 
-    const thereAreMoreMessages = firstMsg.body !== API.Actions.INITIAL_MSG
+    const thereAreMoreMessages =
+      firstMsg.body !== '$$__SHOCKWALLET__INITIAL__MESSAGE'
 
     /** @type {GiftedChatMessage[]} */
-    const giftedChatMsgs = sortedMessages.map(msg => {
-      return {
-        _id: msg.id,
-        text: msg.body,
-        createdAt: msg.timestamp,
-        user: msg.outgoing ? ownUser : recipientUser,
-      }
-    })
+    const giftedChatMsgs = sortedMessages
+      .filter(msg => msg.body !== '$$__SHOCKWALLET__INITIAL__MESSAGE')
+      .map(msg => {
+        return {
+          _id: msg.id,
+          text: msg.body,
+          createdAt: msg.timestamp,
+          user: msg.outgoing ? ownUser : recipientUser,
+        }
+      })
 
     return (
       <GiftedChat
@@ -315,6 +300,7 @@ export default class Chat extends React.PureComponent {
         renderMessage={this.messageRenderer}
         renderSend={SendRenderer}
         user={ownUser}
+        onSend={this.onSend}
       />
     )
   }
