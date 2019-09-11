@@ -22,7 +22,6 @@ import * as Schema from './schema'
 
 /** @typedef {(authData: AuthData) => void} AuthListener */
 /** @typedef {(connected: boolean) => void} ConnectionListener  */
-/** @typedef {(alias: string, pass: string) => void} RegisterListener  */
 
 /**
  * @type {AuthData}
@@ -118,87 +117,6 @@ export const onConnection = listener => {
     connectionListeners.splice(idx, 1)
   }
 }
-
-Socket.socket.on('connect', () => {
-  console.warn('socket connected')
-  connectionListeners.forEach(l => {
-    l(true)
-  })
-})
-
-Socket.socket.on('disconnect', reason => {
-  connectionListeners.forEach(l => {
-    l(false)
-  })
-
-  if (reason === 'io server disconnect') {
-    // https://socket.io/docs/client-api/#Event-%E2%80%98disconnect%E2%80%99
-    Socket.socket.connect()
-  }
-})
-
-Socket.socket.on(Action.AUTHENTICATE, res => {
-  try {
-    if (typeof res.msg.token !== 'string') {
-      throw new TypeError('token received from server not string')
-    }
-
-    if (typeof res.msg.publicKey !== 'string') {
-      throw new TypeError('publickey received from server not string')
-    }
-
-    _authData = {
-      publicKey: res.msg.publicKey,
-      token: res.msg.token,
-    }
-
-    authListeners.forEach(l => {
-      l(_authData)
-    })
-  } catch (e) {
-    console.warn(e.message)
-  }
-})
-
-Socket.socket.on(Action.LOGOUT, res => {
-  if (res.ok) {
-    _authData = null
-
-    authListeners.forEach(l => {
-      l(_authData)
-    })
-  } else {
-    console.warn(res.msg)
-  }
-})
-
-// If when receiving a token expired response on response to any data event
-// notify auth listeners that the token expired.
-Object.values(Event).forEach(e => {
-  Socket.socket.on(e, res => {
-    if (res.msg === 'Token expired.') {
-      _authData = null
-
-      authListeners.forEach(l => {
-        l(_authData)
-      })
-    }
-  })
-})
-
-// If when receiving a token expired response on response to any action event
-// notify auth listeners that the token expired.
-Object.values(Action).forEach(a => {
-  Socket.socket.on(a, res => {
-    if (res.msg === 'Token expired.') {
-      _authData = null
-
-      authListeners.forEach(l => {
-        l(_authData)
-      })
-    }
-  })
-})
 
 ////////////////////////////////////////////////////////////////////////////////
 // DATA EVENTS /////////////////////////////////////////////////////////////////
@@ -415,60 +333,197 @@ export const onUsers = listener => {
   }
 }
 
-Socket.socket.on(Event.ON_AVATAR, res => {
-  if (res.ok) {
-    avatarListeners.forEach(l => {
-      l(res.msg)
-    })
+////////////////////////////////////////////////////////////////////////////////
+// ACTION EVENTS ///////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * @typedef {object} _RegisterListenerDataBAD
+ * @prop {false} ok
+ * @prop {string} msg
+ * @prop {string} alias
+ * @prop {string} pass
+ */
+
+/**
+ * @typedef {object} _RegisterListenerDataOK
+ * @prop {true} ok
+ * @prop {null} msg
+ * @prop {string} alias
+ * @prop {string} pass
+ */
+
+/**
+ * @typedef {_RegisterListenerDataBAD|_RegisterListenerDataOK} RegisterListenerData
+ */
+
+/** @typedef {(res: RegisterListenerData) => void} RegisterListener  */
+
+/**
+ * @type {RegisterListener[]}
+ */
+const registerListeners = []
+
+/**
+ *
+ * @param {RegisterListener} listener
+ */
+export const onRegister = listener => {
+  if (registerListeners.indexOf(listener) > -1) {
+    throw new Error('tried to subscribe twice')
   }
-})
 
-Socket.socket.on(Event.ON_CHATS, res => {
-  if (res.ok) {
-    chatsListeners.forEach(l => {
-      l(res.msg)
-    })
+  registerListeners.push(listener)
+
+  return () => {
+    const idx = registerListeners.indexOf(listener)
+
+    if (idx < 0) {
+      throw new Error('tried to unsubscribe twice')
+    }
+
+    registerListeners.splice(idx, 1)
   }
-})
+}
 
-Socket.socket.on(Event.ON_DISPLAY_NAME, res => {
-  if (res.ok) {
-    displayNameListeners.forEach(l => {
-      l(res.msg)
+export const setupEvents = () => {
+  Socket.socket.on('connect', () => {
+    console.warn('socket connected')
+    connectionListeners.forEach(l => {
+      l(true)
     })
-  }
-})
+  })
 
-Socket.socket.on(Event.ON_RECEIVED_REQUESTS, res => {
-  if (res.ok) {
-    receivedRequestsListeners.forEach(l => {
-      l(res.msg)
+  Socket.socket.on('disconnect', reason => {
+    connectionListeners.forEach(l => {
+      l(false)
     })
-  }
-})
 
-Socket.socket.on(Event.ON_SENT_REQUESTS, res => {
-  if (res.ok) {
-    sentRequestsListeners.forEach(l => {
-      l(res.msg)
+    if (reason === 'io server disconnect') {
+      // https://socket.io/docs/client-api/#Event-%E2%80%98disconnect%E2%80%99
+      Socket.socket.connect()
+    }
+  })
+
+  Socket.socket.on(Action.REGISTER, res => {
+    registerListeners.forEach(l => {
+      l({
+        alias: res.origBody.alias,
+        msg: res.msg,
+        ok: res.ok,
+        pass: res.origBody.pass,
+      })
     })
-  }
-})
+  })
 
-Socket.socket.on(Event.ON_ALL_USERS, res => {
-  if (res.ok) {
-    usersListeners.forEach(l => {
-      l(res.msg)
+  Socket.socket.on(Event.ON_AVATAR, res => {
+    if (res.ok) {
+      avatarListeners.forEach(l => {
+        l(res.msg)
+      })
+    }
+  })
+
+  Socket.socket.on(Event.ON_CHATS, res => {
+    if (res.ok) {
+      chatsListeners.forEach(l => {
+        l(res.msg)
+      })
+    }
+  })
+
+  Socket.socket.on(Event.ON_DISPLAY_NAME, res => {
+    if (res.ok) {
+      displayNameListeners.forEach(l => {
+        l(res.msg)
+      })
+    }
+  })
+
+  Socket.socket.on(Event.ON_RECEIVED_REQUESTS, res => {
+    if (res.ok) {
+      receivedRequestsListeners.forEach(l => {
+        l(res.msg)
+      })
+    }
+  })
+
+  Socket.socket.on(Event.ON_SENT_REQUESTS, res => {
+    if (res.ok) {
+      sentRequestsListeners.forEach(l => {
+        l(res.msg)
+      })
+    }
+  })
+
+  Socket.socket.on(Event.ON_ALL_USERS, res => {
+    if (res.ok) {
+      usersListeners.forEach(l => {
+        l(res.msg)
+      })
+    }
+  })
+
+  Socket.socket.on(Action.AUTHENTICATE, res => {
+    try {
+      if (typeof res.msg.token !== 'string') {
+        throw new TypeError('token received from server not string')
+      }
+
+      if (typeof res.msg.publicKey !== 'string') {
+        throw new TypeError('publickey received from server not string')
+      }
+
+      _authData = {
+        publicKey: res.msg.publicKey,
+        token: res.msg.token,
+      }
+
+      authListeners.forEach(l => {
+        l(_authData)
+      })
+    } catch (e) {
+      console.warn(e.message)
+    }
+  })
+
+  Socket.socket.on(Action.LOGOUT, res => {
+    if (res.ok) {
+      _authData = null
+
+      authListeners.forEach(l => {
+        l(_authData)
+      })
+    } else {
+      console.warn(res.msg)
+    }
+  })
+
+  // If when receiving a token expired response on response to any data event
+  // notify auth listeners that the token expired.
+  Object.values(Event).forEach(e => {
+    Socket.socket.on(e, res => {
+      if (res.msg === 'Token expired.') {
+        _authData = null
+
+        authListeners.forEach(l => {
+          l(_authData)
+        })
+      }
     })
-  }
-})
+  })
 
-//   Socket.socket.on(Action.REGISTER, res => {
+  // If when receiving a token expired response on response to any action event
+  // notify auth listeners that the token expired.
+  Object.values(Action).forEach(a => {
+    Socket.socket.on(a, res => {
+      if (res.msg === 'Token expired.') {
+        _authData = null
 
-//     registerListeners.forEach(l => {
-//       l(alias, pass)
-//     })
-//   } else {
-//     console.warn(res.msg)
-//   }
-// })
+        authListeners.forEach(l => {
+          l(_authData)
+        })
+      }
+    })
+  })
+}
