@@ -1,7 +1,7 @@
 /** @format */
 import React from 'react'
 
-import { TextInput, Button, View } from 'react-native'
+import { TextInput, Button, View, AsyncStorage } from 'react-native'
 
 import * as API from '../services/contact-api'
 import { CHATS_ROUTE } from './Chats'
@@ -37,6 +37,10 @@ export default class MyProfile extends React.PureComponent {
     API.Actions.logout()
   }
 
+  clearAllCache = () => {
+    AsyncStorage.clear()
+  }
+
   render() {
     return (
       <View>
@@ -48,6 +52,7 @@ export default class MyProfile extends React.PureComponent {
         <Button title="Change" onPress={this.onPress} />
         <Button title="Continue to Chats" onPress={this.goToChats} />
         <Button title="Generate Handshake Address" onPress={this.genHandAddr} />
+        <Button title="Clear all cache" onPress={this.clearAllCache} />
       </View>
     )
   }
