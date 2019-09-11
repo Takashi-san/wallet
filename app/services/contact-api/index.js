@@ -1,9 +1,10 @@
 /**
- * @prettier
+ * @format
  */
+
 import * as Actions from './actions'
 import * as Events from './events'
 import * as Schema from './schema'
-import { spinupJobs } from './jobs'
+import * as Socket from './socket'
 
-export { Actions, Events, Schema, spinupJobs }
+export { Actions, Events, Schema, Socket }

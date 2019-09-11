@@ -25,7 +25,7 @@ interface Props {
   color?: string;
   disabled?: boolean;
   fullWidth?: boolean;
-  icon: IconProps;
+  icon?: IconProps;
   onPress?: () => void;
   title: string;
 }

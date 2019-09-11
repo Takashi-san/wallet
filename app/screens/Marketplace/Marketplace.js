@@ -5,7 +5,6 @@ import { Button, Dimensions, Image, Keyboard, StyleSheet, Text, TextInput, Touch
 import { Icon } from 'react-native-elements'
 import EntypoIcons from 'react-native-vector-icons/Entypo';
 import { withNavigation } from 'react-navigation'
-//import {  } from "react-native-webview";
 
 // import { Button, Icon } from 'react-native-elements';
 // import { StackNavigator } from 'react-navigation';
