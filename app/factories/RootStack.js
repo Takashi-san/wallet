@@ -34,7 +34,7 @@ import * as ContactAPI from '../services/contact-api'
 import * as Cache from '../services/cache'
 import * as NavigationService from '../services/navigation'
 
-const APP = 'APP'
+export const APP = 'APP'
 
 const App = createStackNavigator(
   {

@@ -20,7 +20,7 @@ import WithConnWarning from './app/components/WithConnWarning'
 import ShockDialog from './app/components/ShockDialog'
 import ConnectToNode from './app/screens/ConnectToNode'
 
-const CONTACT_SOCKET_PORT = 3000
+const CONTACT_SOCKET_PORT = 9835
 
 // https://github.com/moment/moment/issues/2781#issuecomment-160739129
 moment.locale('en', {

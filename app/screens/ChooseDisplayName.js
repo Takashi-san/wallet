@@ -18,6 +18,7 @@ import debounce from 'lodash/debounce'
 
 import * as API from '../services/contact-api'
 import ShockButton from '../components/ShockButton'
+import { APP } from '../factories/RootStack'
 
 export const CHOOSE_DISPLAY_NAME = 'CHOOSE_DISPLAY_NAME'
 
@@ -151,7 +152,7 @@ export default class ChooseDisplayName extends React.PureComponent {
               },
               () => {
                 if (dn === this.state.displayName) {
-                  this.props.navigation.navigate('App')
+                  this.props.navigation.navigate(APP)
                 }
               },
             )
