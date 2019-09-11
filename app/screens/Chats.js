@@ -2,19 +2,23 @@
  * @prettier
  */
 import React from 'react'
-import { ActivityIndicator, FlatList, Text, View } from 'react-native'
+import { ActivityIndicator, FlatList, Text, View, Button } from 'react-native'
 import moment from 'moment'
 import { Divider, Icon } from 'react-native-elements'
 /**
  * @typedef {import('react-navigation').NavigationScreenProp<{}>} Navigation
  */
 
-import UserDetail from '../components/UserDetail'
 import * as API from '../services/contact-api'
+import UserDetail from '../components/UserDetail'
 import { Colors, SCREEN_PADDING } from '../css'
+import ShockButton from '../components/ShockButton'
+import ShockDialog from '../components/ShockDialog'
+import { CHAT_ROUTE } from './Chat'
 
+const ACCEPT_REQUEST_DIALOG_TEXT =
+  'By accepting this request, this user will be able to send you messages. You can block the user from sending further messages down the line if you wish so.'
 export const CHATS_ROUTE = 'CHATS_ROUTE'
-
 /**
  * @typedef {import('./Chat').Params} ChatParams
  */
@@ -26,7 +30,15 @@ export const CHATS_ROUTE = 'CHATS_ROUTE'
  */
 const byTimestampFromOldestToNewest = (a, b) => a.timestamp - b.timestamp
 
-const NoChatsOrRequests = React.memo(() => <Text>NO CHATS OR REQUESTS</Text>)
+/**
+ * @type {React.FC<{ onPressGoToUsers: () => void }>}
+ */
+const NoChatsOrRequests = React.memo(({ onPressGoToUsers }) => ((
+  <View style={styles.noChats}>
+    <Text>NO CHATS OR REQUESTS</Text>
+    <ShockButton onPress={onPressGoToUsers} title="See List Of Users" />
+  </View>
+)))
 
 /**
  * @param {API.Schema.Chat | API.Schema.SimpleReceivedRequest | API.Schema.SimpleSentRequest} item
@@ -47,6 +59,7 @@ const keyExtractor = item => {
 
 /**
  * @typedef {object} State
+ * @prop {string|null} acceptingRequest
  * @prop {API.Schema.Chat[] | null} chats
  * @prop {API.Schema.SimpleReceivedRequest[] | null} receivedRequests
  * @prop {API.Schema.SimpleSentRequest[] | null} sentRequests
@@ -63,78 +76,92 @@ const readMsgs = new Set()
  * @augments React.PureComponent<Props, State>
  */
 export default class Chats extends React.PureComponent {
-  mounted = false
-
   /**
-   * Gun has no unsubscribing. Keep track so we don't re-subscribe on re-mount
+   * @type {import('react-navigation').NavigationStackScreenOptions}
    */
-  listenersAssigned = false
+  static navigationOptions = {
+    header: null,
+  }
 
   /** @type {State} */
   state = {
+    acceptingRequest: null,
     chats: null,
-    receivedRequests: [],
-    sentRequests: [],
+    receivedRequests: null,
+    sentRequests: null,
   }
 
+  /**
+   * @private
+   * @type {Record<string, () => void>}
+   */
+  choiceToHandler = {
+    Accept: () => {
+      API.Actions.acceptRequest(
+        /** @type {string} */ (this.state.acceptingRequest),
+      )
+
+      this.setState({
+        acceptingRequest: null,
+      })
+    },
+    Ignore: () => {
+      this.setState({
+        acceptingRequest: null,
+      })
+    },
+  }
+
+  chatsUnsubscribe = () => {}
+  receivedReqsUnsubscribe = () => {}
+  sentReqsUnsubscribe = () => {}
+
   componentDidMount() {
-    this.mounted = true
-
-    if (!this.listenersAssigned) {
-      this.listenersAssigned = true
-
-      try {
-        API.Events.onChats(this.onChats)
-        API.Events.onSimplerReceivedRequests(this.onReceivedRequests)
-        API.Events.onSimplerSentRequests(this.onSentRequests)
-      } catch (e) {
-        console.warn(e.message)
-      }
-    }
+    this.chatsUnsubscribe = API.Events.onChats(this.onChats)
+    this.receivedReqsUnsubscribe = API.Events.onReceivedRequests(
+      this.onReceivedRequests,
+    )
+    this.sentReqsUnsubscribe = API.Events.onSentRequests(this.onSentRequests)
   }
 
   componentWillUnmount() {
-    this.mounted = false
-  }
-
-  /**
-   * @param {API.Schema.SimpleReceivedRequest[]} receivedRequests
-   */
-  onReceivedRequests = receivedRequests => {
-    if (this.mounted) {
-      this.setState({
-        receivedRequests,
-      })
-    }
-  }
-
-  /**
-   * @param {API.Schema.SimpleSentRequest[]} sentRequests
-   */
-  onSentRequests = sentRequests => {
-    if (this.mounted) {
-      this.setState({
-        sentRequests,
-      })
-    }
+    this.chatsUnsubscribe()
+    this.receivedReqsUnsubscribe()
+    this.sentReqsUnsubscribe()
   }
 
   /**
    * @param {API.Schema.Chat[]} chats
    */
   onChats = chats => {
-    if (this.mounted) {
-      this.setState({
-        chats,
-      })
-    }
+    this.setState({
+      chats,
+    })
+  }
+
+  /**
+   * @param {API.Schema.SimpleReceivedRequest[]} receivedRequests
+   */
+  onReceivedRequests = receivedRequests => {
+    console.warn('onReceivedRequests')
+    this.setState({
+      receivedRequests,
+    })
+  }
+
+  /**
+   * @param {API.Schema.SimpleSentRequest[]} sentRequests
+   */
+  onSentRequests = sentRequests => {
+    this.setState({
+      sentRequests,
+    })
   }
 
   /**
    * @param {string} recipientPublicKey
    */
   onPressChat = recipientPublicKey => {
-    console.warn('here')
     // CAST: If user is pressing on a chat, chats are loaded and not null.
     // TS wants the expression to be casted to `unknown` first. Not possible
     // with jsdoc
@@ -161,22 +188,31 @@ export default class Chats extends React.PureComponent {
       recipientPublicKey,
     }
 
-    this.props.navigation.navigate('chat', params)
+    this.props.navigation.navigate(CHAT_ROUTE, params)
+  }
+  ////////////////////////////////////////////////////////////////////////////////
+  /**
+   * @private
+   * @param {string} receivedRequestID
+   * @returns {void}
+   */
+  onPressReceivedRequest = receivedRequestID => {
+    this.setState({
+      acceptingRequest: receivedRequestID,
+    })
   }
 
   /**
-   * @param {string} receivedRequestID
+   * @private
+   * @returns {void}
    */
-  onPressReceivedRequest = receivedRequestID => {
-    API.Actions.acceptRequest(receivedRequestID)
-      .then(() => {
-        console.warn('accepted successfully')
-      })
-      .catch(e => {
-        console.warn(e)
-      })
+  cancelAcceptingRequest = () => {
+    this.setState({
+      acceptingRequest: null,
+    })
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
   /**
    * @param {API.Schema.Chat} chat
    * @returns {React.ReactElement<any> | null}
@@ -190,7 +226,9 @@ export default class Chats extends React.PureComponent {
 
     const lastMsgTimestamp = lastMsg.timestamp
 
-    const unread = !readMsgs.has(lastMsg.id)
+    const unread =
+      lastMsg.body !== '$$__SHOCKWALLET__INITIAL__MESSAGE' &&
+      !readMsgs.has(lastMsg.id)
 
     return (
       <View style={styles.itemContainer}>
@@ -200,7 +238,11 @@ export default class Chats extends React.PureComponent {
             alternateTextBold={unread}
             id={chat.recipientPublicKey}
             image={chat.recipientAvatar}
-            lowerText={lastMsg.body}
+            lowerText={
+              lastMsg.body === '$$__SHOCKWALLET__INITIAL__MESSAGE'
+                ? 'Empty conversation'
+                : lastMsg.body
+            }
             lowerTextStyle={unread ? styles.boldFont : undefined}
             name={
               chat.recipientDisplayName === null
@@ -293,6 +335,7 @@ export default class Chats extends React.PureComponent {
   }
 
   /**
+   * @private
    * @param {{ item: API.Schema.Chat|API.Schema.SimpleReceivedRequest|API.Schema.SimpleSentRequest }} args
    * @returns {React.ReactElement<any> | null}
    */
@@ -315,14 +358,45 @@ export default class Chats extends React.PureComponent {
     return null
   }
 
+  /**
+   * @private
+   */
+  onPressGoToUsers = () => {
+    this.props.navigation.navigate('Users')
+  }
+
+  logout = () => {
+    API.Actions.logout()
+  }
+
   render() {
-    const { chats, receivedRequests, sentRequests } = this.state
+    const {
+      acceptingRequest,
+      chats,
+      receivedRequests,
+      sentRequests,
+    } = this.state
 
     if (chats === null || receivedRequests === null || sentRequests === null) {
-      return <ActivityIndicator />
+      return (
+        <View>
+          <Button onPress={this.logout} title="Logout" />
+          <ActivityIndicator />
+        </View>
+      )
     }
 
     const items = [...chats, ...receivedRequests, ...sentRequests]
+
+    if (items.length === 0) {
+      return (
+        <View style={styles.flex}>
+          <Button onPress={this.logout} title="Logout" />
+
+          <NoChatsOrRequests onPressGoToUsers={this.onPressGoToUsers} />
+        </View>
+      )
+    }
 
     items.sort((a, b) => {
       /** @type {number} */
@@ -367,15 +441,27 @@ export default class Chats extends React.PureComponent {
     })
 
     return (
-      <FlatList
-        contentContainerStyle={styles.list}
-        ItemSeparatorComponent={Divider}
-        data={items}
-        keyExtractor={keyExtractor}
-        renderItem={this.itemRenderer}
-        style={styles.list}
-        ListEmptyComponent={NoChatsOrRequests}
-      />
+      <React.Fragment>
+        <FlatList
+          contentContainerStyle={styles.list}
+          ItemSeparatorComponent={Divider}
+          data={items}
+          ListHeaderComponent={() => (
+            <Button onPress={this.logout} title="Logout" />
+          )}
+          keyExtractor={keyExtractor}
+          renderItem={this.itemRenderer}
+          style={styles.list}
+        />
+
+        <NoChatsOrRequests onPressGoToUsers={this.onPressGoToUsers} />
+
+        <ShockDialog
+          choiceToHandler={this.choiceToHandler}
+          message={ACCEPT_REQUEST_DIALOG_TEXT}
+          visible={!!acceptingRequest}
+        />
+      </React.Fragment>
     )
   }
 }
@@ -388,7 +474,12 @@ const ITEM_CONTAINER_VERTICAL_PADDING = 15
  */
 const styles = {
   boldFont: {
+    // @ts-ignore
     fontWeight: 'bold',
+  },
+
+  flex: {
+    flex: 1,
   },
 
   itemContainer: {
@@ -403,6 +494,12 @@ const styles = {
 
   list: {
     flex: 1,
+  },
+
+  noChats: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
   },
 
   userDetailContainer: {
