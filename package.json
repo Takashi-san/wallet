@@ -38,6 +38,7 @@
     "@types/react-native-vector-icons": "^6.4.1",
     "@types/react-navigation": "^2.13.10",
     "@types/socket.io-client": "^1.4.32",
+    "@types/uuid": "^3.4.5",
     "babel-jest": "23.0.1",
     "babel-preset-react-native": "4.0.0",
     "flow-bin": "^0.78.0",
