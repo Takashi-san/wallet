@@ -18,6 +18,9 @@ import { JitterTypes } from 'exponential-backoff/dist/options'
 
 const NODE_IP = 'NODE_IP'
 const STORED_AUTH_DATA = 'STORED_AUTH_DATA'
+const TOKEN = 'TOKEN'
+
+export const NO_CACHED_NODE_IP = 'NO_CACHED_NODE_IP'
 
 /**
  * @typedef {(nodeIP: string|null) => void} NodeIPListener
@@ -206,3 +209,33 @@ export const writeStoredAuthData = authData =>
       })
     }
   })
+
+/**
+ * Returns the token.
+ * @throws {TypeError} NO_CACHED_NODE_IP - If node ip is not present in cache.
+ * @returns {Promise<string|null>}
+ */
+export const getToken = async () => {
+  const nodeIP = await getNodeIP()
+
+  if (typeof nodeIP !== 'string') {
+    throw new TypeError(NO_CACHED_NODE_IP)
+  }
+
+  const token = await AsyncStorage.getItem(TOKEN)
+
+  if (typeof token === 'string' && token.length === 0) {
+    return null
+  }
+
+  return token
+}
+
+/**
+ * @returns {Promise<{ nodeIP: string , token: string|null }>}
+ */
+export const getNodeIPTokenPair = async () => ({
+  // @ts-ignore If nodeIP is null, getToken() will throw.
+  nodeIP: await getNodeIP(),
+  token: await getToken(),
+})
