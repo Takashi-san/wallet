@@ -116,11 +116,13 @@ import * as Utils from './utils'
  */
 
 /**
+ * TODO: These should be numbers.
+ * https://api.lightning.community/#grpc-response-walletbalanceresponse
  * @typedef {object} WalletBalanceResponse
- * @prop {number} total_balance The balance of the wallet
- * @prop {number} confirmed_balance The confirmed balance of a wallet(with >= 1
+ * @prop {string} total_balance The balance of the wallet
+ * @prop {string} confirmed_balance The confirmed balance of a wallet(with >= 1
  * confirmations)
- * @prop {number} unconfirmed_balance The unconfirmed balance of a wallet(with 0
+ * @prop {string} unconfirmed_balance The unconfirmed balance of a wallet(with 0
  * confirmations)
  */
 
@@ -157,6 +159,36 @@ import * as Utils from './utils'
  * returned invoices. This can be used to seek backwards, pagination style.
  */
 export const NO_CACHED_TOKEN = 'NO_CACHED_TOKEN'
+
+/**
+ * @param {Invoice|Payment|Transaction} item
+ * @returns {item is Invoice}
+ */
+export const isInvoice = item => {
+  const i = /** @type {Invoice} */ (item)
+
+  return typeof i.r_hash === 'string'
+}
+
+/**
+ * @param {Invoice|Payment|Transaction} item
+ * @returns {item is Payment}
+ */
+export const isPayment = item => {
+  const p = /** @type {Payment} */ (item)
+
+  return typeof p.payment_hash === 'string'
+}
+
+/**
+ * @param {Invoice|Payment|Transaction} item
+ * @returns {item is Transaction}
+ */
+export const isTransaction = item => {
+  const t = /** @type {Transaction} */ (item)
+
+  return typeof t.tx_hash === 'string'
+}
 
 /**
  * @returns {Promise<number>}
@@ -201,7 +233,7 @@ export const balance = async () => {
     throw new TypeError(NO_CACHED_TOKEN)
   }
 
-  const endpoint = `http://${nodeIP}/api/lnd/walletbalance`
+  const endpoint = `http://${nodeIP}:9835/api/lnd/walletbalance`
 
   const payload = {
     method: 'GET',
@@ -228,7 +260,7 @@ export const balance = async () => {
  * https://api.lightning.community/#gettransactions
  * @throws {Error|TypeError} NO_CACHED_TOKEN - If no token is found. A generic
  * error otherwise, if returned by the API.
- * @returns {Promise<Transaction>}
+ * @returns {Promise<Transaction[]>}
  */
 export const getTransactions = async () => {
   const { nodeIP, token } = await Cache.getNodeIPTokenPair()
@@ -237,7 +269,7 @@ export const getTransactions = async () => {
     throw new TypeError(NO_CACHED_TOKEN)
   }
 
-  const endpoint = `http://${nodeIP}/api/lnd/transactions`
+  const endpoint = `http://${nodeIP}:9835/api/lnd/transactions`
 
   const payload = {
     method: 'GET',
@@ -276,7 +308,7 @@ export const listPayments = async (request = {}) => {
     throw new TypeError(NO_CACHED_TOKEN)
   }
 
-  const endpoint = `http://${nodeIP}/api/lnd/listpayments`
+  const endpoint = `http://${nodeIP}:9835/api/lnd/listpayments`
 
   const url = Utils.getQueryParams(endpoint, request)
 
@@ -308,7 +340,7 @@ export const listPayments = async (request = {}) => {
  * Backwards pagination is also supported through the Reversed flag.
  * https://api.lightning.community/?javascript#listinvoices
  * @param {ListInvoiceRequest=} request
- * @returns {Promise<ListInvoiceResponse]>}
+ * @returns {Promise<ListInvoiceResponse>}
  */
 export const listInvoices = async (request = {}) => {
   const { nodeIP, token } = await Cache.getNodeIPTokenPair()
@@ -317,7 +349,7 @@ export const listInvoices = async (request = {}) => {
     throw new TypeError(NO_CACHED_TOKEN)
   }
 
-  const endpoint = `http://${nodeIP}/api/lnd/listinvoices`
+  const endpoint = `http://${nodeIP}:9835/api/lnd/listinvoices`
 
   const url = Utils.getQueryParams(endpoint, request)
 
