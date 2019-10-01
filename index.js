@@ -1,7 +1,7 @@
 /**
  * @format
  */
-import { AppRegistry, AsyncStorage, View, StyleSheet } from 'react-native'
+import { AppRegistry, View, StyleSheet, AsyncStorage } from 'react-native'
 import moment from 'moment'
 
 import once from 'lodash/once'
@@ -13,6 +13,7 @@ import RootStack, { setup as rootStackSetup } from './app/factories/RootStack'
 
 import Loading from './app/screens/Loading'
 
+import * as Auth from './app/services/auth'
 import * as NavigationService from './app/services/navigation'
 import * as Cache from './app/services/cache'
 import * as ContactApi from './app/services/contact-api'
@@ -143,13 +144,15 @@ export default class ShockWallet extends Component {
       .then(async conn => {
         if (conn) {
           await Cache.writeNodeIP(this.state.tryingIP)
+          // pre-emptively signal node to Connect to LND
+          Auth.connectNodeToLND()
+
           const storedAuthData = await Cache.getStoredAuthData()
 
           if (
             storedAuthData !== null &&
             storedAuthData.nodeIP === this.state.tryingIP
           ) {
-            console.warn(`storedAuthData: ${JSON.stringify(storedAuthData)}`)
             ContactApi.Events.initAuthData(storedAuthData.authData)
           }
 
@@ -243,7 +246,7 @@ export default class ShockWallet extends Component {
 
   onPressUseShockCloud = () => {
     this.setState({
-      tryingIP: '167.88.11.206',
+      tryingIP: '192.168.10.123',
     })
   }
 
