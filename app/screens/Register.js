@@ -12,8 +12,6 @@ import {
   View,
 } from 'react-native'
 
-import debounce from 'lodash/debounce'
-import once from 'lodash/once'
 /**
  * @typedef {import('react-navigation').NavigationScreenProp<{}, { awaitingRes: boolean }>} Navigation
  */
@@ -22,6 +20,7 @@ import ShockButton from '../components/ShockButton'
 import ShockDialog from '../components/ShockDialog'
 
 import * as API from '../services/contact-api'
+import * as Auth from '../services/auth'
 
 const SUCCESS_MSG = 'Registration Sucessful'
 
@@ -145,54 +144,23 @@ export default class Register extends React.PureComponent {
       awaitingRes: true,
     })
 
-    const resFromServer = new Promise(resolve => {
-      API.Events.onRegister(
-        debounce(
-          once(res => {
-            resolve(res)
-          }),
-          300,
-        ),
-      )
-    })
+    Auth.createWallet(this.state.alias, this.state.pass)
+      .then(({ publicKey, token }) => {
+        this.props.navigation.goBack()
 
-    API.Actions.register(this.state.alias, this.state.pass)
-
-    const timeout = new Promise(res => {
-      setTimeout(() => {
-        /** @type {API.Events._RegisterListenerDataBAD} */
-        const r = {
-          alias: this.state.alias,
-          msg: 'Did not receive a response from the server on time.',
-          ok: false,
-          pass: this.state.pass,
-        }
-
-        res(r)
-      }, 3000)
-    })
-
-    Promise.race([resFromServer, timeout])
-      .then((/** @type {API.Events.RegisterListenerData} */ res) => {
-        if (res.ok) {
-          this.setState({
-            msg: SUCCESS_MSG,
+        setImmediate(() => {
+          API.Events.initAuthData({
+            publicKey,
+            token,
           })
-        } else {
-          this.setState({
-            msg: res.msg,
-          })
-
-          this.props.navigation.setParams({
-            awaitingRes: false,
-          })
-        }
+        })
       })
       .catch(e => {
         this.setState({
           msg: e.message,
         })
-
+      })
+      .finally(() => {
         this.props.navigation.setParams({
           awaitingRes: false,
         })
@@ -225,7 +193,7 @@ export default class Register extends React.PureComponent {
 
         {!awaitingRes && (
           <View style={styles.center}>
-            <Text style={styles.callToAction}>Register</Text>
+            <Text style={styles.callToAction}>Create Wallet</Text>
           </View>
         )}
 
@@ -275,7 +243,7 @@ export default class Register extends React.PureComponent {
               }
               fullWidth
               onPress={this.onPressRegister}
-              title="Register"
+              title="Create"
             />
           </View>
         )}
