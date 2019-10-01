@@ -83,39 +83,39 @@ const MainSwitch = createSwitchNavigator(
   },
 )
 
-let nodeIP = ''
-
 export const setup = async () => {
   try {
-    ContactAPI.Events.onAuth(ad => {
-      const currentRoute = NavigationService.getCurrentRoute()
-      // Anytime un-authentication happens immediately navigate to the login screen.
+    ContactAPI.Events.onAuth(
+      debounce(ad => {
+        const currentRoute = NavigationService.getCurrentRoute()
+        // Anytime un-authentication happens immediately navigate to the login screen.
 
-      if (ad === null && currentRoute !== AUTH) {
-        NavigationService.navigate(AUTH)
-      }
+        if (ad === null && currentRoute !== AUTH) {
+          NavigationService.navigate(AUTH)
+        }
 
-      // empty string handles case when we get auth data from cache
-      if (ad !== null && (currentRoute === LOGIN || currentRoute === '')) {
-        NavigationService.navigate(LOADING)
+        // empty string handles case when we get auth data from cache
+        if (ad !== null && (currentRoute === LOGIN || currentRoute === '')) {
+          NavigationService.navigate(LOADING)
 
-        // Get the display name once after login.
-        // Make the user choose his/her display name if not already set.
-        ContactAPI.Events.onDisplayName(
-          debounce(
-            once(dn => {
-              if (dn === null) {
-                NavigationService.navigate(CHOOSE_DISPLAY_NAME)
-              } else {
-                NavigationService.navigate(APP)
-              }
-            }),
-          ),
-        )
-      }
+          // Get the display name once after login.
+          // Make the user choose his/her display name if not already set.
+          ContactAPI.Events.onDisplayName(
+            debounce(
+              once(dn => {
+                if (dn === null) {
+                  NavigationService.navigate(CHOOSE_DISPLAY_NAME)
+                } else {
+                  NavigationService.navigate(APP)
+                }
+              }),
+            ),
+          )
+        }
 
-      Cache.writeStoredAuthData(ad)
-    })
+        Cache.writeStoredAuthData(ad)
+      }),
+    )
   } catch (e) {
     console.warn(e)
   }
