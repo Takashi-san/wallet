@@ -15,7 +15,9 @@ import {
  */
 
 import * as API from '../services/contact-api'
+import * as Auth from '../services/auth'
 import ShockButton from '../components/ShockButton'
+import ShockDialog from '../components/ShockDialog'
 import { REGISTER } from './Register'
 
 export const LOGIN = 'LOGIN'
@@ -36,13 +38,14 @@ const shockLogo = require('../assets/images/shocklogo.png')
  * @prop {string} alias
  * @prop {boolean} awaitingRes
  * @prop {boolean} connected
+ * @prop {string} err
  * @prop {string} pass
  */
 
 /**
  * @augments React.PureComponent<Props, State>
  */
-export default class FakeLogin extends React.PureComponent {
+export default class Login extends React.PureComponent {
   /**
    * @type {import('react-navigation').NavigationScreenOptions}
    */
@@ -55,6 +58,7 @@ export default class FakeLogin extends React.PureComponent {
     alias: '',
     awaitingRes: true,
     connected: false,
+    err: '',
     pass: '',
   }
 
@@ -75,6 +79,15 @@ export default class FakeLogin extends React.PureComponent {
   componentWillUnmount() {
     this.connUnsubscribe()
     this.willFocusSub.remove()
+  }
+
+  /**
+   * @private
+   */
+  dismissDialog = () => {
+    this.setState({
+      err: '',
+    })
   }
 
   /**
@@ -110,30 +123,50 @@ export default class FakeLogin extends React.PureComponent {
    * @private
    * @returns {void}
    */
-  login = () => {
+  onPressUnlock = () => {
     if (this.state.awaitingRes || this.state.alias.length === 0) {
       return
     }
 
-    this.setState({
-      awaitingRes: true,
-    })
-
-    API.Actions.auth(this.state.alias, this.state.pass)
+    this.setState(
+      {
+        awaitingRes: true,
+      },
+      () => {
+        Auth.unlockWallet(this.state.alias, this.state.pass)
+          .then(res => {
+            API.Events.initAuthData(res)
+            // Cache.writeStoredAuthData({
+            //   publicKey: res.publicKey,
+            //   token: res.token,
+            // })
+          })
+          .catch(e => {
+            this.setState({
+              err: e.message,
+            })
+          })
+          .finally(() => {
+            this.setState({
+              awaitingRes: false,
+            })
+          })
+      },
+    )
   }
 
   /**
    * @private
    * @returns {void}
    */
-  goToRegister = () => {
+  goToCreateWallet = () => {
     this.props.navigation.navigate(REGISTER)
   }
 
   render() {
     const { alias, awaitingRes, connected, pass } = this.state
 
-    const enableLoginBtn = connected && alias.length > 0 && pass.length > 0
+    const enableUnlockBtn = connected && alias.length > 0 && pass.length > 0
 
     return (
       <View style={styles.container}>
@@ -146,7 +179,7 @@ export default class FakeLogin extends React.PureComponent {
 
         {!awaitingRes && (
           <View style={styles.shockWalletCallToActionContainer}>
-            <Text style={styles.callToAction}>Login</Text>
+            <Text style={styles.callToAction}>Unlock Wallet</Text>
           </View>
         )}
 
@@ -175,18 +208,24 @@ export default class FakeLogin extends React.PureComponent {
             />
 
             <ShockButton
-              disabled={!enableLoginBtn}
-              onPress={this.login}
-              title="Login"
+              disabled={!enableUnlockBtn}
+              onPress={this.onPressUnlock}
+              title="Unlock"
             />
 
             <ShockButton
               color="grey"
-              onPress={this.goToRegister}
-              title="Register"
+              onPress={this.goToCreateWallet}
+              title="Create Wallet"
             />
           </View>
         )}
+
+        <ShockDialog
+          message={this.state.err}
+          onRequestClose={this.dismissDialog}
+          visible={!!this.state.err}
+        />
       </View>
     )
   }
