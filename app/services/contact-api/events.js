@@ -44,6 +44,12 @@ const connectionListeners = []
  */
 export const initAuthData = ad => {
   _authData = ad
+
+  setImmediate(() => {
+    authListeners.forEach(l => {
+      l(_authData)
+    })
+  })
 }
 
 /**
@@ -464,45 +470,11 @@ export const setupEvents = () => {
     }
   })
 
-  Socket.socket.on(Action.AUTHENTICATE, res => {
-    try {
-      if (typeof res.msg.token !== 'string') {
-        throw new TypeError('token received from server not string')
-      }
-
-      if (typeof res.msg.publicKey !== 'string') {
-        throw new TypeError('publickey received from server not string')
-      }
-
-      _authData = {
-        publicKey: res.msg.publicKey,
-        token: res.msg.token,
-      }
-
-      authListeners.forEach(l => {
-        l(_authData)
-      })
-    } catch (e) {
-      console.warn(e.message)
-    }
-  })
-
-  Socket.socket.on(Action.LOGOUT, res => {
-    if (res.ok) {
-      _authData = null
-
-      authListeners.forEach(l => {
-        l(_authData)
-      })
-    } else {
-      console.warn(res.msg)
-    }
-  })
-
   // If when receiving a token expired response on response to any data event
   // notify auth listeners that the token expired.
   Object.values(Event).forEach(e => {
     Socket.socket.on(e, res => {
+      console.warn(`res for event: ${e}: ${JSON.stringify(res)}`)
       if (res.msg === 'Token expired.') {
         _authData = null
 
@@ -517,6 +489,7 @@ export const setupEvents = () => {
   // notify auth listeners that the token expired.
   Object.values(Action).forEach(a => {
     Socket.socket.on(a, res => {
+      console.warn(`res for action: ${a}: ${JSON.stringify(res)}`)
       if (res.msg === 'Token expired.') {
         _authData = null
 
