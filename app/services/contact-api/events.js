@@ -44,6 +44,12 @@ const connectionListeners = []
  */
 export const initAuthData = ad => {
   _authData = ad
+
+  setImmediate(() => {
+    authListeners.forEach(l => {
+      l(_authData)
+    })
+  })
 }
 
 /**
@@ -461,41 +467,6 @@ export const setupEvents = () => {
       usersListeners.forEach(l => {
         l(res.msg)
       })
-    }
-  })
-
-  Socket.socket.on(Action.AUTHENTICATE, res => {
-    try {
-      if (typeof res.msg.token !== 'string') {
-        throw new TypeError('token received from server not string')
-      }
-
-      if (typeof res.msg.publicKey !== 'string') {
-        throw new TypeError('publickey received from server not string')
-      }
-
-      _authData = {
-        publicKey: res.msg.publicKey,
-        token: res.msg.token,
-      }
-
-      authListeners.forEach(l => {
-        l(_authData)
-      })
-    } catch (e) {
-      console.warn(e.message)
-    }
-  })
-
-  Socket.socket.on(Action.LOGOUT, res => {
-    if (res.ok) {
-      _authData = null
-
-      authListeners.forEach(l => {
-        l(_authData)
-      })
-    } else {
-      console.warn(res.msg)
     }
   })
 
