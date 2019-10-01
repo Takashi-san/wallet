@@ -76,8 +76,8 @@ export const unlockWallet = async (alias, password) => {
       throw new TypeError("typeof body.authorization !== 'string'")
     } else {
       return {
-        publicKey: body.authorization,
-        token: body.user.publicKey,
+        publicKey: body.user.publicKey,
+        token: body.authorization,
       }
     }
   } else {
