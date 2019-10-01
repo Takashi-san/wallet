@@ -115,8 +115,6 @@ export const createWallet = async (alias, password) => {
 
   const body = await res.json()
 
-  console.warn(body)
-
   if (res.ok) {
     if (typeof body.authorization !== 'string') {
       throw new TypeError("typeof body.authorization !== 'string'")
