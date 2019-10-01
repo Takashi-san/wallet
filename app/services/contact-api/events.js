@@ -474,6 +474,7 @@ export const setupEvents = () => {
   // notify auth listeners that the token expired.
   Object.values(Event).forEach(e => {
     Socket.socket.on(e, res => {
+      console.warn(`res for event: ${e}: ${JSON.stringify(res)}`)
       if (res.msg === 'Token expired.') {
         _authData = null
 
@@ -488,6 +489,7 @@ export const setupEvents = () => {
   // notify auth listeners that the token expired.
   Object.values(Action).forEach(a => {
     Socket.socket.on(a, res => {
+      console.warn(`res for action: ${a}: ${JSON.stringify(res)}`)
       if (res.msg === 'Token expired.') {
         _authData = null
 
