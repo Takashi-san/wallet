@@ -2,7 +2,11 @@
  * @prettier
  */
 
-import { createStackNavigator, createSwitchNavigator } from 'react-navigation'
+import {
+  createBottomTabNavigator,
+  createStackNavigator,
+  createSwitchNavigator,
+} from 'react-navigation'
 import debounce from 'lodash/debounce'
 import once from 'lodash/once'
 
@@ -18,6 +22,7 @@ import FundWallet from '../screens/Login/fundWallet'
 import SearchForUsers from '../screens/Search/Search'
 import EditProfile from '../screens/Profile/EditProfile'
 import PublicProfile from '../screens/Profile/PublicProfile'
+import WalletOverview, { WALLET_OVERVIEW } from '../screens/WalletOverview'
 
 import ChooseDisplayName, {
   CHOOSE_DISPLAY_NAME,
@@ -35,6 +40,20 @@ import * as Cache from '../services/cache'
 import * as NavigationService from '../services/navigation'
 
 export const APP = 'APP'
+export const MAIN_NAV = 'MAIN_NAV'
+
+const MainNav = createBottomTabNavigator(
+  {
+    [WALLET_OVERVIEW]: WalletOverview,
+  },
+  {
+    initialRouteName: WALLET_OVERVIEW,
+  },
+)
+
+MainNav.navigationOptions = {
+  header: null,
+}
 
 const App = createStackNavigator(
   {
@@ -52,10 +71,11 @@ const App = createStackNavigator(
     User,
     Users,
     MyProfile,
+    [MAIN_NAV]: MainNav,
   },
   {
     headerLayoutPreset: 'center',
-    initialRouteName: 'MyProfile',
+    initialRouteName: MAIN_NAV,
   },
 )
 
