@@ -181,6 +181,7 @@ import * as Utils from './utils'
  */
 
 /**
+ * Not supported in API as of commit ed93a9e5c3915e1ccf6f76f0244466e999dbc939 .
  * https://api.lightning.community/#grpc-request-listinvoicerequest
  * @typedef {object} ListInvoiceRequest
  * @prop {boolean=} pending_only If set, only unsettled invoices will be returned
@@ -196,6 +197,7 @@ import * as Utils from './utils'
  */
 
 /**
+ * Not supported in API as of commit ed93a9e5c3915e1ccf6f76f0244466e999dbc939 .
  * @typedef {object} ListInvoiceResponse
  * @prop {Invoice[]} invoices A list of invoices from the time slice of the time
  * series specified in the request.
@@ -203,6 +205,21 @@ import * as Utils from './utils'
  * returned invoices.This can be used to seek further, pagination style.
  * @prop {number} first_index_offset The index of the last item in the set of
  * returned invoices. This can be used to seek backwards, pagination style.
+ */
+
+/**
+ * NOT based on any lightning API.
+ * @typedef {object} PaginatedListInvoicesRequest
+ * @prop {number} itemsPerPage
+ * @prop {number} page
+ */
+
+/**
+ * NOT based on any lightning API.
+ * @typedef {object} PaginatedListInvoicesResponse
+ * @prop {Invoice[]} entries
+ * @prop {number} page
+ * @prop {number} totalPages
  */
 export const NO_CACHED_TOKEN = 'NO_CACHED_TOKEN'
 
@@ -387,10 +404,10 @@ export const listPayments = async request => {
  * next request. By default, the first 100 invoices created will be returned.
  * Backwards pagination is also supported through the Reversed flag.
  * https://api.lightning.community/?javascript#listinvoices
- * @param {ListInvoiceRequest=} request
- * @returns {Promise<ListInvoiceResponse>}
+ * @param {PaginatedListInvoicesRequest} request
+ * @returns {Promise<PaginatedListInvoicesResponse>}
  */
-export const listInvoices = async (request = {}) => {
+export const listInvoices = async request => {
   const { nodeIP, token } = await Cache.getNodeIPTokenPair()
 
   if (typeof token !== 'string') {
