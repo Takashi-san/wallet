@@ -156,13 +156,7 @@ export const writeNodeIP = ip =>
  * @returns {Promise<StoredAuthData|null>}
  */
 export const getStoredAuthData = () =>
-  backOff(() => AsyncStorage.getItem(STORED_AUTH_DATA), {
-    jitter: JitterTypes.Full,
-    retry(_, attemptNumber) {
-      console.warn(`retry getItem(STORED_AUTH_DATA): ${attemptNumber}`)
-      return true
-    },
-  }).then(sad => {
+  AsyncStorage.getItem(STORED_AUTH_DATA).then(sad => {
     if (sad === null) {
       return null
     } else {
@@ -222,13 +216,17 @@ export const getToken = async () => {
     throw new TypeError(NO_CACHED_NODE_IP)
   }
 
-  const token = await AsyncStorage.getItem(TOKEN)
+  const authData = await getStoredAuthData()
 
-  if (typeof token === 'string' && token.length === 0) {
-    return null
+  if (authData === null) {
+    throw new TypeError('No stored auth data')
   }
 
-  return token
+  if (authData.authData === null) {
+    throw new TypeError('No stored auth data')
+  }
+
+  return authData.authData.token
 }
 
 /**
