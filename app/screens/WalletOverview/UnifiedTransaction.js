@@ -101,9 +101,7 @@ export default class UnifiedTransaction extends React.PureComponent {
           </View>
 
           <View style={styles.dateContainer}>
-            <Text style={styles.dateText}>
-              {moment.unix(timestamp).fromNow()}
-            </Text>
+            <Text style={styles.dateText}>{moment(timestamp).fromNow()}</Text>
           </View>
         </View>
       </TouchableOpacity>
