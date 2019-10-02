@@ -116,13 +116,12 @@ import * as Utils from './utils'
  */
 
 /**
- * TODO: These should be numbers.
  * https://api.lightning.community/#grpc-response-walletbalanceresponse
  * @typedef {object} WalletBalanceResponse
- * @prop {string} total_balance The balance of the wallet
- * @prop {string} confirmed_balance The confirmed balance of a wallet(with >= 1
+ * @prop {number} total_balance The balance of the wallet
+ * @prop {number} confirmed_balance The confirmed balance of a wallet(with >= 1
  * confirmations)
- * @prop {string} unconfirmed_balance The unconfirmed balance of a wallet(with 0
+ * @prop {number} unconfirmed_balance The unconfirmed balance of a wallet(with 0
  * confirmations)
  */
 
@@ -254,7 +253,7 @@ export const balance = async () => {
 }
 
 /**
- * Returns a list describing all the known regular bitconi network transactions
+ * Returns a list describing all the known regular bitcoin network transactions
  * relevant to the wallet.
  *
  * https://api.lightning.community/#gettransactions
