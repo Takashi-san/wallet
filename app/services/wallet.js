@@ -23,6 +23,36 @@ import * as Utils from './utils'
  */
 
 /**
+ * NOT based on any lightning API. Not supported by API as of commit
+ * ed93a9e5c3915e1ccf6f76f0244466e999dbc939 .
+ * @typedef {object} NonPaginatedTransactionsRequest
+ * @prop {false} paginate
+ */
+
+/**
+ * NOT based on any lightning API.
+ * @typedef {object} PaginatedTransactionsRequest
+ * @prop {number} page
+ * @prop {true} paginate
+ * @prop {number} itemsPerPage
+ */
+
+/**
+ * https://api.lightning.community/#grpc-response-transactiondetails . Not
+ * supported by API as of commit ed93a9e5c3915e1ccf6f76f0244466e999dbc939 .
+ * @typedef {object} NonPaginatedTransactionsResponse
+ * @prop {Transaction[]} transactions
+ */
+
+/**
+ * @typedef {object} PaginatedTransactionsResponse
+ * @prop {Transaction[]} content
+ * @prop {number} page
+ * @prop {number} totalPages
+ * @prop {number} totalItems
+ */
+
+/**
  * https://api.lightning.community/#payment
  * @typedef {object} Payment
  * @prop {string} payment_hash  The payment hash
@@ -126,11 +156,28 @@ import * as Utils from './utils'
  */
 
 /**
+ * Not supported in API as of commit ed93a9e5c3915e1ccf6f76f0244466e999dbc939 .
  * https://api.lightning.community/#grpc-request-listpaymentsrequest
  * @typedef {object} ListPaymentsRequest
  * @prop {boolean=} include_incomplete If true, then return payments that have
  * not yet fully completed. This means that pending payments, as well as failed
  * payments will show up if this field is set to True.
+ */
+
+/**
+ * NOT based on any lightning API.
+ * @typedef {object} PaginatedListPaymentsRequest
+ * @prop {number} page
+ * @prop {true} paginate
+ * @prop {number} itemsPerPage
+ */
+
+/**
+ * @typedef {object} PaginatedListPaymentsResponse
+ * @prop {Payment[]} content
+ * @prop {number} page
+ * @prop {number} totalPages
+ * @prop {number} totalItems
  */
 
 /**
@@ -255,20 +302,22 @@ export const balance = async () => {
 /**
  * Returns a list describing all the known regular bitcoin network transactions
  * relevant to the wallet.
- *
  * https://api.lightning.community/#gettransactions
+ * @param {PaginatedTransactionsRequest} request
  * @throws {Error|TypeError} NO_CACHED_TOKEN - If no token is found. A generic
  * error otherwise, if returned by the API.
- * @returns {Promise<Transaction[]>}
+ * @returns {Promise<PaginatedTransactionsResponse>}
  */
-export const getTransactions = async () => {
+export const getTransactions = async request => {
   const { nodeIP, token } = await Cache.getNodeIPTokenPair()
 
   if (typeof token !== 'string') {
     throw new TypeError(NO_CACHED_TOKEN)
   }
 
-  const endpoint = `http://${nodeIP}:9835/api/lnd/transactions`
+  const endpoint = `http://${nodeIP}:9835/api/lnd/transactions?paginate&page=${
+    request.page
+  }&itemsPerPage=${request.itemsPerPage}`
 
   const payload = {
     method: 'GET',
@@ -282,7 +331,7 @@ export const getTransactions = async () => {
   const body = await res.json()
 
   if (res.ok) {
-    return body.transactions
+    return body
   } else {
     throw new Error(body.errorMessage)
   }
@@ -297,10 +346,10 @@ export const getRegularBitcoinTransactions = getTransactions
  * AKA paid outgoing invoices.
  *
  * https://api.lightning.community/#listpayments
- * @param {ListPaymentsRequest=} request
- * @returns {Promise<Payment[]>}
+ * @param {PaginatedListPaymentsRequest} request
+ * @returns {Promise<PaginatedListPaymentsResponse>}
  */
-export const listPayments = async (request = {}) => {
+export const listPayments = async request => {
   const { nodeIP, token } = await Cache.getNodeIPTokenPair()
 
   if (typeof token !== 'string') {
@@ -323,7 +372,7 @@ export const listPayments = async (request = {}) => {
   const body = await res.json()
 
   if (res.ok) {
-    return body.payments
+    return body
   } else {
     throw new Error(body.errorMessage)
   }
