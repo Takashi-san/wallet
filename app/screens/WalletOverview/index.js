@@ -97,14 +97,25 @@ export default class WalletOverview extends React.PureComponent {
 
   fetchRecentTransactions = async () => {
     await Promise.all([
-      Wallet.listInvoices(),
-      Wallet.listPayments(),
-      Wallet.getTransactions(),
+      Wallet.listInvoices({
+        itemsPerPage: 1,
+        page: 1,
+      }),
+      Wallet.listPayments({
+        itemsPerPage: 1,
+        page: 1,
+        paginate: true,
+      }),
+      Wallet.getTransactions({
+        itemsPerPage: 1,
+        page: 1,
+        paginate: true,
+      }),
     ]).then(([invoiceResponse, payments, transactions]) => {
       const unifiedTrx = [
-        ...invoiceResponse.invoices,
-        ...payments,
-        ...transactions,
+        ...invoiceResponse.entries,
+        ...payments.content,
+        ...transactions.content,
       ]
 
       this.setState({
@@ -269,7 +280,6 @@ export default class WalletOverview extends React.PureComponent {
             >
               <View style={styles.sendButton}>
                 <Text
-                  underlayColor={'transparent'}
                   style={{
                     color: '#ffffff',
                     fontWeight: 'bold',
@@ -286,7 +296,6 @@ export default class WalletOverview extends React.PureComponent {
             >
               <View style={styles.requestButton}>
                 <Text
-                  underlayColor={'transparent'}
                   style={{
                     color: '#ffffff',
                     fontWeight: 'bold',
@@ -308,7 +317,7 @@ export default class WalletOverview extends React.PureComponent {
             width: width,
           }}
         >
-          <UnifiedTrx transactions={unifiedTrx} />
+          <UnifiedTrx unifiedTrx={unifiedTrx} />
         </View>
       </ScrollView>
     )
