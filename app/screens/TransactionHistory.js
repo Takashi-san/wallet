@@ -12,25 +12,22 @@ import moment from 'moment'
 
 // Todo: Transform bits values to a BTC string value
 
-const FAKE_TRANSACTIONS: Array<Transaction> = [
+/**
+ * @type {Transaction[]}
+ */
+const FAKE_TRANSACTIONS = [
   {
     amount: 0.01200661,
-    get symbol() {
-      return this.outgoing ? '-' : '+'
-    },
     id: '1',
     outgoing: false,
     userName: 'Matt Thompson',
     timestamp: moment()
-      .subtract(1, 'minues')
+      .subtract(1, 'minutes')
       .toDate()
       .getTime(),
   },
   {
     amount: 0.01200661,
-    get symbol() {
-      return this.outgoing ? '-' : '+'
-    },
     id: '2',
     userName: 'Jane Welling',
     timestamp: moment()
@@ -41,9 +38,6 @@ const FAKE_TRANSACTIONS: Array<Transaction> = [
   },
   {
     amount: 0.01200661,
-    get symbol() {
-      return this.outgoing ? '-' : '+'
-    },
     id: '3',
     outgoing: false,
     userName: 'Michael Farrignton',
@@ -54,9 +48,6 @@ const FAKE_TRANSACTIONS: Array<Transaction> = [
   },
   {
     amount: 0.01200661,
-    get symbol() {
-      return this.outgoing ? '-' : '+'
-    },
     id: '4',
     outgoing: true,
     userName: 'Bryan Xiang',
@@ -67,9 +58,6 @@ const FAKE_TRANSACTIONS: Array<Transaction> = [
   },
   {
     amount: 0.01200661,
-    get symbol() {
-      return this.outgoing ? '-' : '+'
-    },
     id: '5',
     outgoing: false,
     userName: 'Mel Winters',
@@ -80,9 +68,6 @@ const FAKE_TRANSACTIONS: Array<Transaction> = [
   },
   {
     amount: 0.01200661,
-    get symbol() {
-      return this.outgoing ? '-' : '+'
-    },
     id: '6',
     outgoing: true,
     userName: 'Jane Welling',
@@ -93,45 +78,61 @@ const FAKE_TRANSACTIONS: Array<Transaction> = [
   },
 ]
 
-const KeyExtractor = (item: Transaction): React.Key => item.id
+/**
+ *
+ * @param {Transaction} item
+ * @returns {string}
+ */
+const KeyExtractor = item => String(item.id)
 
 const NoTransactions = React.memo(() => (
   <Text>'There's no transactions availables</Text>
 ))
 
-interface Transaction {
-  amount: number;
-  id?: number | string;
-  userName: string;
-  timestamp: string;
-  image?: string;
-  outgoing: boolean;
-}
+/**
+ * @typedef {object} Transaction
+ * @prop {number} amount
+ * @prop {number|string} id
+ * @prop {string} userName
+ * @prop {number} timestamp
+ * @prop {string=} image
+ * @prop {boolean} outgoing
+ */
 
-interface State {
-  transactions: Array<Transaction>;
-}
+/**
+ * @typedef {object} State
+ * @prop {Transaction[]} transactions
+ */
 
 const sample =
   'https://react-native-training.github.io/react-native-elements/img/avatar/avatar--photo.jpg'
 
-export default class TransactionHistory extends React.PureComponent<{}, State> {
+/**
+ * @augments React.PureComponent<{}, State, never>
+ */
+export default class TransactionHistory extends React.PureComponent {
   state = {
     transactions: [],
   }
 
-  onPressTransaction = (id: string) => {
+  /**
+   * @param {string} id
+   */
+  onPressTransaction = id => {
     console.log(id)
   }
 
+  /**
+   * @param {{ item: Transaction }} args
+   */
   itemRenderer = ({ item }) => (
     <View style={styles.itemContainer}>
       <View style={styles.userDetailContainer}>
         <UserDetail
-          id={item.id}
+          id={String(item.id)}
           name={item.userName}
           nameBold
-          lowerText={`${item.symbol} ${item.amount}`}
+          lowerText={`${item.outgoing ? '-' : '+'} ${item.amount}`}
           lowerTextStyle={
             item.outgoing ? styles.satsLossedText : styles.satsGainedText
           }
@@ -145,7 +146,6 @@ export default class TransactionHistory extends React.PureComponent<{}, State> {
   )
 
   render() {
-    const { transactions } = this.state
     return (
       <View style={styles.list}>
         <FlatList

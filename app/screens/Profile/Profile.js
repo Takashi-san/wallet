@@ -14,7 +14,6 @@ const storage = require('../../services/localStorage');
 const AsyncStorage = require('react-native').AsyncStorage;
 const { width, height } = Dimensions.get('window');
 
-type Props = {};
 let renderLeftHeader = (callback) => {
   return (
     <TouchableHighlight underlayColor={'transparent'} onPress={callback}>
@@ -34,7 +33,7 @@ let renderRightHeader = (callback) => {
   );
 };
 
-export default class ProfileScreen extends Component<Props> {
+export default class ProfileScreen extends Component {
   static navigationOptions = (state) => {
     let params = state.navigation.state.params || {};
     return {

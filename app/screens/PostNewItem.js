@@ -21,14 +21,18 @@ import ShockInput from '../components/ShockInput'
 const INPUT_PADDING_LEFT = 16
 const ICON_SIZE = 36
 
-interface State {
-  amountOfPhotos: number;
-  itemName: string;
-  itemDescription: string;
-  itemPrice: string;
-}
+/**
+ * @typedef {object} State
+ * @prop {number} amountOfPhotos
+ * @prop {string} itemName
+ * @prop {string} itemDescription
+ * @prop {string} itemPrice
+ */
 
-export default class PostNewItem extends React.PureComponent<{}, State> {
+/**
+ * @augments React.PureComponent<{}, State, never>
+ */
+export default class PostNewItem extends React.PureComponent {
   state = {
     amountOfPhotos: 0,
     itemName: '',
@@ -36,19 +40,28 @@ export default class PostNewItem extends React.PureComponent<{}, State> {
     itemPrice: '',
   }
 
-  onChangeItemName = (text: string) => {
+  /**
+   * @param {string} text
+   */
+  onChangeItemName = text => {
     this.setState({
       itemName: text,
     })
   }
 
-  onChangeItemDescription = (text: string) => {
+  /**
+   * @param {string} text
+   */
+  onChangeItemDescription = text => {
     this.setState({
       itemDescription: text,
     })
   }
 
-  onChangeItemPrice = (text: string) => {
+  /**
+   * @param {string} text
+   */
+  onChangeItemPrice = text => {
     this.setState(({ itemPrice }) => ({
       itemPrice: /^[0-9]+$/.test(text) ? text : itemPrice,
     }))
@@ -87,7 +100,6 @@ export default class PostNewItem extends React.PureComponent<{}, State> {
               multiline
               numberOfLines={4}
               onChangeText={this.onChangeItemDescription}
-              paddingLeft={INPUT_PADDING_LEFT}
               placeholder="Write a description about this item"
               value={itemDescription}
             />
@@ -95,7 +107,6 @@ export default class PostNewItem extends React.PureComponent<{}, State> {
           <View style={[styles.containerPrice, styles.inputMargin]}>
             <ShockInput
               onChangeText={this.onChangeItemPrice}
-              paddingLeft={INPUT_PADDING_LEFT}
               placeholder="Item Price"
               value={itemPrice}
             />

@@ -21,7 +21,6 @@ const storage = require('../../services/localStorage');
 
 
 
-type Props = {};
 let renderLeftHeader = (callback) => {
   return (
     <TouchableHighlight underlayColor={'transparent'} onPress={callback}>
@@ -41,7 +40,7 @@ let renderRightHeader = (callback) => {
   );
 }
 
-export default class WalletScreen extends Component<Props> {
+export default class WalletScreen extends Component {
   static navigationOptions = (state) => {
     let params = state.navigation.state.params || {};
     return {

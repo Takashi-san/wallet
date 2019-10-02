@@ -12,10 +12,8 @@ const storage = require('../../services/localStorage');
 const AsyncStorage = require('react-native').AsyncStorage;
 const { width, height } = Dimensions.get('window');
 
-type Props = {
-  navigation: Object
-};
-export default class PublicProfile extends Component<Props> {
+
+export default class PublicProfile extends Component {
   // static navigationOptions = {
   //   header: null,
   // };
