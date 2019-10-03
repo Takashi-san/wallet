@@ -12,7 +12,7 @@ import { Text } from 'react-native-elements'
 
 /**
  * @typedef {object} Props
- * @prop {Record<string, () => void>=} choiceToHandler
+ * @prop {(Record<string, () => void>|{})=} choiceToHandler
  * @prop {string|null=} message
  * @prop {() => void} onRequestClose
  * @prop {boolean} visible
