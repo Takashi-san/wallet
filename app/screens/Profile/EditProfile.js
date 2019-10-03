@@ -13,8 +13,7 @@ const errorReporter = require('../../services/errorReporter');
 const AsyncStorage = require('react-native').AsyncStorage;
 const { width, height } = Dimensions.get('window');
 
-type Props = {};
-export default class EditProfileScreen extends Component<Props> {
+export default class EditProfileScreen extends Component {
   static navigationOptions = (state) => {
     console.log('axaxa', state.navigation.state);
     return {
