@@ -4,6 +4,7 @@
 
 import React from 'react'
 import {
+  Clipboard,
   Dimensions,
   StyleSheet,
   Text,
@@ -13,6 +14,8 @@ import {
   ActivityIndicator,
 } from 'react-native'
 import EntypoIcons from 'react-native-vector-icons/Entypo'
+
+import ShockDialog from '../../components/ShockDialog'
 
 import btcConvert from '../../services/convertBitcoin'
 import * as Wallet from '../../services/wallet'
@@ -27,6 +30,13 @@ import UnifiedTrx from './UnifiedTrx'
  * @typedef {object} State
  * @prop {number|null} USDExchangeRate Null on first fetch.
  * @prop {number|null} balance Null on first fetch.
+ * @prop {boolean} displayingBTCAddress
+ * @prop {boolean} displayingOlderFormatBTCAddress
+ * @prop {boolean} displayingReceiveDialog
+ * @prop {boolean} fetchingBTCAddress
+ * @prop {boolean} fetchingOlderFormatBTCAddress
+ * @prop {string|null} receivingOlderFormatBTCAddress
+ * @prop {string|null} receivingBTCAddress
  * @prop {(Wallet.Invoice|Wallet.Payment|Wallet.Transaction)[]|null} unifiedTrx
  */
 
@@ -60,7 +70,127 @@ export default class WalletOverview extends React.PureComponent {
   state = {
     balance: null,
     USDExchangeRate: null,
+    fetchingBTCAddress: false,
+    fetchingOlderFormatBTCAddress: false,
+    displayingBTCAddress: false,
+    displayingOlderFormatBTCAddress: false,
+    displayingReceiveDialog: false,
+    receivingBTCAddress: null,
+    receivingOlderFormatBTCAddress: null,
     unifiedTrx: null,
+  }
+
+  closeAllReceiveDialogs = () => {
+    this.setState({
+      displayingBTCAddress: false,
+      displayingOlderFormatBTCAddress: false,
+      displayingReceiveDialog: false,
+      receivingBTCAddress: null,
+      receivingOlderFormatBTCAddress: null,
+    })
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  copyOlderFormatBTCAddressToClipboard = () => {
+    const { receivingOlderFormatBTCAddress } = this.state
+    if (receivingOlderFormatBTCAddress === null) {
+      console.warn('receivingOlderFormatBTCAddress === null')
+      return
+    }
+
+    Clipboard.setString(receivingOlderFormatBTCAddress)
+  }
+
+  generateOlderFormatBTCAddressQR = () => {}
+
+  displayingOlderFormatBTCAddressChoiceToHandlerWhileFetching = {}
+
+  displayingOlderFormatBTCAddressChoiceToHandler = {
+    'Copy to clipboard': this.copyOlderFormatBTCAddressToClipboard,
+    'Generate QR': this.generateOlderFormatBTCAddressQR,
+  }
+
+  displayOlderFormatBTCAddress = () => {
+    this.closeAllReceiveDialogs()
+
+    this.setState(
+      {
+        fetchingOlderFormatBTCAddress: true,
+        displayingOlderFormatBTCAddress: true,
+      },
+      () => {
+        Wallet.newAddress(true).then(addr => {
+          this.setState(({ displayingOlderFormatBTCAddress }) => {
+            // Check in case dialog was closed before completing fetch.
+            if (displayingOlderFormatBTCAddress) {
+              return {
+                fetchingOlderFormatBTCAddress: false,
+                receivingOlderFormatBTCAddress: addr,
+              }
+            }
+
+            return null
+          })
+        })
+      },
+    )
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  copyBTCAddressToClipboard = () => {
+    const { receivingBTCAddress } = this.state
+
+    if (receivingBTCAddress === null) {
+      console.warn('receivingOlderFormatBTCAddress === null')
+      return
+    }
+
+    Clipboard.setString(receivingBTCAddress)
+  }
+
+  generateBTCAddressQR = () => {}
+
+  displayingBTCAddressChoiceToHandlerWhileFetching = {
+    'Use older format': this.displayOlderFormatBTCAddress,
+  }
+
+  displayingBTCAddressChoiceToHandler = {
+    'Copy to Clipboard': this.copyBTCAddressToClipboard,
+    'Generate QR': this.generateBTCAddressQR,
+    'Use older format': this.displayOlderFormatBTCAddress,
+  }
+
+  displayBTCAddress = () => {
+    this.closeAllReceiveDialogs()
+
+    this.setState(
+      {
+        fetchingBTCAddress: true,
+        displayingBTCAddress: true,
+      },
+      () => {
+        Wallet.newAddress(false).then(addr => {
+          this.setState(({ displayingBTCAddress }) => {
+            // Check in case dialog was closed before completing fetch.
+            if (displayingBTCAddress) {
+              return {
+                fetchingBTCAddress: false,
+                receivingBTCAddress: addr,
+              }
+            }
+
+            return null
+          })
+        })
+      },
+    )
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  receiveDialogChoiceToHandler = {
+    'BTC Address': this.displayBTCAddress,
   }
 
   /** @type {null|ReturnType<typeof setInterval>} */
@@ -154,6 +284,10 @@ export default class WalletOverview extends React.PureComponent {
     if (balance === null) {
       return
     }
+
+    this.setState({
+      displayingReceiveDialog: true,
+    })
   }
 
   onPressSend = () => {
@@ -248,7 +382,16 @@ export default class WalletOverview extends React.PureComponent {
   }
 
   render() {
-    const { unifiedTrx } = this.state
+    const {
+      displayingBTCAddress,
+      displayingReceiveDialog,
+      fetchingBTCAddress,
+      fetchingOlderFormatBTCAddress,
+      displayingOlderFormatBTCAddress,
+      receivingBTCAddress,
+      receivingOlderFormatBTCAddress,
+      unifiedTrx,
+    } = this.state
 
     return (
       <ScrollView
@@ -319,6 +462,37 @@ export default class WalletOverview extends React.PureComponent {
         >
           <UnifiedTrx unifiedTrx={unifiedTrx} />
         </View>
+        <ShockDialog
+          choiceToHandler={this.receiveDialogChoiceToHandler}
+          onRequestClose={this.closeAllReceiveDialogs}
+          visible={displayingReceiveDialog}
+        />
+
+        <ShockDialog
+          choiceToHandler={
+            fetchingBTCAddress
+              ? this.displayingBTCAddressChoiceToHandlerWhileFetching
+              : this.displayingBTCAddressChoiceToHandler
+          }
+          message={fetchingBTCAddress ? 'Processing...' : receivingBTCAddress}
+          onRequestClose={this.closeAllReceiveDialogs}
+          visible={displayingBTCAddress}
+        />
+
+        <ShockDialog
+          choiceToHandler={
+            fetchingOlderFormatBTCAddress
+              ? this.displayingOlderFormatBTCAddressChoiceToHandlerWhileFetching
+              : this.displayingOlderFormatBTCAddressChoiceToHandler
+          }
+          message={
+            fetchingOlderFormatBTCAddress
+              ? 'Processing...'
+              : receivingOlderFormatBTCAddress
+          }
+          onRequestClose={this.closeAllReceiveDialogs}
+          visible={displayingOlderFormatBTCAddress}
+        />
       </ScrollView>
     )
   }
