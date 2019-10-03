@@ -46,7 +46,6 @@ const styles = StyleSheet.create({
     borderRadius: INPUT_BORDER_RADIUS,
     borderWidth: INPUT_BORDER_WIDTH,
     color: Colors.TEXT_LIGHTEST,
-    flex: 1,
   },
 })
 
