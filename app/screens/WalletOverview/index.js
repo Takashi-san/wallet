@@ -15,7 +15,11 @@ import {
 } from 'react-native'
 import EntypoIcons from 'react-native-vector-icons/Entypo'
 
+import BasicDialog from '../../components/BasicDialog'
+import ShockButton from '../../components/ShockButton'
 import ShockDialog from '../../components/ShockDialog'
+import ShockInput from '../../components/ShockInput'
+import Pad from '../../components/Pad'
 
 import btcConvert from '../../services/convertBitcoin'
 import * as Wallet from '../../services/wallet'
@@ -30,11 +34,19 @@ import UnifiedTrx from './UnifiedTrx'
  * @typedef {object} State
  * @prop {number|null} USDExchangeRate Null on first fetch.
  * @prop {number|null} balance Null on first fetch.
+ * @prop {number} createInvoiceAmount
+ * @prop {string} createInvoiceMemo
  * @prop {boolean} displayingBTCAddress
+ * @prop {boolean} displayingCreateInvoiceDialog
+ * @prop {string} displayingCreateInvoiceDialogMemo
+ * @prop {number} displayingCreateInvoiceDialogExpiryTimestamp
+ * @prop {boolean} displayingCreateInvoiceResultDialog
  * @prop {boolean} displayingOlderFormatBTCAddress
  * @prop {boolean} displayingReceiveDialog
  * @prop {boolean} fetchingBTCAddress
+ * @prop {boolean} fetchingInvoice
  * @prop {boolean} fetchingOlderFormatBTCAddress
+ * @prop {string|null} invoice
  * @prop {string|null} receivingOlderFormatBTCAddress
  * @prop {string|null} receivingBTCAddress
  * @prop {(Wallet.Invoice|Wallet.Payment|Wallet.Transaction)[]|null} unifiedTrx
@@ -68,13 +80,21 @@ export default class WalletOverview extends React.PureComponent {
    * @type {State}
    */
   state = {
-    balance: null,
     USDExchangeRate: null,
+    balance: null,
+    createInvoiceAmount: 0,
+    createInvoiceMemo: '',
     fetchingBTCAddress: false,
     fetchingOlderFormatBTCAddress: false,
     displayingBTCAddress: false,
+    displayingCreateInvoiceDialog: false,
+    displayingCreateInvoiceDialogExpiryTimestamp: 0,
+    displayingCreateInvoiceDialogMemo: '',
+    displayingCreateInvoiceResultDialog: false,
     displayingOlderFormatBTCAddress: false,
     displayingReceiveDialog: false,
+    fetchingInvoice: false,
+    invoice: null,
     receivingBTCAddress: null,
     receivingOlderFormatBTCAddress: null,
     unifiedTrx: null,
@@ -82,9 +102,19 @@ export default class WalletOverview extends React.PureComponent {
 
   closeAllReceiveDialogs = () => {
     this.setState({
+      createInvoiceAmount: 0,
+      createInvoiceMemo: '',
       displayingBTCAddress: false,
+      displayingCreateInvoiceDialog: false,
+      displayingCreateInvoiceResultDialog: false,
+      displayingCreateInvoiceDialogExpiryTimestamp: 0,
+      displayingCreateInvoiceDialogMemo: '',
       displayingOlderFormatBTCAddress: false,
       displayingReceiveDialog: false,
+      fetchingBTCAddress: false,
+      fetchingInvoice: false,
+      fetchingOlderFormatBTCAddress: false,
+      invoice: null,
       receivingBTCAddress: null,
       receivingOlderFormatBTCAddress: null,
     })
@@ -106,7 +136,7 @@ export default class WalletOverview extends React.PureComponent {
   displayingOlderFormatBTCAddressChoiceToHandlerWhileFetching = {}
 
   displayingOlderFormatBTCAddressChoiceToHandler = {
-    'Copy to clipboard': this.copyOlderFormatBTCAddressToClipboard,
+    'Copy to Clipboard': this.copyOlderFormatBTCAddressToClipboard,
     'Generate QR': this.generateOlderFormatBTCAddressQR,
   }
 
@@ -119,6 +149,11 @@ export default class WalletOverview extends React.PureComponent {
         displayingOlderFormatBTCAddress: true,
       },
       () => {
+        // Check in case dialog was closed before state was updated
+        if (!this.state.displayingOlderFormatBTCAddress) {
+          return
+        }
+
         Wallet.newAddress(true).then(addr => {
           this.setState(({ displayingOlderFormatBTCAddress }) => {
             // Check in case dialog was closed before completing fetch.
@@ -170,6 +205,11 @@ export default class WalletOverview extends React.PureComponent {
         displayingBTCAddress: true,
       },
       () => {
+        // Check in case dialog was closed before state was updated
+        if (!this.state.displayingBTCAddress) {
+          return
+        }
+
         Wallet.newAddress(false).then(addr => {
           this.setState(({ displayingBTCAddress }) => {
             // Check in case dialog was closed before completing fetch.
@@ -189,8 +229,108 @@ export default class WalletOverview extends React.PureComponent {
 
   //////////////////////////////////////////////////////////////////////////////
 
+  displayCreateInvoiceDialog = () => {
+    this.closeAllReceiveDialogs()
+    this.setState({
+      displayingCreateInvoiceDialog: true,
+    })
+  }
+
+  /**
+   * @type {import('../../components/ShockInput').Props['onChangeText']}
+   */
+  createInvoiceDialogAmountOnChange = amount => {
+    const numbers = '0123456789'.split('')
+
+    const chars = amount.split('')
+
+    if (!chars.every(c => numbers.includes(c))) {
+      return
+    }
+
+    this.setState({
+      createInvoiceAmount: Number(amount),
+    })
+  }
+
+  /**
+   * @type {import('../../components/ShockInput').Props['onChangeText']}
+   */
+  createInvoiceDialogMemoOnChange = memo => {
+    this.setState({
+      createInvoiceMemo: memo,
+    })
+  }
+
+  copyInvoiceToClipboard = () => {
+    const { invoice } = this.state
+
+    if (invoice === null) {
+      return
+    }
+
+    Clipboard.setString(invoice)
+  }
+
+  generateInvoiceQR = () => {
+    const { invoice } = this.state
+
+    if (invoice === null) {
+      return
+    }
+  }
+
+  sendInvoiceToShockUser = () => {}
+
+  invoiceResultDialogChoiceToHandler = {
+    'Copy to Clipboard': this.copyInvoiceToClipboard,
+    'Generate QR': this.generateInvoiceQR,
+    'Send to Shock Network User': this.sendInvoiceToShockUser,
+  }
+
+  onPressCreateInvoice = () => {
+    if (this.state.createInvoiceAmount === 0) {
+      return
+    }
+
+    this.closeAllReceiveDialogs()
+
+    this.setState(
+      {
+        displayingCreateInvoiceResultDialog: true,
+        fetchingInvoice: true,
+      },
+      () => {
+        // Check in case dialog was closed before state was updated
+        if (!this.state.displayingCreateInvoiceResultDialog) {
+          return
+        }
+
+        Wallet.addInvoice({
+          memo: this.state.createInvoiceMemo,
+          expiry: 2,
+        }).then(res => {
+          this.setState(({ displayingCreateInvoiceResultDialog }) => {
+            // Check in case dialog was closed before completing fetch.
+            if (displayingCreateInvoiceResultDialog) {
+              return {
+                fetchingInvoice: false,
+                invoice: res.payment_request,
+              }
+            }
+
+            return null
+          })
+        })
+      },
+    )
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+
   receiveDialogChoiceToHandler = {
     'BTC Address': this.displayBTCAddress,
+    'Generate a Lightning Invoice': this.displayCreateInvoiceDialog,
   }
 
   /** @type {null|ReturnType<typeof setInterval>} */
@@ -383,10 +523,16 @@ export default class WalletOverview extends React.PureComponent {
 
   render() {
     const {
+      createInvoiceAmount,
+      createInvoiceMemo,
       displayingBTCAddress,
       displayingReceiveDialog,
+      displayingCreateInvoiceDialog,
+      displayingCreateInvoiceResultDialog,
       fetchingBTCAddress,
+      fetchingInvoice,
       fetchingOlderFormatBTCAddress,
+      invoice,
       displayingOlderFormatBTCAddress,
       receivingBTCAddress,
       receivingOlderFormatBTCAddress,
@@ -492,6 +638,50 @@ export default class WalletOverview extends React.PureComponent {
           }
           onRequestClose={this.closeAllReceiveDialogs}
           visible={displayingOlderFormatBTCAddress}
+        />
+
+        <BasicDialog
+          title="Create a Lightning Invoice"
+          onRequestClose={this.closeAllReceiveDialogs}
+          visible={displayingCreateInvoiceDialog}
+        >
+          <ShockInput
+            placeholder="Memo (optional)"
+            onChangeText={this.createInvoiceDialogMemoOnChange}
+            value={createInvoiceMemo}
+          />
+
+          <Pad amount={10} />
+
+          <ShockInput
+            keyboardType="number-pad"
+            onChangeText={this.createInvoiceDialogAmountOnChange}
+            placeholder="Amount (in sats)"
+            value={
+              createInvoiceAmount === 0
+                ? undefined // allow placeholder to show
+                : createInvoiceAmount.toString()
+            }
+          />
+
+          <Pad amount={10} />
+
+          <ShockButton
+            disabled={createInvoiceAmount === 0}
+            title="Create"
+            onPress={this.onPressCreateInvoice}
+          />
+        </BasicDialog>
+
+        <ShockDialog
+          choiceToHandler={
+            fetchingInvoice
+              ? undefined
+              : this.invoiceResultDialogChoiceToHandler
+          }
+          message={fetchingInvoice ? 'Processing...' : invoice}
+          onRequestClose={this.closeAllReceiveDialogs}
+          visible={displayingCreateInvoiceResultDialog}
         />
       </ScrollView>
     )
