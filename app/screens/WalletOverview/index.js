@@ -4,14 +4,13 @@
 
 import React from 'react'
 import {
+  ActivityIndicator,
   Clipboard,
   Dimensions,
   StyleSheet,
   Text,
   TouchableHighlight,
   View,
-  ScrollView,
-  ActivityIndicator,
 } from 'react-native'
 import EntypoIcons from 'react-native-vector-icons/Entypo'
 
@@ -26,9 +25,6 @@ import * as Wallet from '../../services/wallet'
 
 import UnifiedTrx from './UnifiedTrx'
 
-/**
- * @typedef {object} Props
- */
 
 /**
  * @typedef {object} State
@@ -57,7 +53,7 @@ const { width, height } = Dimensions.get('window')
 export const WALLET_OVERVIEW = 'WALLET_OVERVIEW'
 
 /**
- * @augments React.PureComponent<Props, State, never>
+ * @augments React.PureComponent<{}, State, never>
  */
 export default class WalletOverview extends React.PureComponent {
   /**
@@ -529,21 +525,18 @@ export default class WalletOverview extends React.PureComponent {
       displayingReceiveDialog,
       displayingCreateInvoiceDialog,
       displayingCreateInvoiceResultDialog,
+      displayingOlderFormatBTCAddress,
       fetchingBTCAddress,
       fetchingInvoice,
       fetchingOlderFormatBTCAddress,
       invoice,
-      displayingOlderFormatBTCAddress,
       receivingBTCAddress,
       receivingOlderFormatBTCAddress,
       unifiedTrx,
     } = this.state
 
     return (
-      <ScrollView
-        contentContainerStyle={styles.container}
-        showsVerticalScrollIndicator={false}
-      >
+      <View style={styles.container}>
         <View
           style={{
             height: height / 2,
@@ -666,10 +659,14 @@ export default class WalletOverview extends React.PureComponent {
 
           <Pad amount={10} />
 
+          <Text>Invoice will expire in 30min.</Text>
+
+          <Pad amount={10} />
+
           <ShockButton
             disabled={createInvoiceAmount === 0}
-            title="Create"
             onPress={this.onPressCreateInvoice}
+            title="Create"
           />
         </BasicDialog>
 
@@ -683,7 +680,7 @@ export default class WalletOverview extends React.PureComponent {
           onRequestClose={this.closeAllReceiveDialogs}
           visible={displayingCreateInvoiceResultDialog}
         />
-      </ScrollView>
+      </View>
     )
   }
 }
@@ -691,7 +688,6 @@ export default class WalletOverview extends React.PureComponent {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    flexDirection: 'column',
     backgroundColor: '#ffffff',
     justifyContent: 'flex-start',
     alignItems: 'center',
