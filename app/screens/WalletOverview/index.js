@@ -9,6 +9,7 @@ import {
   Dimensions,
   StyleSheet,
   Text,
+  ToastAndroid,
   TouchableHighlight,
   View,
 } from 'react-native'
@@ -24,7 +25,6 @@ import btcConvert from '../../services/convertBitcoin'
 import * as Wallet from '../../services/wallet'
 
 import UnifiedTrx from './UnifiedTrx'
-
 
 /**
  * @typedef {object} State
@@ -51,6 +51,10 @@ import UnifiedTrx from './UnifiedTrx'
 const { width, height } = Dimensions.get('window')
 
 export const WALLET_OVERVIEW = 'WALLET_OVERVIEW'
+
+const showCopiedToClipboardToast = () => {
+  ToastAndroid.show('Copied to clipboard!', 800)
+}
 
 /**
  * @augments React.PureComponent<{}, State, never>
@@ -125,6 +129,7 @@ export default class WalletOverview extends React.PureComponent {
     }
 
     Clipboard.setString(receivingOlderFormatBTCAddress)
+    showCopiedToClipboardToast()
   }
 
   generateOlderFormatBTCAddressQR = () => {}
@@ -178,6 +183,7 @@ export default class WalletOverview extends React.PureComponent {
     }
 
     Clipboard.setString(receivingBTCAddress)
+    showCopiedToClipboardToast()
   }
 
   generateBTCAddressQR = () => {}
@@ -266,6 +272,7 @@ export default class WalletOverview extends React.PureComponent {
     }
 
     Clipboard.setString(invoice)
+    showCopiedToClipboardToast()
   }
 
   generateInvoiceQR = () => {
