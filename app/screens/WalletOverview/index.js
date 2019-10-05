@@ -40,6 +40,7 @@ import UnifiedTrx from './UnifiedTrx'
  * @prop {number} displayingCreateInvoiceDialogExpiryTimestamp
  * @prop {boolean} displayingCreateInvoiceResultDialog
  * @prop {boolean} displayingOlderFormatBTCAddress
+ * @prop {boolean} displayingOlderFormatBTCAddressQR
  * @prop {boolean} displayingReceiveDialog
  * @prop {boolean} fetchingBTCAddress
  * @prop {boolean} fetchingInvoice
@@ -95,6 +96,7 @@ export default class WalletOverview extends React.PureComponent {
     displayingCreateInvoiceDialogMemo: '',
     displayingCreateInvoiceResultDialog: false,
     displayingOlderFormatBTCAddress: false,
+    displayingOlderFormatBTCAddressQR: false,
     displayingReceiveDialog: false,
     fetchingInvoice: false,
     invoice: null,
@@ -114,6 +116,7 @@ export default class WalletOverview extends React.PureComponent {
       displayingCreateInvoiceDialogExpiryTimestamp: 0,
       displayingCreateInvoiceDialogMemo: '',
       displayingOlderFormatBTCAddress: false,
+      displayingOlderFormatBTCAddressQR: false,
       displayingReceiveDialog: false,
       fetchingBTCAddress: false,
       fetchingInvoice: false,
@@ -136,7 +139,18 @@ export default class WalletOverview extends React.PureComponent {
     showCopiedToClipboardToast()
   }
 
-  generateOlderFormatBTCAddressQR = () => {}
+  generateOlderFormatBTCAddressQR = () => {
+    const { receivingOlderFormatBTCAddress } = this.state
+
+    if (receivingOlderFormatBTCAddress === null) {
+      return
+    }
+
+    this.setState({
+      displayingOlderFormatBTCAddress: false,
+      displayingOlderFormatBTCAddressQR: true,
+    })
+  }
 
   displayingOlderFormatBTCAddressChoiceToHandlerWhileFetching = {}
 
@@ -549,6 +563,7 @@ export default class WalletOverview extends React.PureComponent {
       displayingCreateInvoiceDialog,
       displayingCreateInvoiceResultDialog,
       displayingOlderFormatBTCAddress,
+      displayingOlderFormatBTCAddressQR,
       fetchingBTCAddress,
       fetchingInvoice,
       fetchingOlderFormatBTCAddress,
@@ -669,6 +684,20 @@ export default class WalletOverview extends React.PureComponent {
           onRequestClose={this.closeAllReceiveDialogs}
           visible={displayingOlderFormatBTCAddress}
         />
+
+        <BasicDialog
+          onRequestClose={this.closeAllReceiveDialogs}
+          visible={displayingOlderFormatBTCAddressQR}
+        >
+          <View style={styles.alignItemsCenter}>
+            <QR
+              logoToShow="btc"
+              value={/** @type {string} */ (receivingOlderFormatBTCAddress)}
+            />
+            <Pad amount={10} />
+            <Text>Scan To Send To This BTC Address</Text>
+          </View>
+        </BasicDialog>
 
         <BasicDialog
           title="Create a Lightning Invoice"
