@@ -24,6 +24,7 @@ import Pad from '../../components/Pad'
 import btcConvert from '../../services/convertBitcoin'
 import * as Wallet from '../../services/wallet'
 
+import QR from './QR'
 import UnifiedTrx from './UnifiedTrx'
 
 /**
@@ -33,6 +34,7 @@ import UnifiedTrx from './UnifiedTrx'
  * @prop {number} createInvoiceAmount
  * @prop {string} createInvoiceMemo
  * @prop {boolean} displayingBTCAddress
+ * @prop {boolean} displayingBTCAddressQR
  * @prop {boolean} displayingCreateInvoiceDialog
  * @prop {string} displayingCreateInvoiceDialogMemo
  * @prop {number} displayingCreateInvoiceDialogExpiryTimestamp
@@ -87,6 +89,7 @@ export default class WalletOverview extends React.PureComponent {
     fetchingBTCAddress: false,
     fetchingOlderFormatBTCAddress: false,
     displayingBTCAddress: false,
+    displayingBTCAddressQR: false,
     displayingCreateInvoiceDialog: false,
     displayingCreateInvoiceDialogExpiryTimestamp: 0,
     displayingCreateInvoiceDialogMemo: '',
@@ -105,6 +108,7 @@ export default class WalletOverview extends React.PureComponent {
       createInvoiceAmount: 0,
       createInvoiceMemo: '',
       displayingBTCAddress: false,
+      displayingBTCAddressQR: false,
       displayingCreateInvoiceDialog: false,
       displayingCreateInvoiceResultDialog: false,
       displayingCreateInvoiceDialogExpiryTimestamp: 0,
@@ -186,7 +190,18 @@ export default class WalletOverview extends React.PureComponent {
     showCopiedToClipboardToast()
   }
 
-  generateBTCAddressQR = () => {}
+  generateBTCAddressQR = () => {
+    const { receivingBTCAddress } = this.state
+
+    if (receivingBTCAddress === null) {
+      return
+    }
+
+    this.setState({
+      displayingBTCAddress: false,
+      displayingBTCAddressQR: true,
+    })
+  }
 
   displayingBTCAddressChoiceToHandlerWhileFetching = {
     'Use older format': this.displayOlderFormatBTCAddress,
@@ -529,6 +544,7 @@ export default class WalletOverview extends React.PureComponent {
       createInvoiceAmount,
       createInvoiceMemo,
       displayingBTCAddress,
+      displayingBTCAddressQR,
       displayingReceiveDialog,
       displayingCreateInvoiceDialog,
       displayingCreateInvoiceResultDialog,
@@ -625,6 +641,20 @@ export default class WalletOverview extends React.PureComponent {
           visible={displayingBTCAddress}
         />
 
+        <BasicDialog
+          onRequestClose={this.closeAllReceiveDialogs}
+          visible={displayingBTCAddressQR}
+        >
+          <View style={styles.alignItemsCenter}>
+            <QR
+              logoToShow="btc"
+              value={/** @type {string} */ (receivingBTCAddress)}
+            />
+            <Pad amount={10} />
+            <Text>Scan To Send To This BTC Address</Text>
+          </View>
+        </BasicDialog>
+
         <ShockDialog
           choiceToHandler={
             fetchingOlderFormatBTCAddress
@@ -693,6 +723,9 @@ export default class WalletOverview extends React.PureComponent {
 }
 
 const styles = StyleSheet.create({
+  alignItemsCenter: {
+    alignItems: 'center',
+  },
   container: {
     flex: 1,
     backgroundColor: '#ffffff',
