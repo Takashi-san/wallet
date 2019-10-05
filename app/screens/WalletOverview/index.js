@@ -39,6 +39,7 @@ import UnifiedTrx from './UnifiedTrx'
  * @prop {string} displayingCreateInvoiceDialogMemo
  * @prop {number} displayingCreateInvoiceDialogExpiryTimestamp
  * @prop {boolean} displayingCreateInvoiceResultDialog
+ * @prop {boolean} displayingInvoiceQR
  * @prop {boolean} displayingOlderFormatBTCAddress
  * @prop {boolean} displayingOlderFormatBTCAddressQR
  * @prop {boolean} displayingReceiveDialog
@@ -95,6 +96,7 @@ export default class WalletOverview extends React.PureComponent {
     displayingCreateInvoiceDialogExpiryTimestamp: 0,
     displayingCreateInvoiceDialogMemo: '',
     displayingCreateInvoiceResultDialog: false,
+    displayingInvoiceQR: false,
     displayingOlderFormatBTCAddress: false,
     displayingOlderFormatBTCAddressQR: false,
     displayingReceiveDialog: false,
@@ -117,6 +119,7 @@ export default class WalletOverview extends React.PureComponent {
       displayingCreateInvoiceDialogMemo: '',
       displayingOlderFormatBTCAddress: false,
       displayingOlderFormatBTCAddressQR: false,
+      displayingInvoiceQR: false,
       displayingReceiveDialog: false,
       fetchingBTCAddress: false,
       fetchingInvoice: false,
@@ -310,6 +313,11 @@ export default class WalletOverview extends React.PureComponent {
     if (invoice === null) {
       return
     }
+
+    this.setState({
+      displayingCreateInvoiceResultDialog: false,
+      displayingInvoiceQR: true,
+    })
   }
 
   sendInvoiceToShockUser = () => {}
@@ -562,6 +570,7 @@ export default class WalletOverview extends React.PureComponent {
       displayingReceiveDialog,
       displayingCreateInvoiceDialog,
       displayingCreateInvoiceResultDialog,
+      displayingInvoiceQR,
       displayingOlderFormatBTCAddress,
       displayingOlderFormatBTCAddressQR,
       fetchingBTCAddress,
@@ -736,6 +745,20 @@ export default class WalletOverview extends React.PureComponent {
           />
         </BasicDialog>
 
+        <BasicDialog
+          onRequestClose={this.closeAllReceiveDialogs}
+          visible={displayingInvoiceQR}
+        >
+          <View style={styles.alignItemsCenter}>
+            <QR
+              logoToShow="shock"
+              value={/** @type {string} */ (invoice)}
+            />
+            <Pad amount={10} />
+            <Text>Scan To Pay This invoice</Text>
+          </View>
+        </BasicDialog>
+        
         <ShockDialog
           choiceToHandler={
             fetchingInvoice
