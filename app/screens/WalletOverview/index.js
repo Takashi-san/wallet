@@ -748,7 +748,6 @@ export default class WalletOverview extends React.PureComponent {
       sendingBTC,
       sendToBTCAmount,
       sentBTCErr,
-      sentBTCTXID,
 
       displayingBTCAddress,
       displayingBTCAddressQR,
