@@ -6,6 +6,7 @@ import { Text } from 'react-native-elements'
 
 /**
  * @typedef {object} Props
+ * @prop {boolean=} disabled
  * @prop {() => void} onPress
  * @prop {string} title
  */
@@ -14,10 +15,10 @@ import { Text } from 'react-native-elements'
  * An instagram-dialog-style button.
  * @type {React.FC<Props>}
  */
-const _IGDialogBtn = ({ onPress, title }) => (
-  <TouchableHighlight onPress={onPress}>
+const _IGDialogBtn = ({ disabled, onPress, title }) => (
+  <TouchableHighlight onPress={disabled ? undefined : onPress}>
     <View style={[styles.sidePadded, styles.btn]}>
-      <Text>{title}</Text>
+      <Text style={disabled ? styles.textDisabled : undefined}>{title}</Text>
     </View>
   </TouchableHighlight>
 )
@@ -33,6 +34,10 @@ const styles = StyleSheet.create({
   sidePadded: {
     paddingLeft: 10,
     paddingRight: 10,
+  },
+
+  textDisabled: {
+    color: 'grey',
   },
 })
 
