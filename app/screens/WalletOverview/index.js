@@ -14,6 +14,7 @@ import {
   View,
 } from 'react-native'
 import EntypoIcons from 'react-native-vector-icons/Entypo'
+import QRCodeScanner from 'react-native-qrcode-scanner'
 
 import BasicDialog from '../../components/BasicDialog'
 import IGDialogBtn from '../../components/IGDialogBtn'
@@ -426,11 +427,27 @@ export default class WalletOverview extends React.PureComponent {
     })
   }
 
-  onPressSendBTCScanQR = () => {
-    this.closeAllSendDialogs()
+  onPressSendBTC = () => {
+    const { sendToBTCAddress } = this.state
 
+    if (sendToBTCAddress.length === 0) {
+      return
+    }
+  }
+
+  onPressSendBTCScanQR = () => {
     this.setState({
+      displayingSendToBTCDialog: false,
       scanningBTCAddressQR: true,
+    })
+  }
+
+  /** @type {import('react-native-qrcode-scanner').RNQRCodeScannerProps['onRead']} */
+  onSuccessfulBTCQRScan = e => {
+    this.setState({
+      scanningBTCAddressQR: false,
+      displayingSendToBTCDialog: true,
+      sendToBTCAddress: e.data,
     })
   }
 
@@ -631,6 +648,7 @@ export default class WalletOverview extends React.PureComponent {
 
       displayingSendToBTCDialog,
       sendToBTCAddress,
+      scanningBTCAddressQR,
 
       displayingBTCAddress,
       displayingBTCAddressQR,
@@ -649,6 +667,20 @@ export default class WalletOverview extends React.PureComponent {
       unifiedTrx,
     } = this.state
 
+    if (scanningBTCAddressQR) {
+      return (
+        <QRCodeScanner
+          bottomContent={
+            <TouchableHighlight style={xstyles.buttonTouchable}>
+              <Text style={xstyles.buttonText}>OK. Got it!</Text>
+            </TouchableHighlight>
+          }
+          onRead={this.onSuccessfulBTCQRScan}
+          showMarker
+          topContent={<Text>Point your Camera to the QR Code</Text>}
+        />
+      )
+    }
     return (
       <View style={styles.container}>
         <View
@@ -856,12 +888,39 @@ export default class WalletOverview extends React.PureComponent {
             <Pad amount={10} />
 
             <IGDialogBtn onPress={this.onPressSendBTCScanQR} title="Scan QR" />
+
+            <IGDialogBtn
+              disabled={sendToBTCAddress.length === 0}
+              onPress={this.onPressSendBTC}
+              title="Send"
+            />
           </View>
         </BasicDialog>
       </View>
     )
   }
 }
+
+const xstyles = StyleSheet.create({
+  centerText: {
+    flex: 1,
+    fontSize: 18,
+    padding: 32,
+    color: '#777',
+    backgroundColor: 'black',
+  },
+  textBold: {
+    fontWeight: '500',
+    color: '#000',
+  },
+  buttonText: {
+    fontSize: 21,
+    color: 'rgb(0,122,255)',
+  },
+  buttonTouchable: {
+    padding: 16,
+  },
+})
 
 const styles = StyleSheet.create({
   alignItemsCenter: {
