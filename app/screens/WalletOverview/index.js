@@ -46,6 +46,10 @@ import UnifiedTrx from './UnifiedTrx'
  * @prop {string|null} sentBTCErr
  * @prop {string} sentBTCTXID Holds the transaction ID after sending BTC.
  *
+ * @prop {boolean} displayingPayLightningInvoiceDialog
+ * @prop {string} lightningInvoiceInput
+ * @prop {boolean} scanningLightningInvoiceQR
+ *
  * @prop {number} createInvoiceAmount
  * @prop {string} createInvoiceMemo
  * @prop {boolean} displayingBTCAddress
@@ -113,6 +117,10 @@ export default class WalletOverview extends React.PureComponent {
     sentBTCErr: null,
     sentBTCTXID: '',
 
+    displayingPayLightningInvoiceDialog: false,
+    lightningInvoiceInput: '',
+    scanningLightningInvoiceQR: false,
+
     createInvoiceAmount: 0,
     createInvoiceMemo: '',
     fetchingBTCAddress: false,
@@ -145,6 +153,10 @@ export default class WalletOverview extends React.PureComponent {
       sendingBTC: false,
       sentBTCErr: null,
       sentBTCTXID: '',
+
+      displayingPayLightningInvoiceDialog: false,
+      lightningInvoiceInput: '',
+      scanningLightningInvoiceQR: false,
     })
   }
 
@@ -408,7 +420,7 @@ export default class WalletOverview extends React.PureComponent {
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  // SEND //////////////////////////////////////////////////////////////////////
+  // SEND BTC //////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
 
   sendToBTCAddress = () => {
@@ -417,10 +429,6 @@ export default class WalletOverview extends React.PureComponent {
     this.setState({
       displayingSendToBTCDialog: true,
     })
-  }
-
-  sendChoiceToHandler = {
-    'Send to BTC Address': this.sendToBTCAddress,
   }
 
   onPressSend = () => {
@@ -547,8 +555,61 @@ export default class WalletOverview extends React.PureComponent {
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  // /SEND /////////////////////////////////////////////////////////////////////
+  // /SEND BTC /////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
+
+  //////////////////////////////////////////////////////////////////////////////
+  // PAY INVOICE ///////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
+
+  payLightningInvoice = () => {
+    this.closeAllSendDialogs()
+
+    this.setState({
+      displayingPayLightningInvoiceDialog: true,
+    })
+  }
+
+  /**
+   * @param {string} invoice
+   */
+  onChangeLightningInvoice = invoice => {
+    this.setState({
+      lightningInvoiceInput: invoice,
+    })
+  }
+
+  onPressScanLightningInvoiceQR = () => {
+    this.setState({
+      scanningLightningInvoiceQR: true,
+    })
+  }
+
+  /** @type {import('react-native-qrcode-scanner').RNQRCodeScannerProps['onRead']} */
+  onSuccessfulInvoiceQRScan = e => {
+    this.setState({
+      scanningLightningInvoiceQR: false,
+      lightningInvoiceInput: e.data,
+    })
+  }
+
+  onPressPayLightningInvoice = () => {
+    const { lightningInvoiceInput } = this.state
+
+    if (lightningInvoiceInput.length === 0) {
+      return
+    }
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // /PAY INVOICE //////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
+
+  sendChoiceToHandler = {
+    'Send to BTC Address': this.sendToBTCAddress,
+    'Pay Lightning Invoice': this.payLightningInvoice,
+  }
+
   receiveDialogChoiceToHandler = {
     'BTC Address': this.displayBTCAddress,
     'Generate a Lightning Invoice': this.displayCreateInvoiceDialog,
@@ -749,6 +810,10 @@ export default class WalletOverview extends React.PureComponent {
       sendToBTCAmount,
       sentBTCErr,
 
+      displayingPayLightningInvoiceDialog,
+      lightningInvoiceInput,
+      scanningLightningInvoiceQR,
+
       displayingBTCAddress,
       displayingBTCAddressQR,
       displayingReceiveDialog,
@@ -780,6 +845,17 @@ export default class WalletOverview extends React.PureComponent {
         />
       )
     }
+
+    if (scanningLightningInvoiceQR) {
+      return (
+        <QRCodeScanner
+          onRead={this.onSuccessfulInvoiceQRScan}
+          showMarker
+          topContent={<Text>Point your Camera to the QR Code</Text>}
+        />
+      )
+    }
+
     return (
       <View style={styles.container}>
         <View
@@ -1029,6 +1105,29 @@ export default class WalletOverview extends React.PureComponent {
           }
           visible={displayingSendBTCResultDialog}
         />
+
+        <BasicDialog
+          onRequestClose={this.closeAllSendDialogs}
+          visible={displayingPayLightningInvoiceDialog}
+        >
+          <View>
+            <ShockInput
+              placeholder="Paste or type lightning invoice here"
+              onChangeText={this.onChangeLightningInvoice}
+              value={lightningInvoiceInput}
+            />
+
+            <IGDialogBtn
+              onPress={this.onPressScanLightningInvoiceQR}
+              title="Scan QR"
+            />
+
+            <IGDialogBtn
+              onPress={this.onPressPayLightningInvoice}
+              title="Pay"
+            />
+          </View>
+        </BasicDialog>
       </View>
     )
   }
