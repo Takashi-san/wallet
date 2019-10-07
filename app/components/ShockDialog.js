@@ -38,7 +38,7 @@ const _ShockDialog = ({
         <View style={styles.backdrop}>
           <TouchableWithoutFeedback>
             <View style={styles.container}>
-              {message && (
+              {!!message && (
                 <View style={styles.sidePadded}>
                   <Text>{message}</Text>
                 </View>
