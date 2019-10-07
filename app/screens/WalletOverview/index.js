@@ -31,6 +31,9 @@ import UnifiedTrx from './UnifiedTrx'
  * @typedef {object} State
  * @prop {number|null} USDExchangeRate Null on first fetch.
  * @prop {number|null} balance Null on first fetch.
+ *
+ * @prop {boolean} displayingSendDialog
+ *
  * @prop {number} createInvoiceAmount
  * @prop {string} createInvoiceMemo
  * @prop {boolean} displayingBTCAddress
@@ -49,6 +52,7 @@ import UnifiedTrx from './UnifiedTrx'
  * @prop {string|null} invoice
  * @prop {string|null} receivingOlderFormatBTCAddress
  * @prop {string|null} receivingBTCAddress
+ *
  * @prop {(Wallet.Invoice|Wallet.Payment|Wallet.Transaction)[]|null} unifiedTrx
  */
 
@@ -86,6 +90,9 @@ export default class WalletOverview extends React.PureComponent {
   state = {
     USDExchangeRate: null,
     balance: null,
+
+    displayingSendDialog: false,
+
     createInvoiceAmount: 0,
     createInvoiceMemo: '',
     fetchingBTCAddress: false,
@@ -105,6 +112,12 @@ export default class WalletOverview extends React.PureComponent {
     receivingBTCAddress: null,
     receivingOlderFormatBTCAddress: null,
     unifiedTrx: null,
+  }
+
+  closeAllSendDialogs = () => {
+    this.setState({
+      displayingSendDialog: false,
+    })
   }
 
   closeAllReceiveDialogs = () => {
@@ -367,7 +380,30 @@ export default class WalletOverview extends React.PureComponent {
   }
 
   //////////////////////////////////////////////////////////////////////////////
+  // SEND //////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
 
+  sendToBTCAddress = () => {}
+
+  sendChoiceToHandler = {
+    'Send to BTC Address': this.sendToBTCAddress,
+  }
+
+  onPressSend = () => {
+    const { balance } = this.state
+
+    if (balance === null) {
+      return
+    }
+
+    this.setState({
+      displayingSendDialog: true,
+    })
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // /SEND /////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
   receiveDialogChoiceToHandler = {
     'BTC Address': this.displayBTCAddress,
     'Generate a Lightning Invoice': this.displayCreateInvoiceDialog,
@@ -470,14 +506,6 @@ export default class WalletOverview extends React.PureComponent {
     })
   }
 
-  onPressSend = () => {
-    const { balance } = this.state
-
-    if (balance === null) {
-      return
-    }
-  }
-
   renderBalance = () => {
     const { USDExchangeRate, balance } = this.state
 
@@ -565,6 +593,9 @@ export default class WalletOverview extends React.PureComponent {
     const {
       createInvoiceAmount,
       createInvoiceMemo,
+
+      displayingSendDialog,
+
       displayingBTCAddress,
       displayingBTCAddressQR,
       displayingReceiveDialog,
@@ -750,15 +781,12 @@ export default class WalletOverview extends React.PureComponent {
           visible={displayingInvoiceQR}
         >
           <View style={styles.alignItemsCenter}>
-            <QR
-              logoToShow="shock"
-              value={/** @type {string} */ (invoice)}
-            />
+            <QR logoToShow="shock" value={/** @type {string} */ (invoice)} />
             <Pad amount={10} />
             <Text>Scan To Pay This invoice</Text>
           </View>
         </BasicDialog>
-        
+
         <ShockDialog
           choiceToHandler={
             fetchingInvoice
@@ -769,6 +797,14 @@ export default class WalletOverview extends React.PureComponent {
           onRequestClose={this.closeAllReceiveDialogs}
           visible={displayingCreateInvoiceResultDialog}
         />
+
+        {/* SEND */}
+        <ShockDialog
+          choiceToHandler={this.sendChoiceToHandler}
+          onRequestClose={this.closeAllSendDialogs}
+          visible={displayingSendDialog}
+        />
+        {/* /SEND */}
       </View>
     )
   }
