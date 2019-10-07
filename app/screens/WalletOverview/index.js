@@ -16,10 +16,11 @@ import {
 import EntypoIcons from 'react-native-vector-icons/Entypo'
 
 import BasicDialog from '../../components/BasicDialog'
+import IGDialogBtn from '../../components/IGDialogBtn'
+import Pad from '../../components/Pad'
 import ShockButton from '../../components/ShockButton'
 import ShockDialog from '../../components/ShockDialog'
 import ShockInput from '../../components/ShockInput'
-import Pad from '../../components/Pad'
 
 import btcConvert from '../../services/convertBitcoin'
 import * as Wallet from '../../services/wallet'
@@ -33,6 +34,9 @@ import UnifiedTrx from './UnifiedTrx'
  * @prop {number|null} balance Null on first fetch.
  *
  * @prop {boolean} displayingSendDialog
+ * @prop {boolean} displayingSendToBTCDialog
+ * @prop {string} sendToBTCAddress
+ * @prop {boolean} scanningBTCAddressQR
  *
  * @prop {number} createInvoiceAmount
  * @prop {string} createInvoiceMemo
@@ -92,6 +96,9 @@ export default class WalletOverview extends React.PureComponent {
     balance: null,
 
     displayingSendDialog: false,
+    displayingSendToBTCDialog: false,
+    sendToBTCAddress: '',
+    scanningBTCAddressQR: false,
 
     createInvoiceAmount: 0,
     createInvoiceMemo: '',
@@ -117,6 +124,9 @@ export default class WalletOverview extends React.PureComponent {
   closeAllSendDialogs = () => {
     this.setState({
       displayingSendDialog: false,
+      displayingSendToBTCDialog: false,
+      sendToBTCAddress: '',
+      scanningBTCAddressQR: false,
     })
   }
 
@@ -383,7 +393,13 @@ export default class WalletOverview extends React.PureComponent {
   // SEND //////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
 
-  sendToBTCAddress = () => {}
+  sendToBTCAddress = () => {
+    this.closeAllSendDialogs()
+
+    this.setState({
+      displayingSendToBTCDialog: true,
+    })
+  }
 
   sendChoiceToHandler = {
     'Send to BTC Address': this.sendToBTCAddress,
@@ -398,6 +414,23 @@ export default class WalletOverview extends React.PureComponent {
 
     this.setState({
       displayingSendDialog: true,
+    })
+  }
+
+  /**
+   * @param {string} addr
+   */
+  onChangeSendBTCAddress = addr => {
+    this.setState({
+      sendToBTCAddress: addr,
+    })
+  }
+
+  onPressSendBTCScanQR = () => {
+    this.closeAllSendDialogs()
+
+    this.setState({
+      scanningBTCAddressQR: true,
     })
   }
 
@@ -595,6 +628,9 @@ export default class WalletOverview extends React.PureComponent {
       createInvoiceMemo,
 
       displayingSendDialog,
+
+      displayingSendToBTCDialog,
+      sendToBTCAddress,
 
       displayingBTCAddress,
       displayingBTCAddressQR,
@@ -805,6 +841,23 @@ export default class WalletOverview extends React.PureComponent {
           visible={displayingSendDialog}
         />
         {/* /SEND */}
+
+        <BasicDialog
+          onRequestClose={this.closeAllSendDialogs}
+          visible={displayingSendToBTCDialog}
+        >
+          <View>
+            <ShockInput
+              placeholder="BTC Address"
+              onChangeText={this.onChangeSendBTCAddress}
+              value={sendToBTCAddress}
+            />
+
+            <Pad amount={10} />
+
+            <IGDialogBtn onPress={this.onPressSendBTCScanQR} title="Scan QR" />
+          </View>
+        </BasicDialog>
       </View>
     )
   }
