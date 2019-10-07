@@ -12,6 +12,7 @@ import {
   ToastAndroid,
   TouchableHighlight,
   View,
+  Linking,
 } from 'react-native'
 import EntypoIcons from 'react-native-vector-icons/Entypo'
 import QRCodeScanner from 'react-native-qrcode-scanner'
@@ -37,7 +38,13 @@ import UnifiedTrx from './UnifiedTrx'
  * @prop {boolean} displayingSendDialog
  * @prop {boolean} displayingSendToBTCDialog
  * @prop {string} sendToBTCAddress
+ * @prop {number} sendToBTCAmount
  * @prop {boolean} scanningBTCAddressQR
+ * @prop {boolean} displayingSendBTCResultDialog
+ * @prop {boolean} sendingBTC True while sending a BTC transaction is in
+ * progress.
+ * @prop {string|null} sentBTCErr
+ * @prop {string} sentBTCTXID Holds the transaction ID after sending BTC.
  *
  * @prop {number} createInvoiceAmount
  * @prop {string} createInvoiceMemo
@@ -99,7 +106,12 @@ export default class WalletOverview extends React.PureComponent {
     displayingSendDialog: false,
     displayingSendToBTCDialog: false,
     sendToBTCAddress: '',
+    sendToBTCAmount: 0,
     scanningBTCAddressQR: false,
+    displayingSendBTCResultDialog: false,
+    sendingBTC: false,
+    sentBTCErr: null,
+    sentBTCTXID: '',
 
     createInvoiceAmount: 0,
     createInvoiceMemo: '',
@@ -126,8 +138,13 @@ export default class WalletOverview extends React.PureComponent {
     this.setState({
       displayingSendDialog: false,
       displayingSendToBTCDialog: false,
+      displayingSendBTCResultDialog: false,
       sendToBTCAddress: '',
+      sendToBTCAmount: 0,
       scanningBTCAddressQR: false,
+      sendingBTC: false,
+      sentBTCErr: null,
+      sentBTCTXID: '',
     })
   }
 
@@ -427,12 +444,21 @@ export default class WalletOverview extends React.PureComponent {
     })
   }
 
-  onPressSendBTC = () => {
-    const { sendToBTCAddress } = this.state
+  /**
+   * @param {string} amount
+   */
+  onChangeSendBTCAmount = amount => {
+    const numbers = '0123456789'.split('')
 
-    if (sendToBTCAddress.length === 0) {
+    const chars = amount.split('')
+
+    if (!chars.every(c => numbers.includes(c))) {
       return
     }
+
+    this.setState({
+      sendToBTCAmount: Number(amount),
+    })
   }
 
   onPressSendBTCScanQR = () => {
@@ -449,6 +475,75 @@ export default class WalletOverview extends React.PureComponent {
       displayingSendToBTCDialog: true,
       sendToBTCAddress: e.data,
     })
+  }
+
+  onPressSendBTC = () => {
+    const { sendToBTCAddress } = this.state
+
+    if (sendToBTCAddress.length === 0) {
+      return
+    }
+
+    this.setState(
+      {
+        displayingSendToBTCDialog: false,
+        displayingSendBTCResultDialog: true,
+        sendingBTC: true,
+      },
+      () => {
+        // Check in case dialog was closed before state was updated
+        if (!this.state.displayingSendBTCResultDialog) {
+          return
+        }
+
+        Wallet.sendCoins({
+          addr: this.state.sendToBTCAddress,
+          amount: this.state.sendToBTCAmount,
+        })
+          .then(txid => {
+            // Check in case dialog was closed before completing fetch.
+            if (!this.state.displayingSendBTCResultDialog) {
+              return
+            }
+
+            this.setState({
+              sendingBTC: false,
+              sentBTCTXID: txid,
+            })
+          })
+          .catch(e => {
+            this.setState({
+              sendingBTC: false,
+              sentBTCErr: e.message,
+            })
+          })
+      },
+    )
+  }
+
+  goBackFromSentBTCResultDialog = () => {
+    this.setState({
+      displayingSendToBTCDialog: true,
+      displayingSendBTCResultDialog: false,
+    })
+  }
+
+  sentBTCResultChoiceToHandler = {
+    'View in BlockChain': () => {
+      Linking.openURL(`https://blockstream.info/tx/${this.state.sentBTCTXID}`)
+    },
+    'Copy Transaction ID to Clipboard': () => {
+      Clipboard.setString(this.state.sentBTCTXID)
+
+      showCopiedToClipboardToast()
+    },
+    Ok: () => {
+      this.closeAllSendDialogs()
+    },
+  }
+
+  sentBTCErrChoiceToHandler = {
+    Ok: this.goBackFromSentBTCResultDialog,
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -647,8 +742,13 @@ export default class WalletOverview extends React.PureComponent {
       displayingSendDialog,
 
       displayingSendToBTCDialog,
+      displayingSendBTCResultDialog,
       sendToBTCAddress,
       scanningBTCAddressQR,
+      sendingBTC,
+      sendToBTCAmount,
+      sentBTCErr,
+      sentBTCTXID,
 
       displayingBTCAddress,
       displayingBTCAddressQR,
@@ -887,15 +987,49 @@ export default class WalletOverview extends React.PureComponent {
 
             <Pad amount={10} />
 
+            <ShockInput
+              keyboardType="number-pad"
+              onChangeText={this.onChangeSendBTCAmount}
+              placeholder="Amount in Sats"
+              value={
+                sendToBTCAmount === 0 ? undefined : sendToBTCAmount.toString()
+              }
+            />
+
+            <Pad amount={10} />
+
             <IGDialogBtn onPress={this.onPressSendBTCScanQR} title="Scan QR" />
 
             <IGDialogBtn
-              disabled={sendToBTCAddress.length === 0}
+              disabled={sendToBTCAddress.length === 0 || sendToBTCAmount === 0}
               onPress={this.onPressSendBTC}
               title="Send"
             />
           </View>
         </BasicDialog>
+
+        <ShockDialog
+          message={
+            sendingBTC
+              ? 'Processing...'
+              : !!sentBTCErr
+              ? `Error: ${sentBTCErr}`
+              : 'Payment Sent'
+          }
+          choiceToHandler={
+            sendingBTC
+              ? {}
+              : sentBTCErr === null
+              ? this.sentBTCResultChoiceToHandler
+              : this.sentBTCErrChoiceToHandler
+          }
+          onRequestClose={
+            sentBTCErr === null
+              ? this.closeAllSendDialogs
+              : this.goBackFromSentBTCResultDialog
+          }
+          visible={displayingSendBTCResultDialog}
+        />
       </View>
     )
   }
