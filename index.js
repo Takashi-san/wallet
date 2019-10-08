@@ -3,6 +3,7 @@
  */
 import { AppRegistry, AsyncStorage, View, StyleSheet } from 'react-native'
 import moment from 'moment'
+import Http from 'axios'
 
 import once from 'lodash/once'
 import debounce from 'lodash/debounce'
@@ -12,6 +13,7 @@ import React, { Component } from 'react'
 import RootStack, { setup as rootStackSetup } from './app/factories/RootStack'
 
 import Loading from './app/screens/Loading'
+import Advanced from './app/screens/Advanced'
 
 import * as NavigationService from './app/services/navigation'
 import * as Cache from './app/services/cache'
@@ -144,6 +146,11 @@ export default class ShockWallet extends Component {
         if (conn) {
           await Cache.writeNodeIP(this.state.tryingIP)
           const storedAuthData = await Cache.getStoredAuthData()
+          // Sets a base URL for all requests so we won't have to worry
+          // concatenating it every time we want to make a request.
+          Http.defaults.baseURL = this.state.tryingIP
+            ? `${this.state.tryingIP}:${CONTACT_SOCKET_PORT}/api`
+            : undefined
 
           if (
             storedAuthData !== null &&
@@ -151,6 +158,13 @@ export default class ShockWallet extends Component {
           ) {
             console.warn(`storedAuthData: ${JSON.stringify(storedAuthData)}`)
             ContactApi.Events.initAuthData(storedAuthData.authData)
+
+            // Adds a default Authorization header for all requests
+            if (storedAuthData.authData) {
+              Http.defaults.headers.common[
+                'Authorization'
+              ] = `Bearer ${storedAuthData.authData.token}`
+            }
           }
 
           ContactApi.Events.setupEvents()

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Image } from "react-native";
 import Moment from "moment";
 import paymentIcon from "../../../assets/images/payment-icon.png"
 
-export default class Transaction extends Component {
+export default class Invoice extends Component {
   state = {
     open: false
   };
@@ -22,13 +22,14 @@ export default class Transaction extends Component {
         <View style={styles.transactionDetails}>
           <Image style={styles.transactionIcon} source={paymentIcon} resizeMode="contain" />
           <View style={styles.transactionHash}>
-            <Text ellipsizeMode="tail" numberOfLines={1} style={styles.transactionHashText}>{data.tx_hash}</Text>
+            <Text ellipsizeMode="tail" numberOfLines={1} style={styles.transactionHashText}>{data.r_preimage}</Text>
             <Text>Payment</Text>
           </View>
         </View>
         <View style={styles.transactionValue}>
-          <Text style={styles.transactionValueText}>{data.amount}</Text>
-          <Text style={styles.transactionTime}>{Moment(data.timestamp).fromNow()}</Text>
+          <Text style={styles.transactionTime}>{Moment(data.timestamp).fromNow()} ago</Text>
+          <Text style={styles.transactionValueText}>+{data.amt_paid_sat}</Text>
+          <Text style={styles.transactionUSDText}>{(data.amt_paid_sat / 100).toFixed(4)} USD</Text>
         </View>
       </View>
     );
@@ -42,6 +43,7 @@ const styles = StyleSheet.create({
   transactionItem: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 15,
     borderBottomWidth: 1,
@@ -63,9 +65,11 @@ const styles = StyleSheet.create({
     color: "#999999"
   },
   transactionValueText: {
-    fontSize: 20,
-    fontWeight: "bold",
+    fontSize: 15,
     color: "#6b6b6b"
+  },
+  transactionUSDText: {
+    color: "#f5a623"
   },
   transactionTime: {
     textAlign: "right",

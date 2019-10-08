@@ -2,8 +2,12 @@ import React, { Component } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import LinearGradient from "react-native-linear-gradient";
 import EntypoIcons from 'react-native-vector-icons/Entypo';
+import Http from "axios";
+import HttpConfig from "../../services/axiosConfig";
 import AccordionItem from "./Accordion";
 import Transaction from "./Accordion/Transaction";
+import Channel from "./Accordion/Channel";
+import Invoice from "./Accordion/Invoice";
 
 export default class AdvancedScreen extends Component {
   state = {
@@ -12,7 +16,11 @@ export default class AdvancedScreen extends Component {
       peers: false,
       invoices: false,
       channels: false
-    }
+    },
+    transactions: [],
+    peers: [],
+    invoices: [],
+    channels: []
   };
 
   componentDidMount() {
@@ -20,6 +28,23 @@ export default class AdvancedScreen extends Component {
     //   headerLeft: renderLeftHeader(() => {console.log('rendering left header')}),
     //   headerRight: renderRightHeader(() => {console.log('rendering right header')}),
     // });
+    this.fetchData();
+  }
+
+  fetchData = async () => {
+    const [invoices, payments, peers, channels] = await Promise.all([
+      Http.get('/lnd/listinvoices'),
+      Http.get('/lnd/listpayments'),
+      Http.get('/lnd/listpeers'),
+      Http.get('/lnd/listchannels')
+    ]);
+
+    this.setState({
+      invoices: invoices.data.entries,
+      payments: payments.data.entries,
+      peers: peers.data.peers,
+      channels: channels.data.channels
+    })
   }
 
   toggleAccordion = (name) => {
@@ -37,7 +62,13 @@ export default class AdvancedScreen extends Component {
   }
 
   render() {
-    const { accordions } = this.state;
+    const { 
+      accordions, 
+      transactions, 
+      peers,
+      invoices,
+      channels 
+    } = this.state;
     return (
         <View style={styles.container}>
           <LinearGradient start={{x: 0, y: 0}} end={{x: 1, y: 0}} colors={["#194B93", "#4285B9"]} style={styles.statsHeader}>
@@ -77,15 +108,19 @@ export default class AdvancedScreen extends Component {
           </LinearGradient>
           <View style={styles.accordionsContainer}>
             <AccordionItem title="Transactions" open={accordions["transactions"]} toggleAccordion={() => this.toggleAccordion("transactions")}>
-              <Transaction data={{ tx_hash: "3P3QsMVK89JBNqZQv5zMK89JBNqZQv5zMNqZQv5zMK89JBNq" }} />
-              <Transaction data={{ tx_hash: "3P3QsMVK89JBNqZQv5zMK89JBNqZQv5zMNqZQv5zMK89JBNq" }} />
-              <Transaction data={{ tx_hash: "3P3QsMVK89JBNqZQv5zMK89JBNqZQv5zMNqZQv5zMK89JBNq" }} />
-              <Transaction data={{ tx_hash: "3P3QsMVK89JBNqZQv5zMK89JBNqZQv5zMNqZQv5zMK89JBNq" }} />
-              <Transaction data={{ tx_hash: "3P3QsMVK89JBNqZQv5zMK89JBNqZQv5zMNqZQv5zMK89JBNq" }} />
+              {transactions.map(transaction =>
+                <Transaction data={transaction} />
+              )}
             </AccordionItem>
-            <AccordionItem title="Peers" open={accordions["peers"]} toggleAccordion={() => this.toggleAccordion("peers")} />
-            <AccordionItem title="Invoices" open={accordions["invoices"]} toggleAccordion={() => this.toggleAccordion("invoices")} />
-            <AccordionItem title="Channels" open={accordions["channels"]} toggleAccordion={() => this.toggleAccordion("channels")} />
+            <AccordionItem title="Peers" open={accordions["peers"]} toggleAccordion={() => this.toggleAccordion("peers")}>
+              {peers.map(peer => <Transaction data={peer} />)}
+            </AccordionItem>
+            <AccordionItem title="Invoices" open={accordions["invoices"]} toggleAccordion={() => this.toggleAccordion("invoices")}>
+              {invoices.map(invoice => <Invoice data={invoice} />)}
+            </AccordionItem>
+            <AccordionItem title="Channels" open={accordions["channels"]} toggleAccordion={() => this.toggleAccordion("channels")}>
+              {channels.map(channel => <Channel data={channel} />)}
+            </AccordionItem>
           </View>
         </View>
     );

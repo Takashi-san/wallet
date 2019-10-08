@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
     width: "100%"
   },
   accordionHeader: {
-    paddingVertical: 15,
+    paddingVertical: 10,
     paddingHorizontal: 15,
     borderBottomWidth: 0.5,
     borderColor: "#eee",
