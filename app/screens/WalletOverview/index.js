@@ -656,7 +656,38 @@ export default class WalletOverview extends React.PureComponent {
     })
   }
 
-  confirmInvoicePayment = () => {}
+  confirmInvoicePayment = () => {
+    this.setState(
+      {
+        displayingConfirmInvoicePaymentDialog: false,
+        displayingInvoicePaymentResult: true,
+        payingInvoice: true,
+      },
+      () => {
+        const { decodedInvoice, invoiceAmt, lightningInvoiceInput } = this.state
+
+        if (decodedInvoice === null) {
+          console.warn('decodedInvoice === null')
+          return
+        }
+
+        const zeroInvoice = decodedInvoice.num_satoshis === 0
+
+        Wallet.CAUTION_payInvoice({
+          amt: zeroInvoice ? invoiceAmt : undefined,
+          payreq: lightningInvoiceInput,
+        }).then(() => {
+          if (!this.state.displayingInvoicePaymentResult) {
+            return
+          }
+
+          this.setState({
+            payingInvoice: false,
+          })
+        })
+      },
+    )
+  }
 
   /**
    * @param {Wallet.DecodeInvoiceResponse} decodedInvoice
@@ -665,9 +696,11 @@ export default class WalletOverview extends React.PureComponent {
   renderConfirmInvoiceDialog(decodedInvoice) {
     const { invoiceAmt } = this.state
 
+    const zeroInvoice = decodedInvoice.num_satoshis === 0
+
     return (
       <View>
-        {decodedInvoice.num_satoshis === 0 && (
+        {zeroInvoice && (
           <React.Fragment>
             <Text>
               This invoice doesn't have an amount embedded in it. Enter the
@@ -682,7 +715,11 @@ export default class WalletOverview extends React.PureComponent {
           </React.Fragment>
         )}
 
-        <ShockButton onPress={this.confirmInvoicePayment} title="PAY" />
+        <ShockButton
+          disabled={zeroInvoice ? invoiceAmt === 0 : false}
+          onPress={this.confirmInvoicePayment}
+          title="PAY"
+        />
       </View>
     )
   }
@@ -901,6 +938,8 @@ export default class WalletOverview extends React.PureComponent {
       scanningLightningInvoiceQR,
       displayingConfirmInvoicePaymentDialog,
       decodedInvoice,
+      payingInvoice,
+      displayingInvoicePaymentResult,
 
       displayingBTCAddress,
       displayingBTCAddressQR,
@@ -1229,6 +1268,20 @@ export default class WalletOverview extends React.PureComponent {
               this.renderConfirmInvoiceDialog(decodedInvoice)
             )}
           </View>
+        </BasicDialog>
+
+        <BasicDialog
+          onRequestClose={this.closeAllSendDialogs}
+          title={payingInvoice ? 'Processing...' : 'Success!'}
+          visible={displayingInvoicePaymentResult}
+        >
+          {payingInvoice ? (
+            <ActivityIndicator />
+          ) : (
+            <View style={styles.alignItemsCenter}>
+              <EntypoIcons size={22} color="#2E4674" name="check" />
+            </View>
+          )}
         </BasicDialog>
       </View>
     )
