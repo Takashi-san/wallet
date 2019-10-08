@@ -49,6 +49,12 @@ import UnifiedTrx from './UnifiedTrx'
  * @prop {boolean} displayingPayLightningInvoiceDialog
  * @prop {string} lightningInvoiceInput
  * @prop {boolean} scanningLightningInvoiceQR
+ * @prop {boolean} displayingConfirmInvoicePaymentDialog
+ * @prop {number} invoiceAmt Only asked for if invoice has no amount embedded.
+ * @prop {Wallet.DecodeInvoiceResponse|null} decodedInvoice Null when dialog is
+ * closed or when fetching it.
+ * @prop {boolean} displayingInvoicePaymentResult
+ * @prop {boolean} payingInvoice
  *
  * @prop {number} createInvoiceAmount
  * @prop {string} createInvoiceMemo
@@ -120,6 +126,11 @@ export default class WalletOverview extends React.PureComponent {
     displayingPayLightningInvoiceDialog: false,
     lightningInvoiceInput: '',
     scanningLightningInvoiceQR: false,
+    displayingConfirmInvoicePaymentDialog: false,
+    invoiceAmt: 0,
+    decodedInvoice: null,
+    displayingInvoicePaymentResult: false,
+    payingInvoice: false,
 
     createInvoiceAmount: 0,
     createInvoiceMemo: '',
@@ -157,6 +168,11 @@ export default class WalletOverview extends React.PureComponent {
       displayingPayLightningInvoiceDialog: false,
       lightningInvoiceInput: '',
       scanningLightningInvoiceQR: false,
+      displayingConfirmInvoicePaymentDialog: false,
+      invoiceAmt: 0,
+      decodedInvoice: null,
+      displayingInvoicePaymentResult: false,
+      payingInvoice: false,
     })
   }
 
@@ -599,6 +615,76 @@ export default class WalletOverview extends React.PureComponent {
     if (lightningInvoiceInput.length === 0) {
       return
     }
+
+    this.setState(
+      {
+        displayingPayLightningInvoiceDialog: false,
+        displayingConfirmInvoicePaymentDialog: true,
+      },
+      () => {
+        const { lightningInvoiceInput } = this.state
+
+        Wallet.decodeInvoice({ pay_req: lightningInvoiceInput }).then(
+          decodedInvoice => {
+            if (!this.state.displayingConfirmInvoicePaymentDialog) {
+              return
+            }
+
+            this.setState({
+              decodedInvoice,
+            })
+          },
+        )
+      },
+    )
+  }
+
+  /**
+   * @param {string} amt
+   */
+  onChangeInvoiceAmt = amt => {
+    const numbers = '0123456789'.split('')
+
+    const chars = amt.split('')
+
+    if (!chars.every(c => numbers.includes(c))) {
+      return
+    }
+
+    this.setState({
+      invoiceAmt: Number(amt),
+    })
+  }
+
+  confirmInvoicePayment = () => {}
+
+  /**
+   * @param {Wallet.DecodeInvoiceResponse} decodedInvoice
+   * @returns {JSX.Element}
+   */
+  renderConfirmInvoiceDialog(decodedInvoice) {
+    const { invoiceAmt } = this.state
+
+    return (
+      <View>
+        {decodedInvoice.num_satoshis === 0 && (
+          <React.Fragment>
+            <Text>
+              This invoice doesn't have an amount embedded in it. Enter the
+              amount to be paid.
+            </Text>
+            <ShockInput
+              keyboardType="number-pad"
+              onChangeText={this.onChangeInvoiceAmt}
+              placeholder="Amount in sats."
+              value={invoiceAmt === 0 ? undefined : invoiceAmt.toString()}
+            />
+          </React.Fragment>
+        )}
+
+        <ShockButton onPress={this.confirmInvoicePayment} title="PAY" />
+      </View>
+    )
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -813,6 +899,8 @@ export default class WalletOverview extends React.PureComponent {
       displayingPayLightningInvoiceDialog,
       lightningInvoiceInput,
       scanningLightningInvoiceQR,
+      displayingConfirmInvoicePaymentDialog,
+      decodedInvoice,
 
       displayingBTCAddress,
       displayingBTCAddressQR,
@@ -1126,6 +1214,20 @@ export default class WalletOverview extends React.PureComponent {
               onPress={this.onPressPayLightningInvoice}
               title="Pay"
             />
+          </View>
+        </BasicDialog>
+
+        <BasicDialog
+          onRequestClose={this.closeAllSendDialogs}
+          title="Pay Invoice"
+          visible={displayingConfirmInvoicePaymentDialog}
+        >
+          <View>
+            {decodedInvoice === null ? (
+              <ActivityIndicator />
+            ) : (
+              this.renderConfirmInvoiceDialog(decodedInvoice)
+            )}
           </View>
         </BasicDialog>
       </View>
