@@ -3,7 +3,6 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 import LinearGradient from "react-native-linear-gradient";
 import EntypoIcons from 'react-native-vector-icons/Entypo';
 import Http from "axios";
-import HttpConfig from "../../services/axiosConfig";
 import AccordionItem from "./Accordion";
 import Transaction from "./Accordion/Transaction";
 import Channel from "./Accordion/Channel";
