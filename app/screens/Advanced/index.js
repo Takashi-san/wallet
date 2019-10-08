@@ -9,6 +9,7 @@ import Transaction from "./Accordion/Transaction";
 import Channel from "./Accordion/Channel";
 import Invoice from "./Accordion/Invoice";
 
+export const ADVANCED_SCREEN = "ADVANCED_SCREEN";
 export default class AdvancedScreen extends Component {
   state = {
     accordions: {

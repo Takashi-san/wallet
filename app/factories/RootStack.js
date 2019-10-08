@@ -10,6 +10,7 @@ import LoggedInScreenNavigator from './MainDrawerNavigator'
 
 import Chat, { CHAT_ROUTE } from '../screens/Chat'
 import Chats, { CHATS_ROUTE } from '../screens/Chats'
+import Advanced, { ADVANCED_SCREEN } from '../screens/Advanced'
 import ConnectToHost from '../screens/Login/connectToHost'
 import ConnectToWallet from '../screens/Login/connectToWallet'
 import NewWallet from '../screens/Login/newWallet'
@@ -38,6 +39,7 @@ export const APP = 'APP'
 
 const App = createStackNavigator(
   {
+    [ADVANCED_SCREEN]: Advanced,
     [CHAT_ROUTE]: Chat,
     [CHATS_ROUTE]: Chats,
     ConnectToHost: ConnectToHost,
