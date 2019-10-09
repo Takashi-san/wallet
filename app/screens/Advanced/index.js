@@ -17,9 +17,17 @@ export default class AdvancedScreen extends Component {
       invoices: false,
       channels: false
     },
-    transactions: [],
+    transactions: { 
+      content: [], 
+      page: 0, 
+      totalPages: 0 
+    },
     peers: [],
-    invoices: [],
+    invoices: { 
+      content: [], 
+      page: 0, 
+      totalPages: 0 
+    },
     channels: []
   };
 
@@ -40,14 +48,14 @@ export default class AdvancedScreen extends Component {
     ]);
 
     this.setState({
-      invoices: invoices.data.entries,
-      payments: payments.data.entries,
+      invoices: invoices.data,
+      payments: payments.data,
       peers: peers.data.peers,
       channels: channels.data.channels
     })
   }
 
-  toggleAccordion = (name) => {
+  toggleAccordion = name => {
     const { accordions } = this.state;
     const updatedAccordions = Object.keys(accordions).reduce((accordions, accordion) => {
       const newStatus = name === accordion;
@@ -59,6 +67,24 @@ export default class AdvancedScreen extends Component {
     this.setState({
       accordions: updatedAccordions
     })
+  }
+
+  wait = (ms) => new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(true);
+    }, ms);
+  });
+
+  fetchNextPage = async (routeName = "", stateName = "") => {
+    const currentData = this.state[stateName];
+    await this.wait(2000)
+    const { data } = await Http.get(`/lnd/list${routeName}?page=${currentData.page + 1}`);
+    this.setState({
+      [stateName]: {
+        ...data,
+        content: [...currentData.content, ...data.content]
+      }
+    });
   }
 
   render() {
@@ -107,20 +133,37 @@ export default class AdvancedScreen extends Component {
             </View>
           </LinearGradient>
           <View style={styles.accordionsContainer}>
-            <AccordionItem title="Transactions" open={accordions["transactions"]} toggleAccordion={() => this.toggleAccordion("transactions")}>
-              {transactions.map(transaction =>
-                <Transaction data={transaction} />
-              )}
-            </AccordionItem>
-            <AccordionItem title="Peers" open={accordions["peers"]} toggleAccordion={() => this.toggleAccordion("peers")}>
-              {peers.map(peer => <Transaction data={peer} />)}
-            </AccordionItem>
-            <AccordionItem title="Invoices" open={accordions["invoices"]} toggleAccordion={() => this.toggleAccordion("invoices")}>
-              {invoices.map(invoice => <Invoice data={invoice} />)}
-            </AccordionItem>
-            <AccordionItem title="Channels" open={accordions["channels"]} toggleAccordion={() => this.toggleAccordion("channels")}>
-              {channels.map(channel => <Channel data={channel} />)}
-            </AccordionItem>
+            <AccordionItem 
+              paginated={true}
+              fetchNextPage={() => this.fetchNextPage("payments", "transactions")}
+              data={transactions}
+              Item={Transaction}
+              title="Transactions" 
+              open={accordions["transactions"]}
+              toggleAccordion={() => this.toggleAccordion("transactions")}
+            />
+            <AccordionItem 
+              data={peers}
+              Item={Transaction}
+              title="Peers" 
+              open={accordions["peers"]}
+              toggleAccordion={() => this.toggleAccordion("peers")}
+            />
+            <AccordionItem 
+              paginated={true}
+              fetchNextPage={() => this.fetchNextPage("invoices", "invoices")}
+              data={invoices}
+              Item={Invoice}
+              title="Invoices" 
+              open={accordions["invoices"]}
+              toggleAccordion={() => this.toggleAccordion("invoices")}
+            />
+            <AccordionItem 
+              data={channels}
+              Item={Channel}
+              title="Channels" open={accordions["channels"]}
+              toggleAccordion={() => this.toggleAccordion("channels")}
+            />
           </View>
         </View>
     );

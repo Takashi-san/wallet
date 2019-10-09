@@ -1,12 +1,13 @@
 import React, { Component, Fragment } from "react";
-import { View, Text, StyleSheet, TouchableHighlight, ScrollView, TouchableOpacity } from "react-native";
+import { Animated, Easing, View, Text, StyleSheet, TouchableHighlight, FlatList, ScrollView, TouchableOpacity, TouchableWithoutFeedback } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/Entypo";
 
 export default class Accordion extends Component {
   state = {
     open: false,
-    menuOpen: false
+    menuOpen: false,
+    menuOpenAnimation: new Animated.Value(0)
   };
 
   componentDidMount() {
@@ -17,38 +18,62 @@ export default class Accordion extends Component {
   }
 
   toggleMenuOpen = () => {
-    const { menuOpen } = this.state;
+    const { menuOpen, menuOpenAnimation } = this.state;
+    Animated.timing(menuOpenAnimation, {
+      toValue: menuOpen ? 0 : 1,
+      easing: Easing.inOut(Easing.ease),
+      duration: 200
+    }).start();
     this.setState({
       menuOpen: !menuOpen
-    })
+    });
   }
 
   renderTRXMenu = () => {
     const { title, open } = this.props;
-    const { menuOpen } = this.state;
+    const { menuOpenAnimation } = this.state;
     const supportedAccordions = ['transactions'];
     if (open && supportedAccordions.includes(title.toLowerCase())) {
       return (
         <View style={styles.accordionMenu}>
-          <View style={[styles.accordionMenuItem, {
-            opacity: menuOpen ? 1 : 0
+          <Animated.View style={[styles.accordionMenuItem, {
+            opacity: menuOpenAnimation,
+            marginRight: menuOpenAnimation.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, 15]
+            })
           }]}>
             <View style={styles.accordionMenuItemIcon}>
               <Icon name="link" size={20} color="#294f93" />
             </View>
             <Text style={styles.accordionMenuItemText}>Generate</Text>
-          </View>
-          <View style={[styles.accordionMenuItem, {
-            opacity: menuOpen ? 1 : 0
+          </Animated.View>
+          <Animated.View style={[styles.accordionMenuItem, {
+            opacity: menuOpenAnimation,
+            marginRight: menuOpenAnimation.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, 15]
+            })
           }]}>
             <View style={styles.accordionMenuItemIcon}>
               <Icon name="flash" size={20} color="#294f93" />
             </View>
             <Text style={styles.accordionMenuItemText}>Send</Text>
-          </View>
-          <TouchableOpacity style={styles.accordionMenuBtn} onPress={this.toggleMenuOpen}>
-            <Icon name="plus" size={30} color="white" />
-          </TouchableOpacity>
+          </Animated.View>
+          <TouchableWithoutFeedback onPress={this.toggleMenuOpen}>
+            <Animated.View style={[styles.accordionMenuBtn, {
+              transform: [{
+                rotateZ: menuOpenAnimation.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: ["0deg", "45deg"]
+                })
+              }, {
+                perspective: 1000
+              }]
+            }]}>
+              <Icon name="plus" size={30} color="white" />
+            </Animated.View>
+          </TouchableWithoutFeedback>
         </View>
       );
     }
@@ -57,7 +82,7 @@ export default class Accordion extends Component {
   }
 
   render() {
-    const { title, children, open, toggleAccordion } = this.props;
+    const { title, children, open, toggleAccordion, data, Item, fetchNextPage, paginated } = this.props;
     return (
       <View style={[styles.accordionItem, { flex: open ? 1 : 0 }]}>
         <TouchableOpacity onPress={toggleAccordion} style={styles.accordionItem}>
@@ -67,11 +92,22 @@ export default class Accordion extends Component {
             </Text>
           </LinearGradient>
         </TouchableOpacity>
-        <ScrollView style={{
+        {paginated ? <FlatList 
+          data={data.content} 
+          renderItem={({ item }) => <Item data={item} />} 
+          style={{
+            height: open ? "100%" : "0%"
+          }}
+          onEndReached={() => {
+            if (data.page < data.totalPages) {
+              fetchNextPage()
+            }
+          }}
+        /> : <ScrollView style={{
           height: open ? "100%" : "0%"
         }}>
-          {children}
-        </ScrollView>
+          {data.map(item => <Item data={item} />)}
+        </ScrollView>}
         {this.renderTRXMenu()}
       </View>
     );
