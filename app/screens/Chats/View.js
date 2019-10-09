@@ -126,6 +126,8 @@ export default class ChatsView extends React.PureComponent {
             lowerText={
               lastMsg.body === '$$__SHOCKWALLET__INITIAL__MESSAGE'
                 ? 'Empty conversation'
+                : lastMsg.body.indexOf('$$__SHOCKWALLET__INVOICE__') === 0
+                ? 'Invoice'
                 : lastMsg.body
             }
             lowerTextStyle={unread ? styles.boldFont : undefined}
