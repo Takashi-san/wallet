@@ -13,7 +13,6 @@ import React, { Component } from 'react'
 import RootStack, { setup as rootStackSetup } from './app/factories/RootStack'
 
 import Loading from './app/screens/Loading'
-import Advanced from './app/screens/Advanced'
 
 import * as NavigationService from './app/services/navigation'
 import * as Cache from './app/services/cache'
