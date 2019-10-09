@@ -1,0 +1,7 @@
+{
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "typescript.format.enable": false,
+  "eslint.enable": false,
+  "prettier.requireConfig": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode"
+}

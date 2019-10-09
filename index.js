@@ -3,6 +3,7 @@
  */
 import { AppRegistry, View, StyleSheet, AsyncStorage } from 'react-native'
 import moment from 'moment'
+import Http from 'axios'
 
 import once from 'lodash/once'
 import debounce from 'lodash/debounce'
@@ -148,12 +149,24 @@ export default class ShockWallet extends Component {
           Auth.connectNodeToLND()
 
           const storedAuthData = await Cache.getStoredAuthData()
+          // Sets a base URL for all requests so we won't have to worry
+          // concatenating it every time we want to make a request.
+          Http.defaults.baseURL = this.state.tryingIP
+            ? `${this.state.tryingIP}:${CONTACT_SOCKET_PORT}/api`
+            : undefined
 
           if (
             storedAuthData !== null &&
             storedAuthData.nodeIP === this.state.tryingIP
           ) {
             ContactApi.Events.initAuthData(storedAuthData.authData)
+
+            // Adds a default Authorization header for all requests
+            if (storedAuthData.authData) {
+              Http.defaults.headers.common[
+                'Authorization'
+              ] = `Bearer ${storedAuthData.authData.token}`
+            }
           }
 
           ContactApi.Events.setupEvents()
