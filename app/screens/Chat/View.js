@@ -12,6 +12,7 @@ import { GiftedChat, Send } from 'react-native-gifted-chat'
 
 import * as API from '../../services/contact-api'
 
+import ChatInvoice from './ChatInvoice'
 import ChatMessage from './ChatMessage'
 
 export const CHAT_ROUTE = 'CHAT_ROUTE'
@@ -49,6 +50,12 @@ const SendRenderer = props => (
 
 /**
  * @typedef {object} Props
+ * @prop {Partial<Record<string, number>>} invoiceToAmount Used for displaying
+ * an amount on invoices. If both amount and payment status are unspecified an
+ * spinner will be shown.
+ * @prop {Partial<Record<string, boolean>>} invoiceToPaid Used for displaying
+ * payment status on invoices. If both amount and payment status are unspecified
+ * an spinner will be shown.
  * @prop {API.Schema.ChatMessage[]} messages
  * @prop {(text: string) => void} onSendMessage
  * @prop {string|null} ownDisplayName
@@ -71,7 +78,7 @@ export default class ChatView extends React.PureComponent {
       return null
     }
 
-    const { recipientPublicKey } = this.props
+    const { invoiceToAmount, invoiceToPaid, recipientPublicKey } = this.props
 
     const user = currentMessage.user
 
@@ -86,6 +93,26 @@ export default class ChatView extends React.PureComponent {
       typeof currentMessage.createdAt === 'number'
         ? currentMessage.createdAt
         : currentMessage.createdAt.getTime()
+
+    const isInvoice =
+      currentMessage.text.indexOf('$$__SHOCKWALLET__INVOICE__') === 0
+
+    if (isInvoice) {
+      return (
+        <View style={outgoing ? styles.alignFlexStart : styles.alignFlexEnd}>
+          <View style={styles.maxWidth}>
+            <ChatInvoice
+              amount={invoiceToAmount[currentMessage._id]}
+              isPaid={invoiceToPaid[currentMessage._id]}
+              id={currentMessage._id}
+              outgoing={outgoing}
+              senderName={senderName}
+              timestamp={timestamp}
+            />
+          </View>
+        </View>
+      )
+    }
 
     return (
       <View style={outgoing ? styles.alignFlexStart : styles.alignFlexEnd}>
