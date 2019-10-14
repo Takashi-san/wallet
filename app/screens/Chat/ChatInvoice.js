@@ -16,12 +16,30 @@ import moment from 'moment'
 import { Colors } from '../../css'
 
 /**
+ * @typedef {object} _PaymentStatus
+ * @prop {string} UNKNOWN If a payment is found for an incoming invoice and
+ * payment status is UNKNOWN.
+ * @prop {string} PAID If an outgoing invoice's status is SETTLED, or a payment
+ * for an incoming invoice is found and its status is SUCCEEDED.
+ * @prop {string} FAILED If a payment is found for an incoming invoice, and its
+ * status is FAILED.
+ * @prop {string} IN_FLIGHT If a payment is found for an incoming invoice, and
+ * its status is IN_FLIGHT.
+ * @prop {string} UNPAID If no payment is found for an incoming invoice.
+ */
+
+/**
+ * @typedef {keyof _PaymentStatus} PaymentStatus
+ */
+
+/**
  * @typedef {object} Props
  * @prop {number|undefined} amount
  * @prop {string} id
- * @prop {boolean|undefined} isPaid
- * @prop {((id: string) => void)=} onPress
+ * @prop {((id: string) => void)} onPressUnpaidIncomingInvoice Only called for
+ * unpaid incoming invoices.
  * @prop {boolean=} outgoing
+ * @prop {PaymentStatus|undefined} paymentStatus
  * @prop {string} senderName
  * @prop {number} timestamp
  */
@@ -44,25 +62,75 @@ export default class ChatMessage extends React.PureComponent {
   }
 
   onPress = () => {
-    const { id, onPress } = this.props
+    const { id, onPressUnpaidIncomingInvoice } = this.props
+    const { amount, outgoing, paymentStatus } = this.props
 
-    onPress && onPress(id)
+    if (
+      typeof amount === 'undefined' ||
+      typeof paymentStatus === 'undefined' ||
+      outgoing
+    ) {
+      return
+    }
+
+    if (paymentStatus === 'UNPAID') {
+      onPressUnpaidIncomingInvoice(id)
+    }
   }
 
   renderPaymentStatus() {
-    const { amount, isPaid, outgoing } = this.props
+    const { amount, outgoing, paymentStatus } = this.props
 
-    if (typeof amount === 'undefined' || typeof isPaid === 'undefined') {
+    if (typeof amount === 'undefined' || typeof paymentStatus === 'undefined') {
       return <ActivityIndicator />
     }
 
-    return (
-      <View>
-        <Text style={styles.body}>{'$' + amount}</Text>
-        {!outgoing && !isPaid && <Text>Press here to Pay</Text>}
-        {isPaid && <Entypo name="check" />}
-      </View>
-    )
+    switch (paymentStatus) {
+      case 'FAILED': {
+        return (
+          <View>
+            <Text style={styles.body}>{amount + ' sats'}</Text>
+            <Text>Payment failed.</Text>
+          </View>
+        )
+      }
+
+      case 'IN_FLIGHT': {
+        return (
+          <View>
+            <Text style={styles.body}>{amount + ' sats'}</Text>
+            <Text>Payment being processed</Text>
+          </View>
+        )
+      }
+
+      case 'PAID': {
+        return (
+          <View>
+            <Text style={styles.body}>{amount + ' sats'}</Text>
+            <Entypo name="check" />
+          </View>
+        )
+      }
+
+      case 'UNKNOWN': {
+        return (
+          <View>
+            <Text style={styles.body}>{amount + ' sats'}</Text>
+            {<Text>Unknown payment status</Text>}
+          </View>
+        )
+      }
+
+      case 'UNPAID': {
+        return (
+          <View>
+            <Text style={styles.body}>{amount + ' sats'}</Text>
+            {!outgoing && <Text>Press here to Pay</Text>}
+          </View>
+        )
+      }
+    }
   }
 
   render() {
@@ -118,12 +186,16 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginTop: 8,
   },
+  // @ts-ignore
   container,
+  // @ts-ignore
   containerOutgoing: {
     ...container,
     backgroundColor: Colors.GRAY_MEDIUM,
   },
+  // @ts-ignore
   name,
+  // @ts-ignore
   nameOutgoing: {
     ...name,
     color: Colors.TEXT_STANDARD,
