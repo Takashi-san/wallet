@@ -135,7 +135,9 @@ export default class MyProfile extends React.PureComponent {
               logoToShow="shock"
               value={`$$__SHOCKWALLET__USER__${
                 authData.publicKey
-              }__${handshakeAddr}__${displayName}`}
+              }__${handshakeAddr}__${
+                displayName ? displayName : authData.publicKey
+              }`}
             />
           </View>
         )}
