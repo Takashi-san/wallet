@@ -10,24 +10,34 @@ const PORT = 9835
 
 /**
  * Tells the node to connect to LND.
+ * @param {string} alias
+ * @param {string} password
  * @returns {Promise<void>}
  */
-export const connectNodeToLND = () =>
+export const connectNodeToLND = (alias, password) =>
   backOff(
     async () => {
       const nodeIP = await Cache.getNodeIP()
 
       if (nodeIP === null) {
-        throw new TypeError('')
+        throw new TypeError('nodeIP === null')
       }
 
-      const res = await fetch(`http://${nodeIP}:${PORT}/api/lnd/connect`)
-
-      const body = await res.json()
+      const res = await fetch(`http://${nodeIP}:${PORT}/api/lnd/connect`, {
+        method: 'POST',
+        body: JSON.stringify({
+          alias,
+          password,
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
 
       if (res.ok) {
         return
       } else {
+        const body = await res.json()
         throw new Error(body.errorMessage)
       }
     },
@@ -52,6 +62,7 @@ export const connectNodeToLND = () =>
  * @returns {Promise<{ token: string , publicKey: string }>}
  */
 export const unlockWallet = async (alias, password) => {
+  await connectNodeToLND(alias, password)
   const nodeIP = await Cache.getNodeIP()
 
   if (nodeIP === null) {
@@ -82,7 +93,7 @@ export const unlockWallet = async (alias, password) => {
     }
   } else {
     if (body.errorMessage === 'LND is down') {
-      connectNodeToLND()
+      connectNodeToLND(alias, password)
     }
 
     throw new Error(body.errorMessage)
@@ -128,7 +139,7 @@ export const createWallet = async (alias, password) => {
     }
   } else {
     if (body.errorMessage === 'LND is down') {
-      connectNodeToLND()
+      connectNodeToLND(alias, password)
     }
 
     throw new Error(body.errorMessage)
