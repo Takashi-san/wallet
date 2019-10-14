@@ -11,6 +11,9 @@ import * as Wallet from '../../services/wallet'
 import { Colors } from '../../css'
 
 import { WALLET_OVERVIEW } from '../WalletOverview'
+/**
+ * @typedef {import('../WalletOverview').Params} WalletOverviewParams
+ */
 
 import ChatView from './View'
 
@@ -364,7 +367,21 @@ export default class Chat extends React.PureComponent {
    * @param {string} msgID
    */
   onPressUnpaidIncomingInvoice = msgID => {
-    this.props.navigation.navigate(WALLET_OVERVIEW)
+    const msg = /** @type {API.Schema.ChatMessage} */ (this.state.messages.find(
+      m => m.id === msgID,
+    ))
+
+    const rawInvoice = msg.body.slice('$$__SHOCKWALLET__INVOICE__'.length)
+
+    /** @type {WalletOverviewParams} */
+    const params = {
+      rawInvoice,
+      recipientAvatar: null,
+      recipientDisplayName: this.state.recipientDisplayName,
+      recipientPublicKey: this.props.navigation.getParam('recipientPublicKey'),
+    }
+
+    this.props.navigation.navigate(WALLET_OVERVIEW, params)
   }
 
   render() {
