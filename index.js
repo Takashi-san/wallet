@@ -145,8 +145,6 @@ export default class ShockWallet extends Component {
       .then(async conn => {
         if (conn) {
           await Cache.writeNodeIP(this.state.tryingIP)
-          // pre-emptively signal node to Connect to LND
-          Auth.connectNodeToLND()
 
           const storedAuthData = await Cache.getStoredAuthData()
           // Sets a base URL for all requests so we won't have to worry
