@@ -1019,7 +1019,7 @@ export default class WalletOverview extends React.PureComponent {
                   fontSize: 24,
                 }}
               >
-                {balance.toFixed(2).toString()} BITS
+                {balance.toFixed(2).toString()} SATS
               </Text>
             </View>
 
