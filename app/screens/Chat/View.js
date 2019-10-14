@@ -49,14 +49,23 @@ const SendRenderer = props => (
 )
 
 /**
+ * @typedef {import('./ChatInvoice').PaymentStatus} PaymentStatus
+ */
+
+/**
  * @typedef {object} Props
- * @prop {Partial<Record<string, number>>} invoiceToAmount Used for displaying
- * an amount on invoices. If both amount and payment status are unspecified an
- * spinner will be shown.
- * @prop {Partial<Record<string, boolean>>} invoiceToPaid Used for displaying
- * payment status on invoices. If both amount and payment status are unspecified
- * an spinner will be shown.
+ * @prop {Partial<Record<string, number>>} msgIDToInvoiceAmount Used for
+ * displaying an amount on incoming/outgoing invoices. If undefined an spinner
+ * will will be shown as a placeholder.
+ * @prop {Partial<Record<string, number>>} msgIDToInvoiceExpiryDate Used for
+ * displaying expiration status on invoices. If undefined for a given invoice,
+ * an spinner will will be shown for that given invoice as a placeholder.
+ * @prop {Partial<Record<string, PaymentStatus>>} msgIDToInvoicePaymentStatus
+ * Used for displaying payment status on invoices. If undefined for a given
+ * invoice, an spinner  will be shown for that given invoice as a placeholder.
+ * Please refer to _PaymentStatus to see what each one represents.
  * @prop {API.Schema.ChatMessage[]} messages
+ * @prop {(msgID: string) => void} onPressUnpaidIncomingInvoice
  * @prop {(text: string) => void} onSendMessage
  * @prop {string|null} ownDisplayName
  * @prop {string|null} ownPublicKey
@@ -78,7 +87,12 @@ export default class ChatView extends React.PureComponent {
       return null
     }
 
-    const { invoiceToAmount, invoiceToPaid, recipientPublicKey } = this.props
+    const {
+      msgIDToInvoiceAmount: invoiceToAmount,
+      msgIDToInvoicePaymentStatus,
+      onPressUnpaidIncomingInvoice,
+      recipientPublicKey,
+    } = this.props
 
     const user = currentMessage.user
 
@@ -103,9 +117,10 @@ export default class ChatView extends React.PureComponent {
           <View style={styles.maxWidth}>
             <ChatInvoice
               amount={invoiceToAmount[currentMessage._id]}
-              isPaid={invoiceToPaid[currentMessage._id]}
               id={currentMessage._id}
+              onPressUnpaidIncomingInvoice={onPressUnpaidIncomingInvoice}
               outgoing={outgoing}
+              paymentStatus={msgIDToInvoicePaymentStatus[currentMessage._id]}
               senderName={senderName}
               timestamp={timestamp}
             />
