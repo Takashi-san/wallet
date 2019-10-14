@@ -16,6 +16,9 @@ import {
 } from 'react-native'
 import EntypoIcons from 'react-native-vector-icons/Entypo'
 import QRCodeScanner from 'react-native-qrcode-scanner'
+/**
+ * @typedef {import('react-navigation').NavigationScreenProp<{}, Params>} Navigation
+ */
 
 import BasicDialog from '../../components/BasicDialog'
 import IGDialogBtn from '../../components/IGDialogBtn'
@@ -23,12 +26,30 @@ import Pad from '../../components/Pad'
 import ShockButton from '../../components/ShockButton'
 import ShockDialog from '../../components/ShockDialog'
 import ShockInput from '../../components/ShockInput'
+import UserDetail from '../../components/UserDetail'
 
 import btcConvert from '../../services/convertBitcoin'
 import * as Wallet from '../../services/wallet'
 
 import QR from './QR'
 import UnifiedTrx from './UnifiedTrx'
+
+/**
+ * @typedef {object} Params
+ * @prop {string=} rawInvoice
+ * @prop {string|null} recipientDisplayName
+ * @prop {string|null} recipientAvatar
+ * @prop {string} recipientPublicKey
+ */
+
+/**
+ * @typedef {object} Props
+ * @prop {Navigation} navigation
+ */
+
+/**
+ * @typedef {{ displayName: string|null , avatar: string|null, pk: string }} ShockUser
+ */
 
 /**
  * @typedef {object} State
@@ -46,6 +67,7 @@ import UnifiedTrx from './UnifiedTrx'
  * @prop {string|null} sentBTCErr
  * @prop {string} sentBTCTXID Holds the transaction ID after sending BTC.
  *
+ * @prop {ShockUser|null} payShockInvoiceUserData
  * @prop {boolean} displayingPayLightningInvoiceDialog
  * @prop {string} lightningInvoiceInput
  * @prop {boolean} scanningLightningInvoiceQR
@@ -87,7 +109,7 @@ const showCopiedToClipboardToast = () => {
 }
 
 /**
- * @augments React.PureComponent<{}, State, never>
+ * @augments React.PureComponent<Props, State, never>
  */
 export default class WalletOverview extends React.PureComponent {
   /**
@@ -123,6 +145,7 @@ export default class WalletOverview extends React.PureComponent {
     sentBTCErr: null,
     sentBTCTXID: '',
 
+    payShockInvoiceUserData: null,
     displayingPayLightningInvoiceDialog: false,
     lightningInvoiceInput: '',
     scanningLightningInvoiceQR: false,
@@ -165,6 +188,7 @@ export default class WalletOverview extends React.PureComponent {
       sentBTCErr: null,
       sentBTCTXID: '',
 
+      payShockInvoiceUserData: null,
       displayingPayLightningInvoiceDialog: false,
       lightningInvoiceInput: '',
       scanningLightningInvoiceQR: false,
@@ -694,7 +718,7 @@ export default class WalletOverview extends React.PureComponent {
    * @returns {JSX.Element}
    */
   renderConfirmInvoiceDialog(decodedInvoice) {
-    const { invoiceAmt } = this.state
+    const { invoiceAmt, payShockInvoiceUserData } = this.state
 
     const zeroInvoice = decodedInvoice.num_satoshis === 0
 
@@ -712,6 +736,30 @@ export default class WalletOverview extends React.PureComponent {
               placeholder="Amount in sats."
               value={invoiceAmt === 0 ? undefined : invoiceAmt.toString()}
             />
+          </React.Fragment>
+        )}
+
+        <Pad amount={10} />
+
+        {!zeroInvoice && (
+          <Text>{`Amount: ${decodedInvoice.num_satoshis}`}</Text>
+        )}
+
+        <Pad amount={10} />
+
+        {payShockInvoiceUserData && (
+          <React.Fragment>
+            <UserDetail
+              image={payShockInvoiceUserData.avatar}
+              name={
+                payShockInvoiceUserData.displayName ||
+                payShockInvoiceUserData.pk
+              }
+              id={payShockInvoiceUserData.pk}
+              lowerText="ShockWallet user"
+            />
+
+            <Pad amount={10} />
           </React.Fragment>
         )}
 
@@ -746,6 +794,38 @@ export default class WalletOverview extends React.PureComponent {
 
   /** @type {null|ReturnType<typeof setInterval>} */
   recentTransactionsIntervalID = null
+
+  /**
+   * @param {Props} prevProps
+   */
+  componentDidUpdate(prevProps) {
+    if (
+      prevProps.navigation.state.params === this.props.navigation.state.params
+    ) {
+      return
+    }
+
+    const newParams = /** @type {Required<Params>} */ (this.props.navigation
+      .state.params)
+
+    this.setState(
+      {
+        displayingConfirmInvoicePaymentDialog: true,
+        payShockInvoiceUserData: {
+          avatar: newParams.recipientAvatar,
+          displayName: null, //newParams.recipientDisplayName,
+          pk: newParams.recipientPublicKey,
+        },
+      },
+      () => {
+        Wallet.decodeInvoice({ pay_req: newParams.rawInvoice }).then(res => {
+          this.setState({
+            decodedInvoice: res,
+          })
+        })
+      },
+    )
+  }
 
   componentDidMount() {
     this.balanceIntervalID = setInterval(this.fetchBalance, 1500)
