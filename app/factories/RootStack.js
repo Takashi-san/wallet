@@ -32,7 +32,7 @@ import Register, { REGISTER } from '../screens/Register'
 import User from '../screens/TheirProfile'
 import Users from '../screens/Users'
 
-import MyProfile from '../screens/MyProfile'
+import MyProfile, { MY_PROFILE } from '../screens/MyProfile'
 import Loading, { LOADING } from '../screens/Loading'
 
 import * as ContactAPI from '../services/contact-api'
@@ -45,9 +45,14 @@ export const MAIN_NAV = 'MAIN_NAV'
 const MainNav = createBottomTabNavigator(
   {
     [WALLET_OVERVIEW]: WalletOverview,
+    [CHATS_ROUTE]: Chats,
+    [MY_PROFILE]: MyProfile,
   },
   {
     initialRouteName: WALLET_OVERVIEW,
+    tabBarOptions: {
+      showLabel: false,
+    },
   },
 )
 
@@ -58,7 +63,6 @@ MainNav.navigationOptions = {
 const App = createStackNavigator(
   {
     [CHAT_ROUTE]: Chat,
-    [CHATS_ROUTE]: Chats,
     ConnectToHost: ConnectToHost,
     ConfirmPhrase: ConfirmPhrase,
     ConnectToWallet: ConnectToWallet,
@@ -70,7 +74,7 @@ const App = createStackNavigator(
     SearchForUsers: SearchForUsers,
     User,
     Users,
-    MyProfile,
+
     [MAIN_NAV]: MainNav,
   },
   {
@@ -99,7 +103,7 @@ const MainSwitch = createSwitchNavigator(
     [CHOOSE_DISPLAY_NAME]: ChooseDisplayName,
   },
   {
-    initialRouteName: LOADING,
+    initialRouteName: APP,
   },
 )
 
