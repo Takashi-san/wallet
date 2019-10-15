@@ -270,7 +270,7 @@ export const isTransaction = item => {
  * @returns {Promise<number>}
  */
 export const USDExchangeRate = () => {
-  return Promise.resolve(8140.9567)
+  // return Promise.resolve(8140.9567)
   const endpoint = 'https://api.coindesk.com/v1/bpi/currentprice.json'
 
   const payload = {
@@ -304,11 +304,13 @@ export const USDExchangeRate = () => {
  * @returns {Promise<WalletBalanceResponse>}
  */
 export const balance = async () => {
-  // return {
-  //   confirmed_balance: 200,
-  //   total_balance: 100,
-  //   unconfirmed_balance: 100,
-  // }
+  {
+    // return {
+    //   confirmed_balance: 200,
+    //   total_balance: 100,
+    //   unconfirmed_balance: 100,
+    // }
+  }
   const { nodeIP, token } = await Cache.getNodeIPTokenPair()
 
   if (typeof token !== 'string') {
@@ -345,11 +347,13 @@ export const balance = async () => {
  * @returns {Promise<PaginatedTransactionsResponse>}
  */
 export const getTransactions = async request => {
-  return {
-    content: [],
-    page: 1,
-    totalItems: 1,
-    totalPages: 1,
+  {
+    // return {
+    //   content: [],
+    //   page: 1,
+    //   totalItems: 1,
+    //   totalPages: 1,
+    // }
   }
 
   const { nodeIP, token } = await Cache.getNodeIPTokenPair()
@@ -393,32 +397,34 @@ export const getRegularBitcoinTransactions = getTransactions
  * @returns {Promise<PaginatedListPaymentsResponse>}
  */
 export const listPayments = async request => {
-  return new Promise(res => {
-    setTimeout(() => {
-      res({
-        content: [
-          {
-            creation_date: Date.now(),
-            fee: 0,
-            fee_msat: 0,
-            fee_sat: 0,
-            path: [],
-            payment_hash: 'payment_hash',
-            payment_preimage: 'payment_preimage',
-            payment_request:
-              '--lnbc2500u1pvjluezpp5qqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqypqdq5xysxxatsyp3k7enxv4jsxqzpuaztrnwngzn3kdzw5hydlzf03qdgm2hdq27cqv3agm2awhz5se903vruatfhq77w3ls4evs3ch9zw97j25emudupq63nyw24cg27h2rspfj9srp',
-            status: 3,
-            value: 0,
-            value_msat: 0,
-            value_sat: 0,
-          },
-        ],
-        page: 1,
-        totalItems: 1,
-        totalPages: 1,
-      })
-    }, 500)
-  })
+  {
+    // return new Promise(res => {
+    //   setTimeout(() => {
+    //     res({
+    //       content: [
+    //         {
+    //           creation_date: Date.now(),
+    //           fee: 0,
+    //           fee_msat: 0,
+    //           fee_sat: 0,
+    //           path: [],
+    //           payment_hash: 'payment_hash',
+    //           payment_preimage: 'payment_preimage',
+    //           payment_request:
+    //             '--lnbc2500u1pvjluezpp5qqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqypqdq5xysxxatsyp3k7enxv4jsxqzpuaztrnwngzn3kdzw5hydlzf03qdgm2hdq27cqv3agm2awhz5se903vruatfhq77w3ls4evs3ch9zw97j25emudupq63nyw24cg27h2rspfj9srp',
+    //           status: 3,
+    //           value: 0,
+    //           value_msat: 0,
+    //           value_sat: 0,
+    //         },
+    //       ],
+    //       page: 1,
+    //       totalItems: 1,
+    //       totalPages: 1,
+    //     })
+    //   }, 500)
+    // })
+  }
 
   const { nodeIP, token } = await Cache.getNodeIPTokenPair()
 
@@ -461,40 +467,42 @@ export const listPayments = async request => {
  * @returns {Promise<PaginatedListInvoicesResponse>}
  */
 export const listInvoices = async request => {
-  return new Promise(res => {
-    setTimeout(() => {
-      res({
-        entries: [
-          {
-            add_index: 1,
-            amt_paid: 0,
-            amt_paid_msat: 0,
-            amt_paid_sat: 0,
-            cltv_expiry: 1,
-            creation_date: 1496314658,
-            description_hash: 'description_hash',
-            expiry: 3600,
-            fallback_addr: 'fallback_addr',
-            memo: 'memo',
-            payment_request:
-              'lnbc1pvjluezpp5qqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqypqdpl2pkx2ctnv5sxxmmwwd5kgetjypeh2ursdae8g6twvus8g6rfwvs8qun0dfjkxaq8rkx3yf5tcsyz3d73gafnh3cax9rn449d9p5uxz9ezhhypd0elx87sjle52x86fux2ypatgddc6k63n7erqz25le42c4u4ecky03ylcqca784w',
-            private: false,
-            r_hash: 'r_hash',
-            r_preimage: 'r_preimage',
-            receipt: 'receipt',
-            route_hints: [],
-            settle_date: 0,
-            settle_index: 0,
-            settled: false,
-            state: 0,
-            value: 0,
-          },
-        ],
-        page: 1,
-        totalPages: 1,
-      })
-    }, 1000)
-  })
+  {
+    // return new Promise(res => {
+    //   setTimeout(() => {
+    //     res({
+    //       entries: [
+    //         {
+    //           add_index: 1,
+    //           amt_paid: 0,
+    //           amt_paid_msat: 0,
+    //           amt_paid_sat: 0,
+    //           cltv_expiry: 1,
+    //           creation_date: 1496314658,
+    //           description_hash: 'description_hash',
+    //           expiry: 3600,
+    //           fallback_addr: 'fallback_addr',
+    //           memo: 'memo',
+    //           payment_request:
+    //             'lnbc1pvjluezpp5qqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqypqdpl2pkx2ctnv5sxxmmwwd5kgetjypeh2ursdae8g6twvus8g6rfwvs8qun0dfjkxaq8rkx3yf5tcsyz3d73gafnh3cax9rn449d9p5uxz9ezhhypd0elx87sjle52x86fux2ypatgddc6k63n7erqz25le42c4u4ecky03ylcqca784w',
+    //           private: false,
+    //           r_hash: 'r_hash',
+    //           r_preimage: 'r_preimage',
+    //           receipt: 'receipt',
+    //           route_hints: [],
+    //           settle_date: 0,
+    //           settle_index: 0,
+    //           settled: false,
+    //           state: 0,
+    //           value: 0,
+    //         },
+    //       ],
+    //       page: 1,
+    //       totalPages: 1,
+    //     })
+    //   }, 1000)
+    // })
+  }
   const { nodeIP, token } = await Cache.getNodeIPTokenPair()
 
   if (typeof token !== 'string') {
