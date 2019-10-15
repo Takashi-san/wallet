@@ -130,6 +130,7 @@ export const onConnection = listener => {
 
 /** @typedef {(avatar: string|null) => void} AvatarListener */
 /** @typedef {(chats: Schema.Chat[]) => void} ChatsListener  */
+/** @typedef {(handshakeAddress: string|null) => void} HandshakeAddrListener */
 /** @typedef {(displayName: string|null) => void} DisplayNameListener */
 /** @typedef {(receivedRequests: Schema.SimpleReceivedRequest[]) => void} ReceivedRequestsListener */
 /** @typedef {(sentRequests: Schema.SimpleSentRequest[]) => void} SentRequestsListener */
@@ -144,6 +145,11 @@ const avatarListeners = []
  * @type {ChatsListener[]}
  */
 const chatsListeners = []
+
+/**
+ * @type {HandshakeAddrListener[]}
+ */
+const handshakeAddrListeners = []
 
 /**
  * @type {DisplayNameListener[]}
@@ -220,6 +226,35 @@ export const onChats = listener => {
     }
 
     chatsListeners.splice(idx, 1)
+  }
+}
+
+/**
+ * @param {HandshakeAddrListener} listener
+ */
+export const onHandshakeAddr = listener => {
+  if (_authData === null) {
+    throw new Error('NOT_AUTH')
+  }
+
+  if (handshakeAddrListeners.indexOf(listener) > -1) {
+    throw new Error('tried to subscribe twice')
+  }
+
+  handshakeAddrListeners.push(listener)
+
+  Socket.socket.emit(Event.ON_HANDSHAKE_ADDRESS, {
+    token: _authData.token,
+  })
+
+  return () => {
+    const idx = handshakeAddrListeners.indexOf(listener)
+
+    if (idx < 0) {
+      throw new Error('tried to unsubscribe twice')
+    }
+
+    handshakeAddrListeners.splice(idx, 1)
   }
 }
 
@@ -433,6 +468,14 @@ export const setupEvents = () => {
   Socket.socket.on(Event.ON_CHATS, res => {
     if (res.ok) {
       chatsListeners.forEach(l => {
+        l(res.msg)
+      })
+    }
+  })
+
+  Socket.socket.on(Event.ON_HANDSHAKE_ADDRESS, res => {
+    if (res.ok) {
+      handshakeAddrListeners.forEach(l => {
         l(res.msg)
       })
     }

@@ -24,7 +24,7 @@ import * as Wallet from '../../services/wallet'
 /**
  * @typedef {object} Props
  * @prop {IUnifiedTransaction} unifiedTransaction
- * @prop {((rHashOrPaymentHashOrTxHash: string) => void)=} onPress
+ * @prop {((rHashOrPaymentRequestOrTxHash: string) => void)=} onPress
  */
 
 const width = Dimensions.get('window').width
@@ -46,7 +46,7 @@ export default class UnifiedTransaction extends React.PureComponent {
     }
 
     if (Wallet.isInvoice(unifiedTransaction)) {
-      onPress(unifiedTransaction.r_hash)
+      onPress(unifiedTransaction.payment_request)
     }
 
     if (Wallet.isPayment(unifiedTransaction)) {
@@ -66,21 +66,24 @@ export default class UnifiedTransaction extends React.PureComponent {
     let timestamp = 0
 
     if (Wallet.isInvoice(unifiedTransaction)) {
-      id = unifiedTransaction.r_hash
-      value = unifiedTransaction.value
-      timestamp = unifiedTransaction.settle_date
+      id = unifiedTransaction.memo || 'No memo'
+      value = Number(unifiedTransaction.value)
+      timestamp =
+        unifiedTransaction.settle_date === '0'
+          ? Number(unifiedTransaction.creation_date)
+          : Number(unifiedTransaction.settle_date)
     }
 
     if (Wallet.isPayment(unifiedTransaction)) {
       id = unifiedTransaction.payment_hash
       value = unifiedTransaction.value
-      timestamp = unifiedTransaction.creation_date
+      timestamp = Number(unifiedTransaction.creation_date)
     }
 
     if (Wallet.isTransaction(unifiedTransaction)) {
       id = unifiedTransaction.tx_hash
       value = unifiedTransaction.amount
-      timestamp = unifiedTransaction.time_stamp
+      timestamp = Number(unifiedTransaction.time_stamp)
     }
 
     return (
@@ -97,11 +100,13 @@ export default class UnifiedTransaction extends React.PureComponent {
 
           <View style={styles.transactionBody}>
             <Text style={styles.boldFont}>{id}</Text>
-            <Text>{btcConvert(value, 'Satoshi', 'bit')} Bits</Text>
+            <Text>{`${value} SATS`}</Text>
           </View>
 
           <View style={styles.dateContainer}>
-            <Text style={styles.dateText}>{moment(timestamp).fromNow()}</Text>
+            <Text style={styles.dateText}>
+              {moment.unix(timestamp).fromNow()}
+            </Text>
           </View>
         </View>
       </TouchableOpacity>

@@ -10,9 +10,11 @@ import {
 } from 'react-native'
 import { Text } from 'react-native-elements'
 
+import IGDialogBtn from './IGDialogBtn'
+
 /**
  * @typedef {object} Props
- * @prop {Record<string, () => void>=} choiceToHandler
+ * @prop {(Record<string, () => void>|{})=} choiceToHandler
  * @prop {string|null=} message
  * @prop {() => void} onRequestClose
  * @prop {boolean} visible
@@ -27,6 +29,7 @@ const _ShockDialog = ({
   onRequestClose,
   visible,
 }) => {
+  /** @type {[string , () => void][]} */
   const choices = Object.entries(choiceToHandler || {})
 
   return ((
@@ -35,7 +38,7 @@ const _ShockDialog = ({
         <View style={styles.backdrop}>
           <TouchableWithoutFeedback>
             <View style={styles.container}>
-              {message && (
+              {!!message && (
                 <View style={styles.sidePadded}>
                   <Text>{message}</Text>
                 </View>
@@ -43,16 +46,12 @@ const _ShockDialog = ({
 
               {choices.length > 0 && (
                 <View style={styles.choices}>
-                  {choices.map(([choiceText, handler]) => (
-                    <TouchableHighlight
-                      // underlayColor="none"
-                      key={choiceText + handler.toString()}
+                  {choices.map(([choice, handler]) => (
+                    <IGDialogBtn
+                      key={choice + handler.toString()}
                       onPress={handler}
-                    >
-                      <View style={[styles.sidePadded, styles.choice]}>
-                        <Text>{choiceText}</Text>
-                      </View>
-                    </TouchableHighlight>
+                      title={choice}
+                    />
                   ))}
                 </View>
               )}
@@ -69,11 +68,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
     flex: 1,
     justifyContent: 'center',
-  },
-
-  choice: {
-    paddingBottom: 16,
-    paddingTop: 16,
   },
 
   choices: {

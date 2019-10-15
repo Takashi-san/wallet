@@ -2,25 +2,23 @@
  * @prettier
  */
 import React from 'react'
-import { ActivityIndicator, FlatList, Text, View, Button } from 'react-native'
+import { FlatList, Text, View } from 'react-native'
 import moment from 'moment'
 import { Divider, Icon } from 'react-native-elements'
 /**
  * @typedef {import('react-navigation').NavigationScreenProp<{}>} Navigation
  */
 
-import * as API from '../services/contact-api'
-import UserDetail from '../components/UserDetail'
-import { Colors, SCREEN_PADDING } from '../css'
-import ShockButton from '../components/ShockButton'
-import ShockDialog from '../components/ShockDialog'
-import { CHAT_ROUTE } from './Chat'
+import * as API from '../../services/contact-api'
+import UserDetail from '../../components/UserDetail'
+import { Colors, SCREEN_PADDING } from '../../css'
+import ShockDialog from '../../components/ShockDialog'
 
 const ACCEPT_REQUEST_DIALOG_TEXT =
   'By accepting this request, this user will be able to send you messages. You can block the user from sending further messages down the line if you wish so.'
 export const CHATS_ROUTE = 'CHATS_ROUTE'
 /**
- * @typedef {import('./Chat').Params} ChatParams
+ * @typedef {import('.././Chat').Params} ChatParams
  */
 
 /**
@@ -31,12 +29,11 @@ export const CHATS_ROUTE = 'CHATS_ROUTE'
 const byTimestampFromOldestToNewest = (a, b) => a.timestamp - b.timestamp
 
 /**
- * @type {React.FC<{ onPressGoToUsers: () => void }>}
+ * @type {React.FC}
  */
-const NoChatsOrRequests = React.memo(({ onPressGoToUsers }) => ((
+const NoChatsOrRequests = React.memo(() => ((
   <View style={styles.noChats}>
     <Text>NO CHATS OR REQUESTS</Text>
-    <ShockButton onPress={onPressGoToUsers} title="See List Of Users" />
   </View>
 )))
 
@@ -54,165 +51,55 @@ const keyExtractor = item => {
 
 /**
  * @typedef {object} Props
- * @prop {Navigation} navigation
+ * @prop {boolean} acceptingRequest True if in the process of accepting a
+ * request (a dialog will pop up).
+ *
+ * @prop {API.Schema.Chat[]} chats
+ * @prop {API.Schema.SimpleReceivedRequest[]} receivedRequests
+ * @prop {API.Schema.SimpleSentRequest[]} sentRequests
+ *
+ * @prop {(recipientPublicKey: string) => void} onPressChat
+ * @prop {(requestID: string) => void} onPressRequest
+ *
+ * @prop {() => void} onPressAcceptRequest
+ * @prop {() => void} onPressIgnoreRequest
  */
 
 /**
- * @typedef {object} State
- * @prop {string|null} acceptingRequest
- * @prop {API.Schema.Chat[] | null} chats
- * @prop {API.Schema.SimpleReceivedRequest[] | null} receivedRequests
- * @prop {API.Schema.SimpleSentRequest[] | null} sentRequests
+ * @augments React.PureComponent<Props>
  */
-
-/**
- * Add the last message's id of a chat to this set when opening. This will
- * simulate read status.
- * @type {Set<string>}
- */
-const readMsgs = new Set()
-
-/**
- * @augments React.PureComponent<Props, State>
- */
-export default class Chats extends React.PureComponent {
-  /**
-   * @type {import('react-navigation').NavigationStackScreenOptions}
-   */
-  static navigationOptions = {
-    header: null,
-  }
-
-  /** @type {State} */
-  state = {
-    acceptingRequest: null,
-    chats: null,
-    receivedRequests: null,
-    sentRequests: null,
-  }
-
+export default class ChatsView extends React.PureComponent {
   /**
    * @private
    * @type {Record<string, () => void>}
    */
   choiceToHandler = {
     Accept: () => {
-      API.Actions.acceptRequest(
-        /** @type {string} */ (this.state.acceptingRequest),
-      )
-
-      this.setState({
-        acceptingRequest: null,
-      })
+      this.props.onPressAcceptRequest()
     },
     Ignore: () => {
-      this.setState({
-        acceptingRequest: null,
-      })
+      this.props.onPressIgnoreRequest()
     },
   }
 
-  chatsUnsubscribe = () => {}
-  receivedReqsUnsubscribe = () => {}
-  sentReqsUnsubscribe = () => {}
-
-  componentDidMount() {
-    this.chatsUnsubscribe = API.Events.onChats(this.onChats)
-    this.receivedReqsUnsubscribe = API.Events.onReceivedRequests(
-      this.onReceivedRequests,
-    )
-    this.sentReqsUnsubscribe = API.Events.onSentRequests(this.onSentRequests)
-  }
-
-  componentWillUnmount() {
-    this.chatsUnsubscribe()
-    this.receivedReqsUnsubscribe()
-    this.sentReqsUnsubscribe()
-  }
-
   /**
-   * @param {API.Schema.Chat[]} chats
-   */
-  onChats = chats => {
-    this.setState({
-      chats,
-    })
-  }
-
-  /**
-   * @param {API.Schema.SimpleReceivedRequest[]} receivedRequests
-   */
-  onReceivedRequests = receivedRequests => {
-    console.warn('onReceivedRequests')
-    this.setState({
-      receivedRequests,
-    })
-  }
-
-  /**
-   * @param {API.Schema.SimpleSentRequest[]} sentRequests
-   */
-  onSentRequests = sentRequests => {
-    this.setState({
-      sentRequests,
-    })
-  }
-
-  /**
+   * @private
    * @param {string} recipientPublicKey
    */
   onPressChat = recipientPublicKey => {
-    // CAST: If user is pressing on a chat, chats are loaded and not null.
-    // TS wants the expression to be casted to `unknown` first. Not possible
-    // with jsdoc
-    //  @ts-ignore
-    const chats = /** @type  {API.Schema.Chat[]} */ (this.state.chats)
-
-    // CAST: If user is pressing on a chat, that chat exists
-    const { messages } = /** @type {API.Schema.Chat} */ (chats.find(
-      chat => chat.recipientPublicKey === recipientPublicKey,
-    ))
-
-    const sortedMessages = messages.slice().sort(byTimestampFromOldestToNewest)
-
-    const lastMsg = sortedMessages[sortedMessages.length - 1]
-
-    if (typeof lastMsg === 'undefined') {
-      throw new TypeError()
-    }
-
-    readMsgs.add(lastMsg.id)
-
-    /** @type {ChatParams} */
-    const params = {
-      recipientPublicKey,
-    }
-
-    this.props.navigation.navigate(CHAT_ROUTE, params)
-  }
-  ////////////////////////////////////////////////////////////////////////////////
-  /**
-   * @private
-   * @param {string} receivedRequestID
-   * @returns {void}
-   */
-  onPressReceivedRequest = receivedRequestID => {
-    this.setState({
-      acceptingRequest: receivedRequestID,
-    })
+    this.props.onPressChat(recipientPublicKey)
   }
 
   /**
    * @private
-   * @returns {void}
+   * @param {string} requestID
    */
-  cancelAcceptingRequest = () => {
-    this.setState({
-      acceptingRequest: null,
-    })
+  onPressRequest = requestID => {
+    this.props.onPressRequest(requestID)
   }
 
   ////////////////////////////////////////////////////////////////////////////////
+
   /**
    * @param {API.Schema.Chat} chat
    * @returns {React.ReactElement<any> | null}
@@ -226,9 +113,7 @@ export default class Chats extends React.PureComponent {
 
     const lastMsgTimestamp = lastMsg.timestamp
 
-    const unread =
-      lastMsg.body !== '$$__SHOCKWALLET__INITIAL__MESSAGE' &&
-      !readMsgs.has(lastMsg.id)
+    const unread = false
 
     return (
       <View style={styles.itemContainer}>
@@ -241,6 +126,8 @@ export default class Chats extends React.PureComponent {
             lowerText={
               lastMsg.body === '$$__SHOCKWALLET__INITIAL__MESSAGE'
                 ? 'Empty conversation'
+                : lastMsg.body.indexOf('$$__SHOCKWALLET__INVOICE__') === 0
+                ? 'Invoice'
                 : lastMsg.body
             }
             lowerTextStyle={unread ? styles.boldFont : undefined}
@@ -284,7 +171,7 @@ export default class Chats extends React.PureComponent {
                 : receivedRequest.requestorDisplayName
             }
             nameBold
-            onPress={this.onPressReceivedRequest}
+            onPress={this.onPressRequest}
           />
         </View>
         <Icon
@@ -358,45 +245,15 @@ export default class Chats extends React.PureComponent {
     return null
   }
 
-  /**
-   * @private
-   */
-  onPressGoToUsers = () => {
-    this.props.navigation.navigate('Users')
-  }
-
-  logout = () => {
-    API.Actions.logout()
-  }
-
   render() {
     const {
       acceptingRequest,
       chats,
       receivedRequests,
       sentRequests,
-    } = this.state
-
-    if (chats === null || receivedRequests === null || sentRequests === null) {
-      return (
-        <View>
-          <Button onPress={this.logout} title="Logout" />
-          <ActivityIndicator />
-        </View>
-      )
-    }
+    } = this.props
 
     const items = [...chats, ...receivedRequests, ...sentRequests]
-
-    if (items.length === 0) {
-      return (
-        <View style={styles.flex}>
-          <Button onPress={this.logout} title="Logout" />
-
-          <NoChatsOrRequests onPressGoToUsers={this.onPressGoToUsers} />
-        </View>
-      )
-    }
 
     items.sort((a, b) => {
       /** @type {number} */
@@ -443,22 +300,18 @@ export default class Chats extends React.PureComponent {
     return (
       <React.Fragment>
         <FlatList
-          contentContainerStyle={styles.list}
           ItemSeparatorComponent={Divider}
+          ListEmptyComponent={NoChatsOrRequests}
           data={items}
-          ListHeaderComponent={() => (
-            <Button onPress={this.logout} title="Logout" />
-          )}
           keyExtractor={keyExtractor}
           renderItem={this.itemRenderer}
           style={styles.list}
         />
 
-        <NoChatsOrRequests onPressGoToUsers={this.onPressGoToUsers} />
-
         <ShockDialog
           choiceToHandler={this.choiceToHandler}
           message={ACCEPT_REQUEST_DIALOG_TEXT}
+          onRequestClose={this.props.onPressIgnoreRequest}
           visible={!!acceptingRequest}
         />
       </React.Fragment>
@@ -478,10 +331,6 @@ const styles = {
     fontWeight: 'bold',
   },
 
-  flex: {
-    flex: 1,
-  },
-
   itemContainer: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -490,10 +339,6 @@ const styles = {
     paddingLeft: ITEM_CONTAINER_HORIZONTAL_PADDING,
     paddingRight: ITEM_CONTAINER_HORIZONTAL_PADDING,
     paddingTop: ITEM_CONTAINER_VERTICAL_PADDING,
-  },
-
-  list: {
-    flex: 1,
   },
 
   noChats: {

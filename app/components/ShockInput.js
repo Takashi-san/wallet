@@ -8,6 +8,7 @@ import { Colors } from '../css'
 
 /**
  * @typedef {object} Props
+ * @prop {import('react-native').TextInputProps['keyboardType']=} keyboardType
  * @prop {number=} numberOfLines
  * @prop {boolean=} multiline
  * @prop {(text: string) => void} onChangeText
@@ -23,6 +24,7 @@ const INPUT_PADDING_LEFT = 16
  * @type {React.FC<Props>}
  */
 const ShockInput = ({
+  keyboardType,
   multiline,
   numberOfLines,
   onChangeText,
@@ -30,6 +32,7 @@ const ShockInput = ({
   value,
 }) => ((
   <TextInput
+    keyboardType={keyboardType}
     multiline={multiline}
     numberOfLines={numberOfLines}
     onChangeText={onChangeText}
@@ -46,7 +49,6 @@ const styles = StyleSheet.create({
     borderRadius: INPUT_BORDER_RADIUS,
     borderWidth: INPUT_BORDER_WIDTH,
     color: Colors.TEXT_LIGHTEST,
-    flex: 1,
   },
 })
 

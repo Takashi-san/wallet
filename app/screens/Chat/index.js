@@ -2,44 +2,24 @@
  * @prettier
  */
 import React from 'react'
-import { StyleSheet, Text, View, ActivityIndicator } from 'react-native'
-import { Icon } from 'react-native-elements'
-import { GiftedChat, Send } from 'react-native-gifted-chat'
 /**
- * @typedef {import('react-native-gifted-chat').IMessage} GiftedChatMessage
- * @typedef {import('react-native-gifted-chat').User} GiftedChatUser
  * @typedef {import('react-navigation').NavigationScreenProp<{}, Params>} Navigation
  */
 
 import * as API from '../../services/contact-api'
+import * as Wallet from '../../services/wallet'
+import { Colors } from '../../css'
 
-import ChatMessage from './ChatMessage'
+import { WALLET_OVERVIEW } from '../WalletOverview'
+/**
+ * @typedef {import('../WalletOverview').Params} WalletOverviewParams
+ */
+
+import ChatView from './View'
+
+import MOCK from '../MOCK'
 
 export const CHAT_ROUTE = 'CHAT_ROUTE'
-
-/**
- * @param {{ timestamp: number }} a
- * @param {{ timestamp: number }} b
- * @returns {number}
- */
-const byTimestampFromOldestToNewest = (a, b) => a.timestamp - b.timestamp
-
-const Loading = () => (
-  <View style={styles.loading}>
-    <Text>Loading</Text>
-  </View>
-)
-
-/**
- * @param {Record<string, any>} props
- */
-const SendRenderer = props => (
-  <Send {...props}>
-    <View style={styles.sendIcon}>
-      <Icon name="paper-plane" type="font-awesome" />
-    </View>
-  </Send>
-)
 
 /**
  * @typedef {object} Params
@@ -52,10 +32,23 @@ const SendRenderer = props => (
  */
 
 /**
+ * @typedef {import('./View').PaymentStatus} PaymentStatus
+ */
+
+/**
+ * Both outgoing and incoming invoices.
+ * @typedef {object} DecodedInvoice
+ * @prop {number} amount
+ * @prop {number} expiryDate UNIX time.
+ */
+
+/**
  * @typedef {object} State
- * @prop {API.Schema.ChatMessage[]|null} messages
+ * @prop {API.Schema.ChatMessage[]} messages
  * @prop {string|null} ownDisplayName
  * @prop {string|null} ownPublicKey
+ * @prop {Partial<Record<string, PaymentStatus>>} rawInvoiceToPaymentStatus
+ * @prop {Partial<Record<string, DecodedInvoice>>} rawInvoiceToDecodedInvoice
  * @prop {string|null} recipientDisplayName
  */
 
@@ -72,31 +65,183 @@ export default class Chat extends React.PureComponent {
     const title = navigation.getParam('title')
 
     return {
-      // headerTransparent: true,
       headerStyle: {
-        backgroundColor: 'white',
+        backgroundColor: Colors.BLUE_DARK,
         elevation: 0,
       },
+
+      headerTintColor: Colors.TEXT_WHITE,
 
       title,
     }
   }
 
+  mounted = false
+
   /** @type {State} */
   state = {
-    messages: null,
+    messages: [],
+    rawInvoiceToDecodedInvoice: {},
+    rawInvoiceToPaymentStatus: {},
     ownDisplayName: null,
     ownPublicKey: null,
     recipientDisplayName: null,
   }
 
-  componentDidUpdate() {
+  decodeIncomingInvoices() {
+    const rawIncomingInvoices = this.state.messages
+      .filter(m => !m.outgoing)
+      .filter(m => m.body.indexOf('$$__SHOCKWALLET__INVOICE__') === 0)
+      .map(m => m.body.slice('$$__SHOCKWALLET__INVOICE__'.length))
+
+    const notDecoded = rawIncomingInvoices.filter(
+      i => !this.state.rawInvoiceToDecodedInvoice[i],
+    )
+
+    notDecoded.forEach(rawInvoice => {
+      Wallet.decodeInvoice({
+        pay_req: rawInvoice,
+      }).then(decodedInvoice => {
+        if (!this.mounted) {
+          return
+        }
+
+        this.setState(({ rawInvoiceToDecodedInvoice }) => ({
+          rawInvoiceToDecodedInvoice: {
+            ...rawInvoiceToDecodedInvoice,
+            [rawInvoice]: {
+              amount: decodedInvoice.num_satoshis,
+              expiryDate:
+                decodedInvoice.timestamp + decodedInvoice.expiry * 1000,
+            },
+          },
+        }))
+      })
+    })
+  }
+
+  async fetchOutgoingInvoicesAndUpdateInfo() {
+    const { entries: invoices } = await Wallet.listInvoices({
+      itemsPerPage: 1000,
+      page: 1,
+    })
+
+    if (!this.mounted) {
+      return
+    }
+
+    this.setState(
+      ({
+        messages,
+        rawInvoiceToDecodedInvoice: oldRawInvoiceToDecodedInvoice,
+        rawInvoiceToPaymentStatus: oldRawInvoiceToPaymentStatus,
+      }) => {
+        const rawOutgoingInvoices = messages
+          .filter(m => m.outgoing)
+          .filter(m => m.body.indexOf('$$__SHOCKWALLET__INVOICE__') === 0)
+          .map(m => m.body.slice('$$__SHOCKWALLET__INVOICE__'.length))
+
+        const outgoingInvoices = invoices.filter(invoice =>
+          rawOutgoingInvoices.includes(invoice.payment_request),
+        )
+
+        /** @type {State['rawInvoiceToPaymentStatus']} */
+        const rawInvoiceToPaymentStatus = {}
+
+        outgoingInvoices.forEach(invoice => {
+          rawInvoiceToPaymentStatus[invoice.payment_request] = invoice.settled
+            ? 'PAID'
+            : 'UNPAID'
+        })
+
+        /** @type {State['rawInvoiceToDecodedInvoice']} */
+        const rawInvoiceToDecodedInvoice = {}
+
+        outgoingInvoices.forEach(invoice => {
+          rawInvoiceToDecodedInvoice[invoice.payment_request] = {
+            amount: invoice.value,
+            expiryDate: invoice.creation_date + invoice.expiry * 1000,
+          }
+        })
+
+        return {
+          rawInvoiceToDecodedInvoice: {
+            ...oldRawInvoiceToDecodedInvoice,
+            ...rawInvoiceToDecodedInvoice,
+          },
+          rawInvoiceToPaymentStatus: {
+            ...oldRawInvoiceToPaymentStatus,
+            ...rawInvoiceToPaymentStatus,
+          },
+        }
+      },
+    )
+  }
+
+  async fetchPaymentsAndUpdatePaymentStatus() {
+    const { content: payments } = await Wallet.listPayments({
+      itemsPerPage: 1000,
+      page: 1,
+      paginate: true,
+    })
+
+    if (!this.mounted) {
+      return
+    }
+
+    const rawIncomingInvoices = this.state.messages
+      .filter(m => !m.outgoing)
+      .filter(m => m.body.indexOf('$$__SHOCKWALLET__INVOICE__') === 0)
+      .map(m => m.body.slice('$$__SHOCKWALLET__INVOICE__'.length))
+
+    /** @type {State['rawInvoiceToPaymentStatus']} */
+    const rawInvoiceToPaymentStatus = {}
+
+    rawIncomingInvoices.forEach(rawInvoice => {
+      const payment = payments.find(
+        payment => payment.payment_request === rawInvoice,
+      )
+
+      if (payment) {
+        switch (payment.status) {
+          case 0:
+            rawInvoiceToPaymentStatus[rawInvoice] = 'UNKNOWN'
+            break
+          case 1:
+            rawInvoiceToPaymentStatus[rawInvoice] = 'IN_FLIGHT'
+            break
+          case 2:
+            rawInvoiceToPaymentStatus[rawInvoice] = 'PAID'
+            break
+          case 3:
+            rawInvoiceToPaymentStatus[rawInvoice] = 'FAILED'
+            break
+        }
+      } else {
+        rawInvoiceToPaymentStatus[rawInvoice] = 'UNPAID'
+      }
+    })
+
+    this.setState(
+      ({ rawInvoiceToPaymentStatus: oldRawInvoiceToPaymentStatus }) => ({
+        rawInvoiceToPaymentStatus: {
+          ...oldRawInvoiceToPaymentStatus,
+          ...rawInvoiceToPaymentStatus,
+        },
+      }),
+    )
+  }
+
+  /**
+   * @param {never} _
+   * @param {State} prevState
+   */
+  componentDidUpdate(_, prevState) {
     const { navigation } = this.props
     const { recipientDisplayName } = this.state
     const recipientPK = navigation.getParam('recipientPublicKey')
     // @ts-ignore
     const oldTitle = navigation.getParam('title')
-
     if (typeof oldTitle === 'undefined') {
       navigation.setParams({
         // @ts-ignore
@@ -104,6 +249,12 @@ export default class Chat extends React.PureComponent {
       })
     }
 
+    if (prevState.messages !== this.state.messages) {
+      this.decodeIncomingInvoices()
+    }
+
+    // TODO: If someone sets their display name to their public key, app will
+    // crash
     if (oldTitle === recipientPK && recipientDisplayName) {
       navigation.setParams({
         // @ts-ignore
@@ -113,13 +264,46 @@ export default class Chat extends React.PureComponent {
   }
 
   componentDidMount() {
-    this.authUnsub = API.Events.onAuth(this.onAuth)
-    this.chatsUnsub = API.Events.onChats(this.onChats)
-    this.displayNameUnsub = API.Events.onDisplayName(displayName => {
-      this.setState({
-        ownDisplayName: displayName,
-      })
+    // this.authUnsub = API.Events.onAuth(this.onAuth)
+    // this.chatsUnsub = API.Events.onChats(this.onChats)
+    // this.displayNameUnsub = API.Events.onDisplayName(displayName => {
+    //   this.setState({
+    //     ownDisplayName: displayName,
+    //   })
+    // })
+
+    this.mounted = true
+
+    const chats = MOCK.chats
+    const { navigation } = this.props
+
+    const recipientPublicKey = navigation.getParam('recipientPublicKey')
+
+    const theChat = chats.find(
+      chat => chat.recipientPublicKey === recipientPublicKey,
+    )
+
+    if (!theChat) {
+      return
+    }
+
+    this.setState({
+      messages: theChat.messages,
+      recipientDisplayName:
+        typeof theChat.recipientDisplayName === 'string' &&
+        theChat.recipientDisplayName.length > 0
+          ? theChat.recipientDisplayName
+          : null,
+      ownPublicKey: 'ownPublicKey',
     })
+
+    this.decodeIncomingInvoices()
+    this.fetchOutgoingInvoicesAndUpdateInfo()
+    this.fetchPaymentsAndUpdatePaymentStatus()
+  }
+
+  componentWillUnmount() {
+    this.mounted = false
   }
 
   authUnsub = () => {}
@@ -136,59 +320,6 @@ export default class Chat extends React.PureComponent {
       this.setState({
         ownPublicKey: authData.publicKey,
       })
-  }
-
-  /**
-   * @private
-   * @type {import('react-native-gifted-chat').GiftedChatProps['renderMessage']}
-   */
-  messageRenderer = ({ currentMessage }) => {
-    if (typeof currentMessage === 'undefined') {
-      console.warn("typeof currentMessage === 'undefined'")
-      return null
-    }
-
-    const recipientPublicKey = this.props.navigation.getParam(
-      'recipientPublicKey',
-    )
-
-    if (!recipientPublicKey) {
-      return null
-    }
-
-    const ownPublicKey = this.state.ownPublicKey
-
-    if (ownPublicKey === null) {
-      return null
-    }
-
-    const user = currentMessage.user
-
-    const outgoing = user._id !== recipientPublicKey
-
-    const senderName =
-      typeof user.name === 'string' && user.name.length > 0
-        ? user.name
-        : user._id
-
-    const timestamp =
-      typeof currentMessage.createdAt === 'number'
-        ? currentMessage.createdAt
-        : currentMessage.createdAt.getTime()
-
-    return (
-      <View style={outgoing ? styles.alignFlexStart : styles.alignFlexEnd}>
-        <View style={styles.maxWidth}>
-          <ChatMessage
-            id={currentMessage._id}
-            body={currentMessage.text}
-            outgoing={outgoing}
-            senderName={senderName}
-            timestamp={timestamp}
-          />
-        </View>
-      </View>
-    )
   }
 
   /**
@@ -221,16 +352,36 @@ export default class Chat extends React.PureComponent {
 
   /**
    * @private
-   * @param {GiftedChatMessage[]} msgs
+   * @param {string} text
    * @returns {void}
    */
-  onSend = msgs => {
-    const [msg] = msgs
-
+  onSend = text => {
     API.Actions.sendMessage(
       this.props.navigation.getParam('recipientPublicKey'),
-      msg.text,
+      text,
     )
+  }
+
+  /**
+   * @private
+   * @param {string} msgID
+   */
+  onPressUnpaidIncomingInvoice = msgID => {
+    const msg = /** @type {API.Schema.ChatMessage} */ (this.state.messages.find(
+      m => m.id === msgID,
+    ))
+
+    const rawInvoice = msg.body.slice('$$__SHOCKWALLET__INVOICE__'.length)
+
+    /** @type {WalletOverviewParams} */
+    const params = {
+      rawInvoice,
+      recipientAvatar: null,
+      recipientDisplayName: this.state.recipientDisplayName,
+      recipientPublicKey: this.props.navigation.getParam('recipientPublicKey'),
+    }
+
+    this.props.navigation.navigate(WALLET_OVERVIEW, params)
   }
 
   render() {
@@ -239,91 +390,88 @@ export default class Chat extends React.PureComponent {
       ownDisplayName,
       ownPublicKey,
       recipientDisplayName,
+      rawInvoiceToDecodedInvoice,
+      rawInvoiceToPaymentStatus,
     } = this.state
 
     const recipientPublicKey = this.props.navigation.getParam(
       'recipientPublicKey',
     )
 
-    if (messages === null) {
-      return <ActivityIndicator />
-    }
+    const msgIDToInvoiceAmount = (() => {
+      /** @type {import('./View').Props['msgIDToInvoiceAmount']} */
+      const o = {}
 
-    if (ownPublicKey === null) {
-      return <ActivityIndicator />
-    }
+      for (const [rawInvoice, decoded] of Object.entries(
+        rawInvoiceToDecodedInvoice,
+      )) {
+        const msg = messages.find(msg => msg.body.indexOf(rawInvoice) > 0)
 
-    /** @type {GiftedChatUser} */
-    const ownUser = {
-      _id: ownPublicKey,
-      name: typeof ownDisplayName === 'string' ? ownDisplayName : ownPublicKey,
-    }
-
-    /** @type {GiftedChatUser} */
-    const recipientUser = {
-      _id: recipientPublicKey,
-      name:
-        typeof recipientDisplayName === 'string'
-          ? recipientDisplayName
-          : recipientPublicKey,
-    }
-
-    const sortedMessages = messages.slice().sort(byTimestampFromOldestToNewest)
-
-    if (sortedMessages.length === 0) {
-      return <Loading />
-    }
-
-    const firstMsg = sortedMessages[0]
-
-    const thereAreMoreMessages =
-      firstMsg.body !== '$$__SHOCKWALLET__INITIAL__MESSAGE'
-
-    /** @type {GiftedChatMessage[]} */
-    const giftedChatMsgs = sortedMessages
-      .filter(msg => msg.body !== '$$__SHOCKWALLET__INITIAL__MESSAGE')
-      .map(msg => {
-        return {
-          _id: msg.id,
-          text: msg.body,
-          createdAt: msg.timestamp,
-          user: msg.outgoing ? ownUser : recipientUser,
+        if (!msg) {
+          break
         }
-      })
+
+        o[msg.id] = /** @type {DecodedInvoice} */ (decoded).amount
+      }
+
+      return o
+    })()
+
+    const msgIDToInvoiceExpiryDate = (() => {
+      /** @type {import('./View').Props['msgIDToInvoiceExpiryDate']} */
+      const o = {}
+
+      for (const [rawInvoice, decoded] of Object.entries(
+        rawInvoiceToDecodedInvoice,
+      )) {
+        const msg = messages.find(msg => msg.body.indexOf(rawInvoice) > 0)
+
+        if (!msg) {
+          break
+        }
+
+        o[msg.id] = /** @type {DecodedInvoice} */ (decoded).expiryDate
+      }
+
+      return o
+    })()
+
+    const msgIDToInvoicePaymentStatus = (() => {
+      /** @type {import('./View').Props['msgIDToInvoicePaymentStatus']} */
+      const o = {}
+
+      for (const [rawInvoice, paymentStatus] of Object.entries(
+        rawInvoiceToPaymentStatus,
+      )) {
+        const msg = messages.find(msg => msg.body.indexOf(rawInvoice) > 0)
+
+        if (!msg) {
+          break
+        }
+
+        if (typeof paymentStatus === 'undefined') {
+          break
+        }
+
+        o[msg.id] = paymentStatus
+      }
+
+      return o
+    })()
 
     return (
-      <GiftedChat
-        isLoadingEarlier={thereAreMoreMessages}
-        loadEarlier={thereAreMoreMessages}
-        messages={giftedChatMsgs}
-        renderLoading={Loading}
-        renderMessage={this.messageRenderer}
-        renderSend={SendRenderer}
-        user={ownUser}
-        onSend={this.onSend}
+      <ChatView
+        msgIDToInvoiceAmount={msgIDToInvoiceAmount}
+        msgIDToInvoiceExpiryDate={msgIDToInvoiceExpiryDate}
+        msgIDToInvoicePaymentStatus={msgIDToInvoicePaymentStatus}
+        messages={messages}
+        onPressUnpaidIncomingInvoice={this.onPressUnpaidIncomingInvoice}
+        onSendMessage={this.onSend}
+        ownDisplayName={ownDisplayName}
+        ownPublicKey={ownPublicKey}
+        recipientDisplayName={recipientDisplayName}
+        recipientPublicKey={recipientPublicKey}
       />
     )
   }
 }
-
-const styles = StyleSheet.create({
-  alignFlexEnd: {
-    alignItems: 'flex-end',
-  },
-
-  alignFlexStart: {
-    alignItems: 'flex-start',
-  },
-
-  loading: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-  },
-
-  maxWidth: {
-    maxWidth: '85%',
-  },
-
-  sendIcon: { marginRight: 10, marginBottom: 10 },
-})
