@@ -38,7 +38,7 @@ export const connectNodeToLND = (alias, password) =>
         return
       } else {
         const body = await res.json()
-        throw new Error(body.errorMessage)
+        throw new Error(body.errorMessage || body.message)
       }
     },
     {
@@ -96,7 +96,7 @@ export const unlockWallet = async (alias, password) => {
       connectNodeToLND(alias, password)
     }
 
-    throw new Error(body.errorMessage)
+    throw new Error(body.errorMessage || body.message)
   }
 }
 
@@ -142,6 +142,6 @@ export const createWallet = async (alias, password) => {
       connectNodeToLND(alias, password)
     }
 
-    throw new Error(body.errorMessage)
+    throw new Error(body.errorMessage || body.message)
   }
 }
