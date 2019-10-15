@@ -543,15 +543,15 @@ export const listGeneratedInvoices = listInvoices
  * @returns {Promise<string>}
  */
 export const newAddress = async useOlderFormat => {
-  return new Promise(res => {
-    setTimeout(() => {
-      res(
-        useOlderFormat
-          ? '347N1Thc213QqfYCz3PZkjoJpNv5b14kBd'
-          : '1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2',
-      )
-    }, 1500)
-  })
+  // return new Promise(res => {
+  //   setTimeout(() => {
+  //     res(
+  //       useOlderFormat
+  //         ? '347N1Thc213QqfYCz3PZkjoJpNv5b14kBd'
+  //         : '1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2',
+  //     )
+  //   }, 1500)
+  // })
 
   /** @type {NewAddressRequest} */
   const req = {
