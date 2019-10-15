@@ -506,6 +506,7 @@ export default class WalletOverview extends React.PureComponent {
         }
 
         Wallet.addInvoice({
+          value: this.state.createInvoiceAmount,
           memo: this.state.createInvoiceMemo,
           expiry: 1800,
         }).then(res => {
