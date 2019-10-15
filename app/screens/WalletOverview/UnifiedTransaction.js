@@ -24,7 +24,7 @@ import * as Wallet from '../../services/wallet'
 /**
  * @typedef {object} Props
  * @prop {IUnifiedTransaction} unifiedTransaction
- * @prop {((rHashOrPaymentHashOrTxHash: string) => void)=} onPress
+ * @prop {((rHashOrPaymentRequestOrTxHash: string) => void)=} onPress
  */
 
 const width = Dimensions.get('window').width
@@ -46,7 +46,7 @@ export default class UnifiedTransaction extends React.PureComponent {
     }
 
     if (Wallet.isInvoice(unifiedTransaction)) {
-      onPress(unifiedTransaction.r_hash)
+      onPress(unifiedTransaction.payment_request)
     }
 
     if (Wallet.isPayment(unifiedTransaction)) {
@@ -66,9 +66,9 @@ export default class UnifiedTransaction extends React.PureComponent {
     let timestamp = 0
 
     if (Wallet.isInvoice(unifiedTransaction)) {
-      id = unifiedTransaction.r_hash
-      value = unifiedTransaction.value
-      timestamp = unifiedTransaction.settle_date
+      id = unifiedTransaction.payment_request
+      value = Number(unifiedTransaction.value)
+      timestamp = Number(unifiedTransaction.settle_date)
     }
 
     if (Wallet.isPayment(unifiedTransaction)) {
