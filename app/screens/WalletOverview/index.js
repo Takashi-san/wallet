@@ -490,11 +490,13 @@ export default class WalletOverview extends React.PureComponent {
     if (this.state.createInvoiceAmount === 0) {
       return
     }
+    
 
     this.closeAllReceiveDialogs()
 
     this.setState(
       {
+        createInvoiceMemo: this.state.createInvoiceMemo,
         createInvoiceAmount: this.state.createInvoiceAmount,
         displayingCreateInvoiceResultDialog: true,
         fetchingInvoice: true,
@@ -504,6 +506,7 @@ export default class WalletOverview extends React.PureComponent {
         if (!this.state.displayingCreateInvoiceResultDialog) {
           return
         }
+
 
         Wallet.addInvoice({
           value: this.state.createInvoiceAmount,
