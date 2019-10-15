@@ -12,6 +12,10 @@ import * as Utils from './utils'
  */
 
 /**
+ * @typedef {string} int64
+ */
+
+/**
  * https://api.lightning.community/#transaction
  * @typedef {object} Transaction
  * @prop {string} tx_hash The transaction hash
@@ -107,48 +111,48 @@ import * as Utils from './utils'
  * @prop {Bytes} r_preimage The hex-encoded preimage (32 byte) which will allow
  * settling an incoming HTLC payable to this preimage
  * @prop {Bytes} r_hash The hash of the preimage
- * @prop {number} value  The value of this invoice in satoshis
+ * @prop {int64} value  The value of this invoice in satoshis
  * @prop {boolean} settled Whether this invoice has been fulfilled
- * @prop {number} creation_date  When this invoice was created
- * @prop {number} settle_date  When this invoice was settled
+ * @prop {int64} creation_date  When this invoice was created
+ * @prop {int64} settle_date  When this invoice was settled
  * @prop {string} payment_request A bare-bones invoice for a payment within the
  * Lightning Network. With the details of the invoice, the sender has all the
  * data necessary to send a payment to the recipient.
  * @prop {Bytes} description_hash Hash (SHA-256) of a description of the
  * payment. Used if the description of payment (memo) is too long to naturally
  * fit within the description field of an encoded payment request.
- * @prop {number} expiry Payment request expiry time in seconds. Default is 3600
+ * @prop {int64} expiry Payment request expiry time in seconds. Default is 3600
  * (1 hour).
  * @prop {string} fallback_addr Fallback on-chain address.
- * @prop {number} cltv_expiry Delta to use for the time-lock of the CLTV
- * extended to the final hop.
+ * @prop {int64} cltv_expiry Delta to use for the time-lock of the CLTV extended
+ * to the final hop.
  * @prop {RouteHint[]} route_hints RouteHint  Route hints that can each be
  * individually used to assist in reaching the invoice's destination.
  * @prop {boolean} private Whether this invoice should include routing hints for
  * private channels.
- * @prop {number} add_index The "add" index of this invoice. Each newly created
+ * @prop {int64} add_index The "add" index of this invoice. Each newly created
  * invoice will increment this index making it monotonically increasing. Callers
  * to the SubscribeInvoices call can use this to instantly get notified of all
  * added invoices with an add_index greater than this one.
- * @prop {number} settle_index  The "settle" index of this invoice. Each newly
+ * @prop {int64} settle_index  The "settle" index of this invoice. Each newly
  * settled invoice will increment this index making it monotonically increasing.
  * Callers to the SubscribeInvoices call can use this to instantly get notified
  * of all settled invoices with an settle_index greater than this one.
- * @prop {number} amt_paid Deprecated, use amt_paid_sat or amt_paid_msat.
- * @prop {number} amt_paid_sat The amount that was accepted for this invoice, in
+ * @prop {int64} amt_paid Deprecated, use amt_paid_sat or amt_paid_msat.
+ * @prop {int64} amt_paid_sat The amount that was accepted for this invoice, in
  * satoshis. This will ONLY be set if this invoice has been settled. We provide
  * this field as if the invoice was created with a zero value, then we need to
  * record what amount was ultimately accepted. Additionally, it's possible that
  * the sender paid MORE that was specified in the original invoice. So we'll
  * record that here as well.
- * @prop {number} amt_paid_msat  The amount that was accepted for this invoice,
- * in millisatoshis. This will ONLY be set if this invoice has been settled. We
+ * @prop {int64} amt_paid_msat The amount that was accepted for this invoice, in
+ * millisatoshis. This will ONLY be set if this invoice has been settled. We
  * provide this field as if the invoice was created with a zero value, then we
  * need to record what amount was ultimately accepted. Additionally, it's
  * possible that the sender paid MORE that was specified in the original
  * invoice. So we'll record that here as well.
- * @prop {0|1|2|3} state The state the invoice is in. OPEN 0 SETTLED 1 CANCELED
- * 2 ACCEPTED 3
+ * @prop {'OPEN'|'SETTLED'|'CANCELED'|'ACCEPTED'} state The state the invoice is
+ * in. OPEN 0 SETTLED 1 CANCELED 2 ACCEPTED 3
  */
 
 /**
