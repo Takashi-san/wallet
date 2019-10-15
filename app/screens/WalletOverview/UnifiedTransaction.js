@@ -66,9 +66,12 @@ export default class UnifiedTransaction extends React.PureComponent {
     let timestamp = 0
 
     if (Wallet.isInvoice(unifiedTransaction)) {
-      id = unifiedTransaction.payment_request
+      id = unifiedTransaction.memo || 'No memo'
       value = Number(unifiedTransaction.value)
-      timestamp = Number(unifiedTransaction.settle_date)
+      timestamp =
+        unifiedTransaction.settle_date === '0'
+          ? Number(unifiedTransaction.creation_date)
+          : Number(unifiedTransaction.settle_date)
     }
 
     if (Wallet.isPayment(unifiedTransaction)) {
@@ -101,7 +104,9 @@ export default class UnifiedTransaction extends React.PureComponent {
           </View>
 
           <View style={styles.dateContainer}>
-            <Text style={styles.dateText}>{moment(timestamp).fromNow()}</Text>
+            <Text style={styles.dateText}>
+              {moment.unix(timestamp).fromNow()}
+            </Text>
           </View>
         </View>
       </TouchableOpacity>
