@@ -25,7 +25,7 @@ import * as Utils from './utils'
  * in
  * @prop {number} block_height The height of the block this transaction was
  * included in
- * @prop {number} time_stamp Timestamp of this transaction
+ * @prop {string} time_stamp Timestamp of this transaction
  * @prop {number} total_fees Fees paid for this transaction
  * @prop {string[]} dest_addresses Addresses that received funds for this
  * transaction
@@ -67,7 +67,7 @@ import * as Utils from './utils'
  * @typedef {object} Payment
  * @prop {string} payment_hash  The payment hash
  * @prop {number} value  Deprecated, use value_sat or value_msat.
- * @prop {number} creation_date  The date of this payment
+ * @prop {string} creation_date  The date of this payment
  * @prop {string[]} path The path this payment took
  * @prop {number} fee Deprecated, use fee_sat or fee_msat.
  * @prop {string} payment_preimage  The payment preimage
@@ -623,6 +623,7 @@ export const newAddress = async useOlderFormat => {
  * for record keeping purposes for the invoice's creator, and will also be set
  * in the description field of the encoded payment request if the
  * description_hash field is not being used.
+ * @prop {number} value
  */
 
 /**
@@ -668,7 +669,7 @@ export const addInvoice = async request => {
   const payload = {
     method: 'POST',
     headers: {
-      Accept: 'application/json',
+      // Accept: 'application/json',
       Authorization: token,
       'Content-Type': 'application/json',
     },

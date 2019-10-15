@@ -74,13 +74,13 @@ export default class UnifiedTransaction extends React.PureComponent {
     if (Wallet.isPayment(unifiedTransaction)) {
       id = unifiedTransaction.payment_hash
       value = unifiedTransaction.value
-      timestamp = unifiedTransaction.creation_date
+      timestamp = Number(unifiedTransaction.creation_date)
     }
 
     if (Wallet.isTransaction(unifiedTransaction)) {
       id = unifiedTransaction.tx_hash
       value = unifiedTransaction.amount
-      timestamp = unifiedTransaction.time_stamp
+      timestamp = Number(unifiedTransaction.time_stamp)
     }
 
     return (
