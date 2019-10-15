@@ -331,7 +331,7 @@ export const balance = async () => {
   if (res.ok) {
     return body
   } else {
-    throw new Error(body.errorMessage)
+    throw new Error(body.errorMessage || body.message)
   }
 }
 
@@ -376,7 +376,7 @@ export const getTransactions = async request => {
   if (res.ok) {
     return body
   } else {
-    throw new Error(body.errorMessage)
+    throw new Error(body.errorMessage || body.message)
   }
 }
 
@@ -444,7 +444,7 @@ export const listPayments = async request => {
   if (res.ok) {
     return body
   } else {
-    throw new Error(body.errorMessage)
+    throw new Error(body.errorMessage || body.message)
   }
 }
 
@@ -519,7 +519,7 @@ export const listInvoices = async request => {
   if (res.ok) {
     return body
   } else {
-    throw new Error(body.errorMessage)
+    throw new Error(body.errorMessage || body.message)
   }
 }
 
@@ -575,7 +575,7 @@ export const newAddress = async useOlderFormat => {
   if (res.ok) {
     return /** @type {NewAddressResponse} */ (body).address
   } else {
-    throw new Error(body.errorMessage)
+    throw new Error(body.errorMessage || body.message)
   }
 }
 
@@ -644,7 +644,7 @@ export const addInvoice = async request => {
   if (res.ok) {
     return body
   } else {
-    throw new Error(body.errorMessage)
+    throw new Error(body.errorMessage || body.message)
   }
 }
 
@@ -702,7 +702,7 @@ export const sendCoins = async request => {
   if (res.ok) {
     return body
   } else {
-    throw new Error(body.errorMessage)
+    throw new Error(body.errorMessage || body.message)
   }
 }
 
@@ -806,7 +806,7 @@ export const CAUTION_payInvoice = async ({ amt, payreq }) => {
   if (res.ok) {
     return body
   } else {
-    throw new Error(body.errorMessage)
+    throw new Error(body.errorMessage || body.message)
   }
 }
 
@@ -890,6 +890,6 @@ export const decodeInvoice = async ({ pay_req }) => {
   if (res.ok) {
     return body
   } else {
-    throw new Error(body.errorMessage)
+    throw new Error(body.errorMessage || body.message)
   }
 }
