@@ -138,7 +138,6 @@ android {
 
 dependencies {
     implementation project(':react-native-linear-gradient')
-    compile project(':@react-native-community_async-storage')
     compile (project(':react-native-camera')) {
         exclude group: "com.google.android.gms"
         compile 'com.android.support:exifinterface:25.+'
