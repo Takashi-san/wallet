@@ -259,7 +259,19 @@ export const NO_CACHED_TOKEN = 'NO_CACHED_TOKEN'
 export const isInvoice = item => {
   const i = /** @type {Invoice} */ (item)
 
-  return typeof i.r_hash === 'string'
+  if (typeof i.r_hash !== 'object') {
+    return false
+  }
+
+  if (typeof i.memo !== 'string') {
+    return false
+  }
+
+  if (!Array.isArray(i.route_hints)) {
+    return false
+  }
+
+  return true
 }
 
 /**

@@ -42,7 +42,7 @@ const Empty = () => ((
  */
 const keyExtractor = unifiedTransaction => {
   if (Wallet.isInvoice(unifiedTransaction)) {
-    return unifiedTransaction.r_hash
+    return unifiedTransaction.payment_request
   }
 
   if (Wallet.isPayment(unifiedTransaction)) {
@@ -53,7 +53,9 @@ const keyExtractor = unifiedTransaction => {
     return unifiedTransaction.tx_hash
   }
 
-  throw new TypeError()
+  throw new TypeError(
+    'UnifiedTrx.prototype.keyExtractor: unknown item type found',
+  )
 }
 
 /**
@@ -77,9 +79,49 @@ export default class UnifiedTransactions extends React.PureComponent {
       return <ActivityIndicator />
     }
 
+    const filtered = unifiedTrx.filter(unifiedTransaction => {
+      if (Wallet.isInvoice(unifiedTransaction)) {
+        return true
+      }
+
+      if (Wallet.isPayment(unifiedTransaction)) {
+        return true
+      }
+
+      if (Wallet.isTransaction(unifiedTransaction)) {
+        return true
+      }
+
+      return false
+    })
+
+    {
+      const rejected = unifiedTrx.filter(unifiedTransaction => {
+        if (Wallet.isInvoice(unifiedTransaction)) {
+          return false
+        }
+
+        if (Wallet.isPayment(unifiedTransaction)) {
+          return false
+        }
+
+        if (Wallet.isTransaction(unifiedTransaction)) {
+          return false
+        }
+
+        return true
+      })
+
+      rejected.forEach(r => {
+        console.warn(
+          `unknown item type found inside <UnifiedTrx />: ${JSON.stringify(r)}`,
+        )
+      })
+    }
+
     return (
       <FlatList
-        data={unifiedTrx}
+        data={filtered}
         keyExtractor={keyExtractor}
         ItemSeparatorComponent={Separator}
         ListEmptyComponent={Empty}
