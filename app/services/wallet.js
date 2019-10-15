@@ -304,11 +304,11 @@ export const USDExchangeRate = () => {
  * @returns {Promise<WalletBalanceResponse>}
  */
 export const balance = async () => {
-  return {
-    confirmed_balance: 200,
-    total_balance: 100,
-    unconfirmed_balance: 100,
-  }
+  // return {
+  //   confirmed_balance: 200,
+  //   total_balance: 100,
+  //   unconfirmed_balance: 100,
+  // }
   const { nodeIP, token } = await Cache.getNodeIPTokenPair()
 
   if (typeof token !== 'string') {
