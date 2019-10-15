@@ -718,7 +718,7 @@ export default class WalletOverview extends React.PureComponent {
       () => {
         const { lightningInvoiceInput } = this.state
 
-        Wallet.decodeInvoice({ pay_req: lightningInvoiceInput }).then(
+        Wallet.decodeInvoice({ payReq: lightningInvoiceInput }).then(
           decodedInvoice => {
             if (!this.state.displayingConfirmInvoicePaymentDialog) {
               return
@@ -758,14 +758,18 @@ export default class WalletOverview extends React.PureComponent {
         payingInvoice: true,
       },
       () => {
-        const { decodedInvoice, invoiceAmt, lightningInvoiceInput } = this.state
+        const { decodedInvoice: decodedInvoiceRes, invoiceAmt, lightningInvoiceInput } = this.state
 
-        if (decodedInvoice === null) {
+        
+
+        if (decodedInvoiceRes === null) {
           console.warn('decodedInvoice === null')
           return
         }
 
-        const zeroInvoice = decodedInvoice.num_satoshis === 0
+        const decodedInvoice = decodedInvoiceRes.decodedRequest
+
+        const zeroInvoice = decodedInvoice.num_satoshis === '0'
 
         Wallet.CAUTION_payInvoice({
           amt: zeroInvoice ? invoiceAmt : undefined,
@@ -784,13 +788,13 @@ export default class WalletOverview extends React.PureComponent {
   }
 
   /**
-   * @param {Wallet.DecodeInvoiceResponse} decodedInvoice
+   * @param {Wallet.DecodeInvoiceResponse['decodedRequest']} decodedInvoice
    * @returns {JSX.Element}
    */
   renderConfirmInvoiceDialog(decodedInvoice) {
     const { invoiceAmt, payShockInvoiceUserData } = this.state
 
-    const zeroInvoice = decodedInvoice.num_satoshis === 0
+    const zeroInvoice = decodedInvoice.num_satoshis === '0'
 
     return (
       <View>
@@ -888,7 +892,7 @@ export default class WalletOverview extends React.PureComponent {
         },
       },
       () => {
-        Wallet.decodeInvoice({ pay_req: newParams.rawInvoice }).then(res => {
+        Wallet.decodeInvoice({ payReq: newParams.rawInvoice }).then(res => {
           this.setState({
             decodedInvoice: res,
           })
@@ -1430,7 +1434,7 @@ export default class WalletOverview extends React.PureComponent {
             {decodedInvoice === null ? (
               <ActivityIndicator />
             ) : (
-              this.renderConfirmInvoiceDialog(decodedInvoice)
+              this.renderConfirmInvoiceDialog(decodedInvoice.decodedRequest)
             )}
           </View>
         </BasicDialog>

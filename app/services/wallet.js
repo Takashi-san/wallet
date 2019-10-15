@@ -820,37 +820,42 @@ export const CAUTION_payInvoice = async ({ amt, payreq }) => {
 
 /**
  * https://api.lightning.community/#grpc-response-payreq
- * @typedef {object} DecodeInvoiceResponse
+ * @typedef {object} DecodedPayReq
  * @prop {string} destination
  * @prop {string} payment_hash
- * @prop {number} num_satoshis
- * @prop {number} timestamp
- * @prop {number} expiry
+ * @prop {string} num_satoshis
+ * @prop {string} timestamp
+ * @prop {string} expiry
  * @prop {string} description
  * @prop {string} description_hash
  * @prop {string} fallback_addr
- * @prop {number} cltv_expiry
+ * @prop {string} cltv_expiry
  * @prop {RouteHint[]} route_hints
+ */
+
+/**
+ * @typedef {object} DecodeInvoiceResponse
+ * @prop {DecodedPayReq} decodedRequest
  */
 
 /**
  * https://api.lightning.community/#grpc-request-payreqstring
  * @typedef {object} DecodeInvoiceRequest
- * @prop {string} pay_req AKA Invoice
+ * @prop {string} payReq AKA Invoice
  */
 
 /**
  * @param {DecodeInvoiceRequest} request
  * @returns {Promise<DecodeInvoiceResponse>}
  */
-export const decodeInvoice = async ({ pay_req }) => {
+export const decodeInvoice = async ({ payReq }) => {
   const { nodeIP, token } = await Cache.getNodeIPTokenPair()
 
   if (typeof token !== 'string') {
     throw new TypeError(NO_CACHED_TOKEN)
   }
 
-  const endpoint = `http://${nodeIP}:9835/api/lnd/decodeinvoice`
+  const endpoint = `http://${nodeIP}:9835/api/lnd/decodePayReq`
 
   const payload = {
     method: 'POST',
@@ -859,7 +864,7 @@ export const decodeInvoice = async ({ pay_req }) => {
       Authorization: token,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ pay_req }),
+    body: JSON.stringify({ payReq }),
   }
 
   const res = await fetch(endpoint, payload)
