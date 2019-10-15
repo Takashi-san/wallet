@@ -217,7 +217,7 @@ import * as Utils from './utils'
 /**
  * NOT based on any lightning API.
  * @typedef {object} PaginatedListInvoicesResponse
- * @prop {Invoice[]} entries
+ * @prop {Invoice[]} content
  * @prop {number} page
  * @prop {number} totalPages
  */
@@ -362,7 +362,7 @@ export const getTransactions = async request => {
     throw new TypeError(NO_CACHED_TOKEN)
   }
 
-  const endpoint = `http://${nodeIP}:9835/api/lnd/transactions?paginate&page=${
+  const endpoint = `http://${nodeIP}:9835/api/lnd/transactions?paginate=true&page=${
     request.page
   }&itemsPerPage=${request.itemsPerPage}`
 
@@ -432,9 +432,9 @@ export const listPayments = async request => {
     throw new TypeError(NO_CACHED_TOKEN)
   }
 
-  const endpoint = `http://${nodeIP}:9835/api/lnd/listpayments`
-
-  const url = Utils.getQueryParams(endpoint, request)
+  const url = `http://${nodeIP}:9835/api/lnd/listpayments?paginate=true&page=${
+    request.page
+  }&itemsPerPage=${request.itemsPerPage}`
 
   const payload = {
     method: 'GET',
