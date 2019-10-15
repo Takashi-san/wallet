@@ -934,7 +934,7 @@ export default class WalletOverview extends React.PureComponent {
       }),
     ]).then(([invoiceResponse, payments, transactions]) => {
       const unifiedTrx = [
-        ...invoiceResponse.entries,
+        ...invoiceResponse.content,
         ...payments.content,
         ...transactions.content,
       ]
