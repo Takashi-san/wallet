@@ -507,7 +507,7 @@ export default class WalletOverview extends React.PureComponent {
 
         Wallet.addInvoice({
           memo: this.state.createInvoiceMemo,
-          expiry: 2,
+          expiry: 1800,
         }).then(res => {
           this.setState(({ displayingCreateInvoiceResultDialog }) => {
             // Check in case dialog was closed before completing fetch.
@@ -919,16 +919,16 @@ export default class WalletOverview extends React.PureComponent {
   fetchRecentTransactions = async () => {
     await Promise.all([
       Wallet.listInvoices({
-        itemsPerPage: 1,
+        itemsPerPage: 100,
         page: 1,
       }),
       Wallet.listPayments({
-        itemsPerPage: 1,
+        itemsPerPage: 100,
         page: 1,
         paginate: true,
       }),
       Wallet.getTransactions({
-        itemsPerPage: 1,
+        itemsPerPage: 100,
         page: 1,
         paginate: true,
       }),
