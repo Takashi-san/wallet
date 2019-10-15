@@ -707,16 +707,14 @@ export const addInvoice = async request => {
  * @returns {Promise<string>}
  */
 export const sendCoins = async request => {
-  return new Promise((_, rej) => {
-    setTimeout(() => {
-      rej(new Error('Error Message Goes Here'))
-    }, 1000)
-  })
-  return new Promise(res => {
-    setTimeout(() => {
-      res('e5ad636a919f94b5ac27b60f81e2072f7384daefcbc6a0833b3a998e7452dccb')
-    }, 1000)
-  })
+  {
+    // return new Promise((_, rej) => {
+    //   setTimeout(() => {
+    //     rej(new Error('Error Message Goes Here'))
+    //   }, 1000)
+    // })
+  }
+
   const { nodeIP, token } = await Cache.getNodeIPTokenPair()
   if (typeof token !== 'string') {
     throw new TypeError(NO_CACHED_TOKEN)
@@ -791,35 +789,6 @@ export const sendCoins = async request => {
  * @returns {Promise<SendResponse>}
  */
 export const CAUTION_payInvoice = async ({ amt, payreq }) => {
-  return new Promise(res => {
-    setTimeout(() => {
-      res({
-        payment_error: '',
-        payment_hash: '',
-        payment_preimage: '',
-        payment_route: {
-          hops: [
-            {
-              expiry: 1,
-              amt_to_forward: 1,
-              amt_to_forward_msat: 1,
-              chan_capacity: 1,
-              chan_id: 1,
-              fee: 0.0001,
-              fee_msat: 1,
-              pub_key: 'pub_key',
-            },
-          ],
-          total_amt: amt || 1,
-          total_amt_msat: (amt || 1) * 1000,
-          total_fees: 1,
-          total_fees_msat: 1000,
-          total_time_lock: 1,
-        },
-      })
-    }, 1000)
-  })
-
   const { nodeIP, token } = await Cache.getNodeIPTokenPair()
 
   if (typeof token !== 'string') {
@@ -875,35 +844,6 @@ export const CAUTION_payInvoice = async ({ amt, payreq }) => {
  * @returns {Promise<DecodeInvoiceResponse>}
  */
 export const decodeInvoice = async ({ pay_req }) => {
-  return new Promise(res => {
-    setTimeout(() => {
-      res({
-        cltv_expiry: 1,
-        description: 'description',
-        description_hash: 'description_hash',
-        destination: 'destination',
-        expiry: 60,
-        fallback_addr: 'fallback_addr',
-        num_satoshis: 250000,
-        payment_hash: 'payment_hash',
-        route_hints: [
-          {
-            hop_hints: [
-              {
-                chan_id: 1,
-                cltv_expiry_delta: 1,
-                fee_base_msat: 100,
-                fee_proportional_millionths: 100000000,
-                node_id: 'node_id',
-              },
-            ],
-          },
-        ],
-        timestamp: 1496314658,
-      })
-    }, 1000)
-  })
-
   const { nodeIP, token } = await Cache.getNodeIPTokenPair()
 
   if (typeof token !== 'string') {
