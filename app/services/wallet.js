@@ -6,6 +6,12 @@ import * as Cache from './cache'
 import * as Utils from './utils'
 
 /**
+ * @typedef {object} Bytes
+ * @prop {string} type
+ * @prop {number[]} data
+ */
+
+/**
  * https://api.lightning.community/#transaction
  * @typedef {object} Transaction
  * @prop {string} tx_hash The transaction hash
@@ -96,11 +102,11 @@ import * as Utils from './utils'
  * for record keeping purposes for the invoice's creator, and will also be set
  * in the description field of the encoded payment request if the
  * description_hash field is not being used.
- * @prop {string} receipt  Deprecated. An optional cryptographic receipt of
+ * @prop {Bytes} receipt  Deprecated. An optional cryptographic receipt of
  * payment which is not implemented.
- * @prop {string} r_preimage The hex-encoded preimage (32 byte) which will allow
+ * @prop {Bytes} r_preimage The hex-encoded preimage (32 byte) which will allow
  * settling an incoming HTLC payable to this preimage
- * @prop {string} r_hash The hash of the preimage
+ * @prop {Bytes} r_hash The hash of the preimage
  * @prop {number} value  The value of this invoice in satoshis
  * @prop {boolean} settled Whether this invoice has been fulfilled
  * @prop {number} creation_date  When this invoice was created
@@ -108,7 +114,7 @@ import * as Utils from './utils'
  * @prop {string} payment_request A bare-bones invoice for a payment within the
  * Lightning Network. With the details of the invoice, the sender has all the
  * data necessary to send a payment to the recipient.
- * @prop {string} description_hash Hash (SHA-256) of a description of the
+ * @prop {Bytes} description_hash Hash (SHA-256) of a description of the
  * payment. Used if the description of payment (memo) is too long to naturally
  * fit within the description field of an encoded payment request.
  * @prop {number} expiry Payment request expiry time in seconds. Default is 3600
@@ -235,6 +241,12 @@ import * as Utils from './utils'
  * @prop {string} address The newly generated wallet address.
  */
 export const NO_CACHED_TOKEN = 'NO_CACHED_TOKEN'
+
+/**
+ * Invoice as it's actually received by listInvoices.
+ * @typedef {object} ActualInvoice
+ * @prop {}
+ */
 
 /**
  * @param {Invoice|Payment|Transaction} item
@@ -616,16 +628,18 @@ export const newAddress = async useOlderFormat => {
  * @returns {Promise<AddInvoiceResponse>}
  */
 export const addInvoice = async request => {
-  return new Promise(res => {
-    setTimeout(() => {
-      res({
-        add_index: 0,
-        payment_request:
-          'lntb1u1pwz5w78pp5e8w8cr5c30xzws92v36sk45znhjn098rtc4pea6ertnmvu25ng3sdpywd6hyetyvf5hgueqv3jk6meqd9h8vmmfvdjsxqrrssy29mzkzjfq27u67evzu893heqex737dhcapvcuantkztg6pnk77nrm72y7z0rs47wzc09vcnugk2ve6sr2ewvcrtqnh3yttv847qqvqpvv398',
-        r_hash: 'r_hash',
-      })
-    }, 1500)
-  })
+  {
+    // return new Promise(res => {
+    //   setTimeout(() => {
+    //     res({
+    //       add_index: 0,
+    //       payment_request:
+    //         'lntb1u1pwz5w78pp5e8w8cr5c30xzws92v36sk45znhjn098rtc4pea6ertnmvu25ng3sdpywd6hyetyvf5hgueqv3jk6meqd9h8vmmfvdjsxqrrssy29mzkzjfq27u67evzu893heqex737dhcapvcuantkztg6pnk77nrm72y7z0rs47wzc09vcnugk2ve6sr2ewvcrtqnh3yttv847qqvqpvv398',
+    //       r_hash: 'r_hash',
+    //     })
+    //   }, 1500)
+    // })
+  }
 
   const { nodeIP, token } = await Cache.getNodeIPTokenPair()
 
