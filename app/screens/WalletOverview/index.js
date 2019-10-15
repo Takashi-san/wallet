@@ -898,11 +898,11 @@ export default class WalletOverview extends React.PureComponent {
   }
 
   componentDidMount() {
-    this.balanceIntervalID = setInterval(this.fetchBalance, 1500)
-    this.exchangeRateIntervalID = setInterval(this.fetchExchangeRate, 1500)
+    this.balanceIntervalID = setInterval(this.fetchBalance, 4000)
+    this.exchangeRateIntervalID = setInterval(this.fetchExchangeRate, 4000)
     this.recentTransactionsIntervalID = setInterval(
       this.fetchRecentTransactions,
-      1500,
+      4000,
     )
   }
 
