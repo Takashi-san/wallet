@@ -97,7 +97,7 @@ export default class UnifiedTransaction extends React.PureComponent {
 
           <View style={styles.transactionBody}>
             <Text style={styles.boldFont}>{id}</Text>
-            <Text>{btcConvert(value, 'Satoshi', 'bit')} Bits</Text>
+            <Text>{`${value} SATS`}</Text>
           </View>
 
           <View style={styles.dateContainer}>
