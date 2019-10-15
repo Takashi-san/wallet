@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "start": "node node_modules/react-native/local-cli/cli.js start",
-    "android": "react-native run-android",
-    "test": "jest"
+    "test": "jest",
+    "build:debug": "rm android/app/src/main/assets/index.android.bundle && cd android && ./gradlew clean && cd .. && react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res && cd android && ./gradlew assembleDebug"
   },
   "dependencies": {
     "axios": "^0.19.0",
