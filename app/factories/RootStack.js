@@ -6,6 +6,7 @@ import {
   createBottomTabNavigator,
   createStackNavigator,
   createSwitchNavigator,
+  createDrawerNavigator,
 } from 'react-navigation'
 import debounce from 'lodash/debounce'
 import once from 'lodash/once'
@@ -61,6 +62,22 @@ MainNav.navigationOptions = {
   header: null,
 }
 
+const MAIN_DRAWER = 'MAIN_DRAWER'
+
+const MainDrawer = createDrawerNavigator(
+  {
+    [MAIN_NAV]: MainNav,
+    [ADVANCED_SCREEN]: Advanced,
+  },
+  {
+    initialRouteName: MAIN_NAV,
+  },
+)
+
+MainDrawer.navigationOptions = {
+  header: null,
+}
+
 const App = createStackNavigator(
   {
     [ADVANCED_SCREEN]: Advanced,
@@ -77,11 +94,11 @@ const App = createStackNavigator(
     User,
     Users,
 
-    [MAIN_NAV]: MainNav,
+    [MAIN_DRAWER]: MainDrawer,
   },
   {
     headerLayoutPreset: 'center',
-    initialRouteName: MAIN_NAV,
+    initialRouteName: MAIN_DRAWER,
   },
 )
 
