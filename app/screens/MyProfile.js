@@ -1,7 +1,13 @@
 /** @format */
 import React from 'react'
 
-import { Text, StyleSheet, ActivityIndicator } from 'react-native'
+import {
+  Clipboard,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  ToastAndroid,
+} from 'react-native'
 import { View } from 'react-native'
 import EntypoIcons from 'react-native-vector-icons/Entypo'
 
@@ -15,6 +21,10 @@ import ShockInput from '../components/ShockInput'
 import IGDialogBtn from '../components/IGDialogBtn'
 
 export const MY_PROFILE = 'MY_PROFILE'
+
+const showCopiedToClipboardToast = () => {
+  ToastAndroid.show('Copied to clipboard!', 800)
+}
 
 /**
  * @typedef {object} State
@@ -107,6 +117,22 @@ export default class MyProfile extends React.PureComponent {
     API.Actions.generateNewHandshakeNode()
   }
 
+  copyDataToClipboard = () => {
+    const { authData, displayName, handshakeAddr } = this.state
+
+    if (authData === null) {
+      return
+    }
+
+    const data = `$$__SHOCKWALLET__USER__${
+      authData.publicKey
+    }__${handshakeAddr}__${displayName ? displayName : authData.publicKey}`
+
+    Clipboard.setString(data)
+
+    showCopiedToClipboardToast()
+  }
+
   render() {
     const {
       displayName,
@@ -161,6 +187,11 @@ export default class MyProfile extends React.PureComponent {
                 displayName ? displayName : authData.publicKey
               }`}
             />
+            <Pad amount={10} />
+            <ShockButton
+              onPress={this.copyDataToClipboard}
+              title="Copy raw data to clipboard (use this if your QR cannot be scanned)"
+            />
           </View>
         )}
 
@@ -211,6 +242,5 @@ const styles = StyleSheet.create({
   QRHolder: {
     alignItems: 'center',
     flex: 1,
-    backgroundColor: 'pink',
   },
 })
