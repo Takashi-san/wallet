@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   ToastAndroid,
+  TouchableOpacity,
 } from 'react-native'
 import { View } from 'react-native'
 import EntypoIcons from 'react-native-vector-icons/Entypo'
@@ -148,7 +149,9 @@ export default class MyProfile extends React.PureComponent {
 
     return (
       <View style={styles.container}>
-        <ShockAvatar displayName={displayName} height={320} image={null} />
+        <TouchableOpacity onPress={this.toggleSetupDisplayName}>
+          <ShockAvatar displayName={displayName} height={320} image={null} />
+        </TouchableOpacity>
 
         {displayName === null && (
           <ShockButton
