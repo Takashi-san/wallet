@@ -10,6 +10,9 @@ import ShockAvatar from '../components/ShockAvatar'
 import ShockButton from '../components/ShockButton'
 import QR from './WalletOverview/QR'
 import Pad from '../components/Pad'
+import BasicDialog from '../components/BasicDialog'
+import ShockInput from '../components/ShockInput'
+import IGDialogBtn from '../components/IGDialogBtn'
 
 export const MY_PROFILE = 'MY_PROFILE'
 
@@ -17,6 +20,8 @@ export const MY_PROFILE = 'MY_PROFILE'
  * @typedef {object} State
  * @prop {API.Events.AuthData} authData
  * @prop {string|null} displayName
+ * @prop {boolean} displayNameDialogOpen
+ * @prop {string} displayNameInput
  * @prop {string|null} handshakeAddr
  */
 
@@ -44,6 +49,8 @@ export default class MyProfile extends React.PureComponent {
   state = {
     authData: null,
     displayName: null,
+    displayNameDialogOpen: false,
+    displayNameInput: '',
     handshakeAddr: null,
   }
 
@@ -52,35 +59,21 @@ export default class MyProfile extends React.PureComponent {
   onHandshakeAddressUnsub = () => {}
 
   componentDidMount() {
-    setTimeout(() => {
+    this.onAuthDataUnsub = API.Events.onAuth(ad => {
       this.setState({
-        authData: {
-          publicKey: 'pk',
-          token: 'token',
-        },
-        displayName: 'John',
+        authData: ad,
       })
-    }, 500)
-    {
-      // this.onAuthDataUnsub = API.Events.onAuth(ad => {
-      //   if (ad === null) {
-      //     return
-      //   }
-      //   this.setState({
-      //     authData: ad,
-      //   })
-      // })
-      // this.onDisplayNameUnsub = API.Events.onDisplayName(dn => {
-      //   this.setState({
-      //     displayName: dn,
-      //   })
-      // })
-      // this.onHandshakeAddressUnsub = API.Events.onHandshakeAddr(addr => {
-      //   this.setState({
-      //     handshakeAddr: addr,
-      //   })
-      // })
-    }
+    })
+    this.onDisplayNameUnsub = API.Events.onDisplayName(dn => {
+      this.setState({
+        displayName: dn,
+      })
+    })
+    this.onHandshakeAddressUnsub = API.Events.onHandshakeAddr(addr => {
+      this.setState({
+        handshakeAddr: addr,
+      })
+    })
   }
 
   componentWillUnmount() {
@@ -89,18 +82,39 @@ export default class MyProfile extends React.PureComponent {
     this.onHandshakeAddressUnsub()
   }
 
-  genHandAddr = () => {
-    setTimeout(() => {
-      this.setState({
-        handshakeAddr: 'jaksljdklasjfhaskjdhkj',
-      })
-    }, 100)
+  /**
+   * @param {string} dn
+   */
+  onChangeDisplayNameInput = dn => {
+    this.setState({
+      displayNameInput: dn,
+    })
+  }
 
-    // API.Actions.generateNewHandshakeNode()
+  toggleSetupDisplayName = () => {
+    this.setState(({ displayNameDialogOpen }) => ({
+      displayNameDialogOpen: !displayNameDialogOpen,
+      displayNameInput: '',
+    }))
+  }
+
+  setDisplayName = () => {
+    API.Actions.setDisplayName(this.state.displayNameInput)
+    this.toggleSetupDisplayName()
+  }
+
+  genHandAddr = () => {
+    API.Actions.generateNewHandshakeNode()
   }
 
   render() {
-    const { displayName, authData, handshakeAddr } = this.state
+    const {
+      displayName,
+      authData,
+      handshakeAddr,
+      displayNameInput,
+      displayNameDialogOpen,
+    } = this.state
 
     if (authData === null) {
       return <ActivityIndicator size="large" />
@@ -108,7 +122,14 @@ export default class MyProfile extends React.PureComponent {
 
     return (
       <View style={styles.container}>
-        <ShockAvatar displayName={displayName} height={180} image={null} />
+        <ShockAvatar displayName={displayName} height={320} image={null} />
+
+        {displayName === null && (
+          <ShockButton
+            title="Press here to set up a display name"
+            onPress={this.toggleSetupDisplayName}
+          />
+        )}
 
         {handshakeAddr === null && (
           <React.Fragment>
@@ -128,10 +149,11 @@ export default class MyProfile extends React.PureComponent {
         )}
 
         {handshakeAddr !== null && (
-          <View style={{ maxWidth: '75%', alignItems: 'center' }}>
+          <View style={styles.QRHolder}>
             <Text>Other users can scan this QR to contact you.</Text>
             <Pad amount={10} />
             <QR
+              size={256}
               logoToShow="shock"
               value={`$$__SHOCKWALLET__USER__${
                 authData.publicKey
@@ -141,6 +163,25 @@ export default class MyProfile extends React.PureComponent {
             />
           </View>
         )}
+
+        <BasicDialog
+          onRequestClose={this.toggleSetupDisplayName}
+          title="Display Name"
+          visible={displayNameDialogOpen}
+        >
+          <View style={styles.dialog}>
+            <ShockInput
+              onChangeText={this.onChangeDisplayNameInput}
+              value={displayNameInput}
+            />
+
+            <IGDialogBtn
+              disabled={displayNameInput.length === 0}
+              title="OK"
+              onPress={this.setDisplayName}
+            />
+          </View>
+        </BasicDialog>
       </View>
     )
   }
@@ -154,11 +195,22 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     width: '100%',
   },
+
+  dialog: {
+    alignItems: 'stretch',
+  },
+
   container: {
     alignItems: 'center',
     backgroundColor: 'white',
     flex: 1,
     justifyContent: 'space-between',
     paddingBottom: 20,
+  },
+
+  QRHolder: {
+    alignItems: 'center',
+    flex: 1,
+    backgroundColor: 'pink',
   },
 })
