@@ -12,8 +12,6 @@ import { CHAT_ROUTE } from './../Chat'
 
 import ChatsView from './View'
 
-import MOCK from '../MOCK'
-
 export const CHATS_ROUTE = 'CHATS_ROUTE'
 /**
  * @typedef {import('../Chat').Params} ChatParams
@@ -69,9 +67,9 @@ export default class Chats extends React.PureComponent {
   /** @type {State} */
   state = {
     acceptingRequest: null,
-    chats: MOCK.chats,
-    receivedRequests: MOCK.receivedRequests,
-    sentRequests: MOCK.sentRequests,
+    chats: [],
+    receivedRequests: [],
+    sentRequests: [],
   }
 
   chatsUnsubscribe = () => {}
@@ -79,23 +77,23 @@ export default class Chats extends React.PureComponent {
   sentReqsUnsubscribe = () => {}
 
   componentDidMount() {
-    // this.chatsUnsubscribe = API.Events.onChats(chats => {
-    //   this.setState({
-    //     chats,
-    //   })
-    // })
-    // this.receivedReqsUnsubscribe = API.Events.onReceivedRequests(
-    //   receivedRequests => {
-    //     this.setState({
-    //       receivedRequests,
-    //     })
-    //   },
-    // )
-    // this.sentReqsUnsubscribe = API.Events.onSentRequests(sentRequests => {
-    //   this.setState({
-    //     sentRequests,
-    //   })
-    // })
+    this.chatsUnsubscribe = API.Events.onChats(chats => {
+      this.setState({
+        chats,
+      })
+    })
+    this.receivedReqsUnsubscribe = API.Events.onReceivedRequests(
+      receivedRequests => {
+        this.setState({
+          receivedRequests,
+        })
+      },
+    )
+    this.sentReqsUnsubscribe = API.Events.onSentRequests(sentRequests => {
+      this.setState({
+        sentRequests,
+      })
+    })
   }
 
   componentWillUnmount() {
