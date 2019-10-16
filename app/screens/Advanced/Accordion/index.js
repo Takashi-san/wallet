@@ -29,37 +29,27 @@ export default class Accordion extends Component {
     });
   }
 
-  renderTRXMenu = () => {
+  renderTRXMenu = (options) => {
     const { title, open } = this.props;
     const { menuOpenAnimation } = this.state;
     const supportedAccordions = ['transactions'];
     if (open && supportedAccordions.includes(title.toLowerCase())) {
       return (
         <View style={styles.accordionMenu}>
-          <Animated.View style={[styles.accordionMenuItem, {
-            opacity: menuOpenAnimation,
-            marginRight: menuOpenAnimation.interpolate({
-              inputRange: [0, 1],
-              outputRange: [0, 15]
-            })
-          }]}>
-            <View style={styles.accordionMenuItemIcon}>
-              <Icon name="link" size={20} color="#294f93" />
-            </View>
-            <Text style={styles.accordionMenuItemText}>Generate</Text>
-          </Animated.View>
-          <Animated.View style={[styles.accordionMenuItem, {
-            opacity: menuOpenAnimation,
-            marginRight: menuOpenAnimation.interpolate({
-              inputRange: [0, 1],
-              outputRange: [0, 15]
-            })
-          }]}>
-            <View style={styles.accordionMenuItemIcon}>
-              <Icon name="flash" size={20} color="#294f93" />
-            </View>
-            <Text style={styles.accordionMenuItemText}>Send</Text>
-          </Animated.View>
+          {options.map(option => (
+            <Animated.View onPress={option.action} style={[styles.accordionMenuItem, {
+              opacity: menuOpenAnimation,
+              marginRight: menuOpenAnimation.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, 15]
+              })
+            }]}>
+              <View style={styles.accordionMenuItemIcon}>
+                <Icon name={option.icon} size={20} color="#294f93" />
+              </View>
+              <Text style={styles.accordionMenuItemText}>{option.name}</Text>
+            </Animated.View>
+          ))}
           <TouchableWithoutFeedback onPress={this.toggleMenuOpen}>
             <Animated.View style={[styles.accordionMenuBtn, {
               transform: [{
@@ -82,7 +72,7 @@ export default class Accordion extends Component {
   }
 
   render() {
-    const { title, children, open, toggleAccordion, data, Item, fetchNextPage, paginated } = this.props;
+    const { title, children, open, toggleAccordion, data, Item, fetchNextPage, paginated, menuOptions = [] } = this.props;
     return (
       <View style={[styles.accordionItem, { flex: open ? 1 : 0 }]}>
         <TouchableOpacity onPress={toggleAccordion} style={styles.accordionItem}>
@@ -108,7 +98,7 @@ export default class Accordion extends Component {
         }}>
           {data.map(item => <Item data={item} />)}
         </ScrollView>}
-        {this.renderTRXMenu()}
+        {this.renderTRXMenu(menuOptions)}
       </View>
     );
   }

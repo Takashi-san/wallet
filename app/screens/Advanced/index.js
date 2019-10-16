@@ -3,6 +3,10 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 import LinearGradient from "react-native-linear-gradient";
 import EntypoIcons from 'react-native-vector-icons/Entypo';
 import Http from "axios";
+import BasicDialog from "../../components/BasicDialog";
+import ShockInput from "../../components/ShockInput";
+import IGDialogBtn from "../../components/IGDialogBtn";
+import Pad from "../../components/Pad";
 import AccordionItem from "./Accordion";
 import Transaction from "./Accordion/Transaction";
 import Channel from "./Accordion/Channel";
@@ -28,7 +32,12 @@ export default class AdvancedScreen extends Component {
       page: 0, 
       totalPages: 0 
     },
-    channels: []
+    channels: [],
+    addPeerOpen: false,
+    addChannelOpen: false,
+    peerPublicKey: "",
+    host: "",
+    channelPublicKey: ""
   };
 
   componentDidMount() {
@@ -87,13 +96,56 @@ export default class AdvancedScreen extends Component {
     });
   }
 
+  handleInputChange = (key, value) => {
+    this.setState({
+      [key]: value
+    })
+  }
+
+  addPeer = async () => {
+    const { peerPublicKey, host } = this.state;
+    
+    await Http.post(`/lnd/connectpeer`, {
+      host,
+      pubkey: peerPublicKey
+    });
+
+    const newPeers = await Http.get('/lnd/listpeers');
+
+    this.setState({
+      peers: newPeers.data.peers,
+      host: "",
+      peerPublicKey: ""
+    });
+  }
+
+  addChannel = async () => {
+    const { channelPublicKey } = this.state;
+    
+    await Http.post(`/lnd/openchannel`, {
+      pubkey: channelPublicKey
+    });
+
+    const newChannels = await Http.get('/lnd/listchannels');
+
+    this.setState({
+      channels: newChannels.data.channels,
+      channelPublicKey: ""
+    });
+  }
+
   render() {
     const { 
       accordions, 
       transactions, 
       peers,
       invoices,
-      channels 
+      channels,
+      addPeerOpen,
+      addChannelOpen,
+      peerPublicKey,
+      channelPublicKey,
+      host
     } = this.state;
     return (
         <View style={styles.container}>
@@ -140,6 +192,13 @@ export default class AdvancedScreen extends Component {
               Item={Transaction}
               title="Transactions" 
               open={accordions["transactions"]}
+              menuOptions={[{
+                name: "Generate",
+                icon: "link"
+              }, {
+                name: "Send",
+                icon: "flash"
+              }]}
               toggleAccordion={() => this.toggleAccordion("transactions")}
             />
             <AccordionItem 
@@ -147,6 +206,15 @@ export default class AdvancedScreen extends Component {
               Item={Transaction}
               title="Peers" 
               open={accordions["peers"]}
+              menuOptions={[{
+                name: "Add Peer",
+                icon: "link",
+                action: () => {
+                  this.setState({
+                    addPeerOpen: true
+                  })
+                }
+              }]}
               toggleAccordion={() => this.toggleAccordion("peers")}
             />
             <AccordionItem 
@@ -162,9 +230,66 @@ export default class AdvancedScreen extends Component {
               data={channels}
               Item={Channel}
               title="Channels" open={accordions["channels"]}
+              menuOptions={[{
+                name: "Add Channel",
+                icon: "link",
+                action: () => {
+                  this.setState({
+                    addChannelOpen: true
+                  })
+                }
+              }]}
               toggleAccordion={() => this.toggleAccordion("channels")}
             />
           </View>
+          <BasicDialog
+            onRequestClose={() => this.setState({
+              addPeerOpen: false
+            })}
+            visible={addPeerOpen}
+          >
+            <View>
+              <ShockInput
+                placeholder="Public Key"
+                onChangeText={text => this.handleInputChange("peerPublicKey", text)}
+                value={peerPublicKey}
+              />
+
+              <Pad amount={10} />
+
+              <ShockInput
+                placeholder="Host"
+                onChangeText={text => this.handleInputChange("host", text)}
+                value={host}
+              />
+
+              <IGDialogBtn
+                disabled={!host || !peerPublicKey}
+                onPress={this.addPeer}
+                title="Add Peer"
+              />
+            </View>
+          </BasicDialog>
+          <BasicDialog
+            onRequestClose={() => this.setState({
+              addChannelOpen: false
+            })}
+            visible={addChannelOpen}
+          >
+            <View>
+              <ShockInput
+                placeholder="Public Key"
+                onChangeText={text => this.handleInputChange("channelPublicKey", text)}
+                value={channelPublicKey}
+              />
+
+              <IGDialogBtn
+                disabled={!channelPublicKey}
+                onPress={this.addChannel}
+                title="Add Channel"
+              />
+            </View>
+          </BasicDialog>
         </View>
     );
   }
