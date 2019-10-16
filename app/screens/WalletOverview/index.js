@@ -444,8 +444,28 @@ export default class WalletOverview extends React.PureComponent {
     })
   }
 
+  getShockUserRawDataFromClipboard = () => {
+    Clipboard.getString().then(_data => {
+      /** @type {string} */
+      const data = _data.slice('$$__SHOCKWALLET__USER__'.length)
+
+      const [pk, hAddr, name] = data.split('__')
+
+      this.setState({
+        displayingPreShockUserQRScan: false,
+        displayingPostShockUserQRScan: true,
+        QRShockUserInfo: {
+          hAddr,
+          name,
+          pk,
+        },
+      })
+    })
+  }
+
   preQRScanDialogChoiceToHandler = {
     Proceed: this.proceedToShockuserQRScan,
+    'Get raw data from clipboard': this.getShockUserRawDataFromClipboard,
   }
 
   /** @type {import('react-native-qrcode-scanner').RNQRCodeScannerProps['onRead']} */
@@ -490,7 +510,6 @@ export default class WalletOverview extends React.PureComponent {
     if (this.state.createInvoiceAmount === 0) {
       return
     }
-    
 
     this.closeAllReceiveDialogs()
 
@@ -506,7 +525,6 @@ export default class WalletOverview extends React.PureComponent {
         if (!this.state.displayingCreateInvoiceResultDialog) {
           return
         }
-
 
         Wallet.addInvoice({
           value: this.state.createInvoiceAmount,
@@ -758,9 +776,11 @@ export default class WalletOverview extends React.PureComponent {
         payingInvoice: true,
       },
       () => {
-        const { decodedInvoice: decodedInvoiceRes, invoiceAmt, lightningInvoiceInput } = this.state
-
-        
+        const {
+          decodedInvoice: decodedInvoiceRes,
+          invoiceAmt,
+          lightningInvoiceInput,
+        } = this.state
 
         if (decodedInvoiceRes === null) {
           console.warn('decodedInvoice === null')
@@ -1455,7 +1475,7 @@ export default class WalletOverview extends React.PureComponent {
 
         <ShockDialog
           choiceToHandler={this.preQRScanDialogChoiceToHandler}
-          message="Tell the other user to open up their profile, generate a handshake address then scan their QR"
+          message="Tell the other user to open up their profile, generate a handshake address then scan their QR or send you their raw data"
           onRequestClose={this.closeAllReceiveDialogs}
           visible={displayingPreShockUserQRScan}
         />
