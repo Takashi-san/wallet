@@ -707,16 +707,14 @@ export const addInvoice = async request => {
  * @returns {Promise<string>}
  */
 export const sendCoins = async request => {
-  return new Promise((_, rej) => {
-    setTimeout(() => {
-      rej(new Error('Error Message Goes Here'))
-    }, 1000)
-  })
-  return new Promise(res => {
-    setTimeout(() => {
-      res('e5ad636a919f94b5ac27b60f81e2072f7384daefcbc6a0833b3a998e7452dccb')
-    }, 1000)
-  })
+  {
+    // return new Promise((_, rej) => {
+    //   setTimeout(() => {
+    //     rej(new Error('Error Message Goes Here'))
+    //   }, 1000)
+    // })
+  }
+
   const { nodeIP, token } = await Cache.getNodeIPTokenPair()
   if (typeof token !== 'string') {
     throw new TypeError(NO_CACHED_TOKEN)
@@ -791,35 +789,6 @@ export const sendCoins = async request => {
  * @returns {Promise<SendResponse>}
  */
 export const CAUTION_payInvoice = async ({ amt, payreq }) => {
-  return new Promise(res => {
-    setTimeout(() => {
-      res({
-        payment_error: '',
-        payment_hash: '',
-        payment_preimage: '',
-        payment_route: {
-          hops: [
-            {
-              expiry: 1,
-              amt_to_forward: 1,
-              amt_to_forward_msat: 1,
-              chan_capacity: 1,
-              chan_id: 1,
-              fee: 0.0001,
-              fee_msat: 1,
-              pub_key: 'pub_key',
-            },
-          ],
-          total_amt: amt || 1,
-          total_amt_msat: (amt || 1) * 1000,
-          total_fees: 1,
-          total_fees_msat: 1000,
-          total_time_lock: 1,
-        },
-      })
-    }, 1000)
-  })
-
   const { nodeIP, token } = await Cache.getNodeIPTokenPair()
 
   if (typeof token !== 'string') {
@@ -851,66 +820,42 @@ export const CAUTION_payInvoice = async ({ amt, payreq }) => {
 
 /**
  * https://api.lightning.community/#grpc-response-payreq
- * @typedef {object} DecodeInvoiceResponse
+ * @typedef {object} DecodedPayReq
  * @prop {string} destination
  * @prop {string} payment_hash
- * @prop {number} num_satoshis
- * @prop {number} timestamp
- * @prop {number} expiry
+ * @prop {string} num_satoshis
+ * @prop {string} timestamp
+ * @prop {string} expiry
  * @prop {string} description
  * @prop {string} description_hash
  * @prop {string} fallback_addr
- * @prop {number} cltv_expiry
+ * @prop {string} cltv_expiry
  * @prop {RouteHint[]} route_hints
+ */
+
+/**
+ * @typedef {object} DecodeInvoiceResponse
+ * @prop {DecodedPayReq} decodedRequest
  */
 
 /**
  * https://api.lightning.community/#grpc-request-payreqstring
  * @typedef {object} DecodeInvoiceRequest
- * @prop {string} pay_req AKA Invoice
+ * @prop {string} payReq AKA Invoice
  */
 
 /**
  * @param {DecodeInvoiceRequest} request
  * @returns {Promise<DecodeInvoiceResponse>}
  */
-export const decodeInvoice = async ({ pay_req }) => {
-  return new Promise(res => {
-    setTimeout(() => {
-      res({
-        cltv_expiry: 1,
-        description: 'description',
-        description_hash: 'description_hash',
-        destination: 'destination',
-        expiry: 60,
-        fallback_addr: 'fallback_addr',
-        num_satoshis: 250000,
-        payment_hash: 'payment_hash',
-        route_hints: [
-          {
-            hop_hints: [
-              {
-                chan_id: 1,
-                cltv_expiry_delta: 1,
-                fee_base_msat: 100,
-                fee_proportional_millionths: 100000000,
-                node_id: 'node_id',
-              },
-            ],
-          },
-        ],
-        timestamp: 1496314658,
-      })
-    }, 1000)
-  })
-
+export const decodeInvoice = async ({ payReq }) => {
   const { nodeIP, token } = await Cache.getNodeIPTokenPair()
 
   if (typeof token !== 'string') {
     throw new TypeError(NO_CACHED_TOKEN)
   }
 
-  const endpoint = `http://${nodeIP}:9835/api/lnd/decodeinvoice`
+  const endpoint = `http://${nodeIP}:9835/api/lnd/decodePayReq`
 
   const payload = {
     method: 'POST',
@@ -919,7 +864,7 @@ export const decodeInvoice = async ({ pay_req }) => {
       Authorization: token,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ pay_req }),
+    body: JSON.stringify({ payReq }),
   }
 
   const res = await fetch(endpoint, payload)
