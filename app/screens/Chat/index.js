@@ -100,8 +100,10 @@ export default class Chat extends React.PureComponent {
 
     notDecoded.forEach(rawInvoice => {
       Wallet.decodeInvoice({
-        pay_req: rawInvoice,
-      }).then(decodedInvoice => {
+        payReq: rawInvoice,
+      }).then(res => {
+        const decodedInvoice = res.decodedRequest
+
         if (!this.mounted) {
           return
         }
@@ -110,9 +112,10 @@ export default class Chat extends React.PureComponent {
           rawInvoiceToDecodedInvoice: {
             ...rawInvoiceToDecodedInvoice,
             [rawInvoice]: {
-              amount: decodedInvoice.num_satoshis,
+              amount: Number(decodedInvoice.num_satoshis),
               expiryDate:
-                decodedInvoice.timestamp + decodedInvoice.expiry * 1000,
+                Number(decodedInvoice.timestamp) +
+                Number(decodedInvoice.expiry) * 1000,
             },
           },
         }))
