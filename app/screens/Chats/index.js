@@ -122,7 +122,7 @@ export default class Chats extends React.PureComponent {
     const lastMsg = sortedMessages[sortedMessages.length - 1]
 
     if (typeof lastMsg === 'undefined') {
-      throw new TypeError()
+      throw new TypeError("typeof lastMsg === 'undefined'")
     }
 
     readMsgs.add(lastMsg.id)
