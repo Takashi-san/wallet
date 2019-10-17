@@ -108,7 +108,9 @@ export default class ChatsView extends React.PureComponent {
     const lastMsg = chat.messages[chat.messages.length - 1]
 
     if (typeof lastMsg === 'undefined') {
-      throw new TypeError()
+      throw new TypeError(
+        "<ChatsView/>->chatRenderer() typeof lastMsg === 'undefined'",
+      )
     }
 
     const lastMsgTimestamp = lastMsg.timestamp
@@ -270,7 +272,9 @@ export default class ChatsView extends React.PureComponent {
         const lastMsg = sortedMessages[sortedMessages.length - 1]
 
         if (typeof lastMsg === 'undefined') {
-          throw new TypeError()
+          throw new TypeError(
+            "<ChatsView />->render()->API.Schema.isChat(a) typeof lastMsg === 'undefined'",
+          )
         }
 
         at = lastMsg.timestamp
@@ -286,7 +290,9 @@ export default class ChatsView extends React.PureComponent {
         const lastMsg = sortedMessages[sortedMessages.length - 1]
 
         if (typeof lastMsg === 'undefined') {
-          throw new TypeError()
+          throw new TypeError(
+            "<ChatsView />->render()->API.Schema.isChat(b) : typeof lastMsg === 'undefined' ",
+          )
         }
 
         bt = lastMsg.timestamp
