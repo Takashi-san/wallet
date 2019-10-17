@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node node_modules/react-native/local-cli/cli.js start",
+    "android": "node node_modules/react-native/local-cli/cli.js run-android",
     "test": "jest",
     "build:debug": "rm -f android/app/src/main/assets/index.android.bundle && cd android && ./gradlew clean && cd .. && react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res && cd android && ./gradlew assembleDebug",
     "build:release": "rm -f android/app/src/main/assets/index.android.bundle && cd android && ./gradlew clean && cd .. && react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res && cd android && ./gradlew assembleRelease"
@@ -20,6 +21,7 @@
     "jsonfile": "^4.0.0",
     "jsonwebtoken": "^8.4.0",
     "moment": "^2.24.0",
+    "opencollective-postinstall": "^2.0.2",
     "react": "^16.6.3",
     "react-native": "^0.57.7",
     "react-native-camera": "^1.13.1",
