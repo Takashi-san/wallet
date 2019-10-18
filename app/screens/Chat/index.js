@@ -271,6 +271,17 @@ export default class Chat extends React.PureComponent {
         title: recipientDisplayName,
       })
     }
+
+    if (
+      oldTitle !== recipientPK &&
+      oldTitle !== recipientDisplayName &&
+      !!recipientDisplayName
+    ) {
+      navigation.setParams({
+        // @ts-ignore
+        title: recipientDisplayName,
+      })
+    }
   }
 
   componentDidMount() {
