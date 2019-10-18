@@ -124,7 +124,7 @@ export default class Chat extends React.PureComponent {
   }
 
   async fetchOutgoingInvoicesAndUpdateInfo() {
-    const { entries: invoices } = await Wallet.listInvoices({
+    const { content: invoices } = await Wallet.listInvoices({
       itemsPerPage: 1000,
       page: 1,
     })
@@ -162,8 +162,9 @@ export default class Chat extends React.PureComponent {
 
         outgoingInvoices.forEach(invoice => {
           rawInvoiceToDecodedInvoice[invoice.payment_request] = {
-            amount: invoice.value,
-            expiryDate: invoice.creation_date + invoice.expiry * 1000,
+            amount: Number(invoice.value),
+            expiryDate:
+              Number(invoice.creation_date) + Number(invoice.expiry) * 1000,
           }
         })
 
@@ -219,6 +220,12 @@ export default class Chat extends React.PureComponent {
           case 3:
             rawInvoiceToPaymentStatus[rawInvoice] = 'FAILED'
             break
+          default:
+            console.warn(
+              `unknown state found for invoice at <Chat />.index -> fetchPaymentsAndUpdate... : type: ${typeof payment.status} value: ${
+                payment.status
+              }`,
+            )
         }
       } else {
         rawInvoiceToPaymentStatus[rawInvoice] = 'UNPAID'
@@ -267,38 +274,15 @@ export default class Chat extends React.PureComponent {
   }
 
   componentDidMount() {
-    // this.authUnsub = API.Events.onAuth(this.onAuth)
-    // this.chatsUnsub = API.Events.onChats(this.onChats)
-    // this.displayNameUnsub = API.Events.onDisplayName(displayName => {
-    //   this.setState({
-    //     ownDisplayName: displayName,
-    //   })
-    // })
+    this.authUnsub = API.Events.onAuth(this.onAuth)
+    this.chatsUnsub = API.Events.onChats(this.onChats)
+    this.displayNameUnsub = API.Events.onDisplayName(displayName => {
+      this.setState({
+        ownDisplayName: displayName,
+      })
+    })
 
     this.mounted = true
-
-    const chats = MOCK.chats
-    const { navigation } = this.props
-
-    const recipientPublicKey = navigation.getParam('recipientPublicKey')
-
-    const theChat = chats.find(
-      chat => chat.recipientPublicKey === recipientPublicKey,
-    )
-
-    if (!theChat) {
-      return
-    }
-
-    this.setState({
-      messages: theChat.messages,
-      recipientDisplayName:
-        typeof theChat.recipientDisplayName === 'string' &&
-        theChat.recipientDisplayName.length > 0
-          ? theChat.recipientDisplayName
-          : null,
-      ownPublicKey: 'ownPublicKey',
-    })
 
     this.decodeIncomingInvoices()
     this.fetchOutgoingInvoicesAndUpdateInfo()
@@ -340,17 +324,27 @@ export default class Chat extends React.PureComponent {
     )
 
     if (!theChat) {
+      console.warn(
+        `<Chat />.index -> onChats -> no chat found. recipientPublicKey: ${recipientPublicKey}`,
+      )
       return
     }
 
-    this.setState({
-      messages: theChat.messages,
-      recipientDisplayName:
-        typeof theChat.recipientDisplayName === 'string' &&
-        theChat.recipientDisplayName.length > 0
-          ? theChat.recipientDisplayName
-          : null,
-    })
+    this.setState(
+      {
+        messages: theChat.messages,
+        recipientDisplayName:
+          typeof theChat.recipientDisplayName === 'string' &&
+          theChat.recipientDisplayName.length > 0
+            ? theChat.recipientDisplayName
+            : null,
+      },
+      () => {
+        this.decodeIncomingInvoices()
+        this.fetchOutgoingInvoicesAndUpdateInfo()
+        this.fetchPaymentsAndUpdatePaymentStatus()
+      },
+    )
   }
 
   /**
