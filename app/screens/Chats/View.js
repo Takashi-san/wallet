@@ -241,8 +241,7 @@ export default class ChatsView extends React.PureComponent {
       return this.receivedRequestRenderer(item)
     }
 
-    console.warn('unknown kind of item found')
-    console.warn(JSON.stringify(item))
+    console.warn(`unknown kind of item found: ${JSON.stringify(item)}`)
 
     return null
   }
