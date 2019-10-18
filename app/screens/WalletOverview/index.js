@@ -32,7 +32,7 @@ import btcConvert from '../../services/convertBitcoin'
 import * as ContactAPI from '../../services/contact-api'
 import * as Wallet from '../../services/wallet'
 
-import {CHATS_ROUTE} from '../../screens/Chats'
+import { CHATS_ROUTE } from '../../screens/Chats'
 
 import QR from './QR'
 import UnifiedTrx from './UnifiedTrx'
@@ -104,7 +104,7 @@ import UnifiedTrx from './UnifiedTrx'
  * @prop {boolean} scanningShockUserQR
  * @prop {{ name: string , hAddr: string , pk: string }|null} QRShockUserInfo
  * @prop {boolean} displayingPostShockUserQRScan
- * 
+ *
  * @prop {boolean} sendingInvoiceToShockUser
  * @prop {string} sendingInvoiceToShockUserMsg
  *
@@ -192,7 +192,7 @@ export default class WalletOverview extends React.PureComponent {
     displayingPostShockUserQRScan: false,
 
     sendingInvoiceToShockUser: false,
-    sendingInvoiceToShockUserMsg: ''
+    sendingInvoiceToShockUserMsg: '',
   }
 
   closeAllSendDialogs = () => {
@@ -520,17 +520,22 @@ export default class WalletOverview extends React.PureComponent {
       sendingInvoiceToShockUser: true,
     })
 
-    ContactAPI.Actions.sendReqWithInitialMsg(QRShockUserInfo.hAddr, QRShockUserInfo.pk, invoice)
+    ContactAPI.Actions.sendReqWithInitialMsg(
+      QRShockUserInfo.hAddr,
+      QRShockUserInfo.pk,
+      '$$__SHOCKWALLET__INVOICE__' + invoice,
+    )
       .then(() => {
-       this.closeAllReceiveDialogs()
-        
+        this.closeAllReceiveDialogs()
+
         this.props.navigation.navigate(CHATS_ROUTE)
-      }).catch(e => {
+      })
+      .catch(e => {
         this.setState({
           sendingInvoiceToShockUser: false,
           sendingInvoiceToShockUserMsg: e.message,
+        })
       })
-    })
   }
 
   ///
@@ -1172,7 +1177,7 @@ export default class WalletOverview extends React.PureComponent {
       displayingPostShockUserQRScan,
 
       sendingInvoiceToShockUser,
-      sendingInvoiceToShockUserMsg
+      sendingInvoiceToShockUserMsg,
     } = this.state
 
     if (scanningBTCAddressQR) {
@@ -1548,9 +1553,13 @@ export default class WalletOverview extends React.PureComponent {
               ? 'Sending...'
               : sendingInvoiceToShockUserMsg
           }
-          choiceToHandler={sendingInvoiceToShockUser ? {} : {
-            OK: this.closeAllReceiveDialogs
-          }}
+          choiceToHandler={
+            sendingInvoiceToShockUser
+              ? {}
+              : {
+                  OK: this.closeAllReceiveDialogs,
+                }
+          }
         ></ShockDialog>
       </View>
     )
