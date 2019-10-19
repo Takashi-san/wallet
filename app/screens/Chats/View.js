@@ -5,6 +5,7 @@ import React from 'react'
 import { FlatList, Text, View } from 'react-native'
 import moment from 'moment'
 import { Divider, Icon } from 'react-native-elements'
+import Ionicons from 'react-native-vector-icons/Ionicons'
 /**
  * @typedef {import('react-navigation').NavigationScreenProp<{}>} Navigation
  */
@@ -63,6 +64,12 @@ const keyExtractor = item => {
  *
  * @prop {() => void} onPressAcceptRequest
  * @prop {() => void} onPressIgnoreRequest
+ *
+ * @prop {() => void} onPressAdd
+ * @prop {boolean} showingAddDialog
+ * @prop {boolean} showingQRScanner
+ * @prop {() => void} onRequestCloseAddDialog
+ * @prop {() => void} onRequestCloseQRScanner
  */
 
 /**
@@ -250,8 +257,17 @@ export default class ChatsView extends React.PureComponent {
     const {
       acceptingRequest,
       chats,
+
       receivedRequests,
       sentRequests,
+
+      onPressAdd,
+
+      showingAddDialog,
+      showingQRScanner,
+
+      onRequestCloseAddDialog,
+      onRequestCloseQRScanner,
     } = this.props
 
     const items = [...chats, ...receivedRequests, ...sentRequests]
@@ -305,6 +321,24 @@ export default class ChatsView extends React.PureComponent {
     return (
       <React.Fragment>
         <FlatList
+          ListHeaderComponent={() => (
+            <View
+              style={{
+                justifyContent: 'flex-end',
+                flexDirection: 'row',
+                paddingLeft: SCREEN_PADDING,
+                paddingRight: SCREEN_PADDING,
+                paddingTop: 12,
+              }}
+            >
+              <Ionicons
+                name="ios-add"
+                color={Colors.BLUE_LIGHT}
+                size={48}
+                onPress={onPressAdd}
+              />
+            </View>
+          )}
           ItemSeparatorComponent={Divider}
           ListEmptyComponent={NoChatsOrRequests}
           data={items}

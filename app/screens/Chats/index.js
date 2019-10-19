@@ -35,6 +35,7 @@ const byTimestampFromOldestToNewest = (a, b) => a.timestamp - b.timestamp
  * @prop {API.Schema.Chat[]} chats
  * @prop {API.Schema.SimpleReceivedRequest[]} receivedRequests
  * @prop {API.Schema.SimpleSentRequest[]} sentRequests
+ * @prop {boolean} showingAddDialog
  */
 
 /**
@@ -70,6 +71,7 @@ export default class Chats extends React.PureComponent {
     chats: [],
     receivedRequests: [],
     sentRequests: [],
+    showingAddDialog: false,
   }
 
   chatsUnsubscribe = () => {}
@@ -171,6 +173,12 @@ export default class Chats extends React.PureComponent {
     })
   }
 
+  toggleAddDialog = () => {
+    this.setState(({ showingAddDialog }) => ({
+      showingAddDialog: !showingAddDialog,
+    }))
+  }
+
   render() {
     const {
       acceptingRequest,
@@ -186,6 +194,7 @@ export default class Chats extends React.PureComponent {
         receivedRequests={receivedRequests}
         sentRequests={sentRequests}
         onPressAcceptRequest={this.acceptRequest}
+        onPressAdd={this.toggleAddDialog}
         onPressIgnoreRequest={this.cancelAcceptingRequest}
         onPressChat={this.onPressChat}
         onPressRequest={this.onPressReceivedRequest}
