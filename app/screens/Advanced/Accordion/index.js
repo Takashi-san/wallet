@@ -30,25 +30,26 @@ export default class Accordion extends Component {
   }
 
   renderTRXMenu = (options) => {
-    const { title, open } = this.props;
+    const { open } = this.props;
     const { menuOpenAnimation } = this.state;
-    const supportedAccordions = ['transactions'];
-    if (open && supportedAccordions.includes(title.toLowerCase())) {
+    if (open && options && options.length > 0) {
       return (
         <View style={styles.accordionMenu}>
           {options.map(option => (
-            <Animated.View onPress={option.action} style={[styles.accordionMenuItem, {
-              opacity: menuOpenAnimation,
-              marginRight: menuOpenAnimation.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0, 15]
-              })
-            }]}>
-              <View style={styles.accordionMenuItemIcon}>
-                <Icon name={option.icon} size={20} color="#294f93" />
-              </View>
-              <Text style={styles.accordionMenuItemText}>{option.name}</Text>
-            </Animated.View>
+            <TouchableWithoutFeedback onPress={option.action}>
+              <Animated.View style={[styles.accordionMenuItem, {
+                opacity: menuOpenAnimation,
+                marginRight: menuOpenAnimation.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, 15]
+                })
+              }]}>
+                <View style={styles.accordionMenuItemIcon}>
+                  <Icon name={option.icon} size={20} color="#294f93" />
+                </View>
+                <Text style={styles.accordionMenuItemText}>{option.name}</Text>
+              </Animated.View>
+            </TouchableWithoutFeedback>
           ))}
           <TouchableWithoutFeedback onPress={this.toggleMenuOpen}>
             <Animated.View style={[styles.accordionMenuBtn, {

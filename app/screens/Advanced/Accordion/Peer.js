@@ -16,27 +16,19 @@ export default class Transaction extends Component {
   }
 
   render() {
-    const { data } = this.props;
+    const { data = {} } = this.props;
     return (
-      <View style={styles.channelItem}>
-        <View style={styles.channelDetails}>
-          <Text style={styles.channelIp}>{data.address}</Text>
-          <Text style={styles.channelName}>
-            Bob.com <View style={styles.channelStatus}></View>
-          </Text>
-          <Text style={styles.channelPublicKey}>{data.address}</Text>
-          <View style={styles.channelStats}>
-            <View style={[styles.channelStat, {
-              borderStyle: 'solid',
-              borderRightWidth: 2,
-              borderColor: "#d6d6d6"
-            }]}>
-              <Text style={styles.channelStatText}>Sendable: 42415 sats</Text>
-            </View>
-            <View style={styles.channelStat}>
-              <Text style={styles.channelStatText}>Receivable: 42415 sats</Text>
-            </View>
+      <View style={styles.transactionItem}>
+        <View style={styles.transactionDetails}>
+          <Image style={styles.transactionIcon} source={paymentIcon} resizeMode="contain" />
+          <View style={styles.transactionHash}>
+            <Text ellipsizeMode="tail" numberOfLines={1} style={styles.transactionHashText}>{data.address}</Text>
+            <Text ellipsizeMode="middle" numberOfLines={1} style={{ fontSize: 10, opacity: 0.7 }}>{data.pub_key}</Text>
           </View>
+        </View>
+        <View style={styles.transactionValue}>
+          <Text style={styles.transactionTime}>Sent: {parseFloat(data.sat_sent).toFixed(2)} sats</Text>
+          <Text style={styles.transactionTime}>Received: {parseFloat(data.sat_recv).toFixed(2)} sats</Text>
         </View>
       </View>
     );
@@ -44,28 +36,17 @@ export default class Transaction extends Component {
 }
 
 const styles = StyleSheet.create({
-  channelItem: {
-    width: "100%",
-    backgroundColor: 'white'
+  accordionItem: {
+    width: "100%"
   },
-  channelDetails: {
-    width: "100%",
+  transactionItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingVertical: 15
-  },
-  channelIp: {
-    color: "#6b6b6b"
-  },
-  channelName: {
-    flexDirection: 'row',
-    color: "#6b6b6b",
-    alignItems: 'center'
-  },
-  channelStatus: {
-    height: 20,
-    width: 20,
-    backgroundColor: "#39b54a",
-    marginLeft: 10
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderStyle: "solid",
+    borderColor: "#ddd"
   },
   transactionDetails: {
     flexDirection: "row",

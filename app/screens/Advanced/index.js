@@ -11,6 +11,7 @@ import AccordionItem from "./Accordion";
 import Transaction from "./Accordion/Transaction";
 import Channel from "./Accordion/Channel";
 import Invoice from "./Accordion/Invoice";
+import Peer from "./Accordion/Peer";
 
 export const ADVANCED_SCREEN = "ADVANCED_SCREEN";
 export default class AdvancedScreen extends Component {
@@ -49,19 +50,30 @@ export default class AdvancedScreen extends Component {
   }
 
   fetchData = async () => {
-    const [invoices, payments, peers, channels] = await Promise.all([
-      Http.get('/lnd/listinvoices'),
-      Http.get('/lnd/listpayments'),
-      Http.get('/lnd/listpeers'),
-      Http.get('/lnd/listchannels')
-    ]);
-
-    this.setState({
-      invoices: invoices.data,
-      payments: payments.data,
-      peers: peers.data.peers,
-      channels: channels.data.channels
-    })
+    try {
+      const [invoices, payments, peers, channels] = await Promise.all([
+        Http.get('/lnd/listinvoices?itemsPerPage=20&page=1'),
+        Http.get('/lnd/listpayments?itemsPerPage=20&page=1'),
+        Http.get('/lnd/listpeers'),
+        Http.get('/lnd/listchannels')
+      ]);
+  
+      console.log({
+        invoices: invoices.data,
+        payments: payments.data,
+        peers: peers.data.peers,
+        channels: channels.data.channels
+      })
+  
+      this.setState({
+        invoices: invoices.data,
+        payments: payments.data,
+        peers: peers.data.peers,
+        channels: channels.data.channels
+      })
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   toggleAccordion = name => {
@@ -103,20 +115,26 @@ export default class AdvancedScreen extends Component {
   }
 
   addPeer = async () => {
-    const { peerPublicKey, host } = this.state;
-    
-    await Http.post(`/lnd/connectpeer`, {
-      host,
-      pubkey: peerPublicKey
-    });
+    try {
+      const { peerPublicKey, host } = this.state;
+      
+      await Http.post(`/lnd/connectpeer`, {
+        host,
+        pubkey: peerPublicKey
+      });
+  
+      const newPeers = await Http.get('/lnd/listpeers');
 
-    const newPeers = await Http.get('/lnd/listpeers');
-
-    this.setState({
-      peers: newPeers.data.peers,
-      host: "",
-      peerPublicKey: ""
-    });
+      console.log("newPeers", newPeers);
+  
+      this.setState({
+        peers: newPeers.data.peers,
+        host: "",
+        peerPublicKey: ""
+      });
+    } catch (err) {
+      console.error(Http.defaults.baseURL, err.response);
+    }
   }
 
   addChannel = async () => {
@@ -203,13 +221,14 @@ export default class AdvancedScreen extends Component {
             />
             <AccordionItem 
               data={peers}
-              Item={Transaction}
+              Item={Peer}
               title="Peers" 
               open={accordions["peers"]}
               menuOptions={[{
                 name: "Add Peer",
                 icon: "link",
                 action: () => {
+                  console.log("addPeerOpen");
                   this.setState({
                     addPeerOpen: true
                   })

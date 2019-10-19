@@ -150,7 +150,7 @@ export default class ShockWallet extends Component {
           // Sets a base URL for all requests so we won't have to worry
           // concatenating it every time we want to make a request.
           Http.defaults.baseURL = this.state.tryingIP
-            ? `${this.state.tryingIP}:${CONTACT_SOCKET_PORT}/api`
+            ? `http://${this.state.tryingIP}:${CONTACT_SOCKET_PORT}/api`
             : undefined
 
           if (
@@ -161,9 +161,7 @@ export default class ShockWallet extends Component {
 
             // Adds a default Authorization header for all requests
             if (storedAuthData.authData) {
-              Http.defaults.headers.common[
-                'Authorization'
-              ] = `Bearer ${storedAuthData.authData.token}`
+              Http.defaults.headers.common.Authorization = `${storedAuthData.authData.token}`
             }
           }
 
