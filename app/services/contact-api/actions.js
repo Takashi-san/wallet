@@ -6,6 +6,7 @@ import debounce from 'lodash/debounce'
 import once from 'lodash/once'
 
 import Action from './action'
+import Event from './event'
 import { _authData as authData } from './events'
 import { socket } from './socket'
 
@@ -195,6 +196,11 @@ export const sendReqWithInitialMsg = async (
   })
 
   console.warn(`res in sendreqwithinitialmsg: ${JSON.stringify(res)}`)
+
+  // issue#31
+  socket.emit(Event.ON_SENT_REQUESTS, {
+    token: authData.token,
+  })
 
   if (!res.ok) {
     throw new Error(res.msg)
