@@ -6,7 +6,7 @@ import { FlatList, Text, View } from 'react-native'
 import moment from 'moment'
 import { Divider, Icon } from 'react-native-elements'
 import Ionicons from 'react-native-vector-icons/Ionicons'
-import QRCodeScanner from 'react-native-qrcode-scanner'
+import QRCodeScanner from '../../components/QRScanner'
 /**
  * @typedef {import('react-navigation').NavigationScreenProp<{}>} Navigation
  */
@@ -73,7 +73,7 @@ const keyExtractor = item => {
  * @prop {() => void} userChosePasteFromClipboard
  * @prop {boolean} showingQRScanner
  * @prop {() => void} onRequestCloseQRScanner
- * @prop {import('react-native-qrcode-scanner').RNQRCodeScannerProps['onRead']} onQRRead
+ * @prop {(e: { data: string }) => void} onQRRead
  */
 
 /**
@@ -291,8 +291,7 @@ export default class ChatsView extends React.PureComponent {
       return (
         <QRCodeScanner
           onRead={onQRRead}
-          showMarker
-          topContent={<Text>Point your Camera to the QR Code</Text>}
+          onRequestClose={onRequestCloseQRScanner}
         />
       )
     }
