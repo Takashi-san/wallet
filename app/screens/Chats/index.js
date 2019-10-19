@@ -2,6 +2,7 @@
  * @prettier
  */
 import React from 'react'
+import { Clipboard } from 'react-native'
 import EntypoIcons from 'react-native-vector-icons/Entypo'
 /**
  * @typedef {import('react-navigation').NavigationScreenProp<{}>} Navigation
@@ -36,6 +37,8 @@ const byTimestampFromOldestToNewest = (a, b) => a.timestamp - b.timestamp
  * @prop {API.Schema.SimpleReceivedRequest[]} receivedRequests
  * @prop {API.Schema.SimpleSentRequest[]} sentRequests
  * @prop {boolean} showingAddDialog
+ *
+ * @prop {boolean} scanningUserQR
  */
 
 /**
@@ -72,6 +75,8 @@ export default class Chats extends React.PureComponent {
     receivedRequests: [],
     sentRequests: [],
     showingAddDialog: false,
+
+    scanningUserQR: false,
   }
 
   chatsUnsubscribe = () => {}
@@ -173,11 +178,83 @@ export default class Chats extends React.PureComponent {
     })
   }
 
+  ///
+
   toggleAddDialog = () => {
     this.setState(({ showingAddDialog }) => ({
       showingAddDialog: !showingAddDialog,
+
+      scanningUserQR: false,
     }))
   }
+
+  /**
+   * @param {string} encodedShockUser
+   */
+  sendHR = encodedShockUser => {
+    const data = encodedShockUser.slice('$$__SHOCKWALLET__USER__'.length)
+
+    const [pk, hAddr, name] = data.split('__')
+
+    if (typeof pk === 'string' && pk.length === 0) {
+      console.warn("typeof pk === 'string' && pk.length === 0")
+      return
+    }
+
+    if (
+      typeof pk !== 'string' ||
+      typeof hAddr !== 'string' ||
+      typeof name !== 'string'
+    ) {
+      console.warn(
+        "typeof pk !== 'string' || typeof hAddr !== 'string' || typeof name !== 'string'",
+      )
+      return
+    }
+
+    API.Actions.sendHandshakeRequest(hAddr, pk)
+  }
+
+  sendHRToUserFromClipboard = () => {
+    this.toggleAddDialog()
+
+    Clipboard.getString()
+      .then(this.sendHR)
+      .catch(e => {
+        console.warn(
+          `sendHRToUserFromClipboard()->Clipboard.getString() error: ${e.message}`,
+        )
+      })
+  }
+
+  toggleContactQRScanner = () => {
+    this.setState(({ scanningUserQR }) => ({
+      showingAddDialog: false,
+
+      scanningUserQR: !scanningUserQR,
+    }))
+  }
+
+  /**
+   * @type {import('react-native-qrcode-scanner').RNQRCodeScannerProps['onRead']}
+   */
+  onQRRead = e => {
+    try {
+      if (typeof e.data !== 'string') {
+        throw new TypeError(`typeof e.data !== 'string' :: ${typeof e.data}`)
+      }
+
+      const encodedShockUser = e.data
+
+      this.toggleContactQRScanner()
+
+      this.sendHR(encodedShockUser)
+    } catch (e) {
+      console.warn(`<Chats />.index -> onQRRead() -> ${e.message}`)
+    }
+  }
+
+  ///
 
   render() {
     const {
@@ -185,19 +262,30 @@ export default class Chats extends React.PureComponent {
       chats,
       receivedRequests,
       sentRequests,
+
+      showingAddDialog,
+
+      scanningUserQR,
     } = this.state
 
     return (
       <ChatsView
-        acceptingRequest={!!acceptingRequest}
-        chats={chats}
-        receivedRequests={receivedRequests}
         sentRequests={sentRequests}
-        onPressAcceptRequest={this.acceptRequest}
-        onPressAdd={this.toggleAddDialog}
-        onPressIgnoreRequest={this.cancelAcceptingRequest}
+        chats={chats}
         onPressChat={this.onPressChat}
+        acceptingRequest={!!acceptingRequest}
+        receivedRequests={receivedRequests}
         onPressRequest={this.onPressReceivedRequest}
+        onPressAcceptRequest={this.acceptRequest}
+        onPressIgnoreRequest={this.cancelAcceptingRequest}
+        onPressAdd={this.toggleAddDialog}
+        showingAddDialog={showingAddDialog}
+        onRequestCloseAddDialog={this.toggleAddDialog}
+        userChosePasteFromClipboard={this.sendHRToUserFromClipboard}
+        userChoseQRScan={this.toggleContactQRScanner}
+        showingQRScanner={scanningUserQR}
+        onQRRead={this.onQRRead}
+        onRequestCloseQRScanner={this.toggleContactQRScanner}
       />
     )
   }

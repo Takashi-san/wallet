@@ -6,6 +6,7 @@ import { FlatList, Text, View } from 'react-native'
 import moment from 'moment'
 import { Divider, Icon } from 'react-native-elements'
 import Ionicons from 'react-native-vector-icons/Ionicons'
+import QRCodeScanner from 'react-native-qrcode-scanner'
 /**
  * @typedef {import('react-navigation').NavigationScreenProp<{}>} Navigation
  */
@@ -67,9 +68,12 @@ const keyExtractor = item => {
  *
  * @prop {() => void} onPressAdd
  * @prop {boolean} showingAddDialog
- * @prop {boolean} showingQRScanner
  * @prop {() => void} onRequestCloseAddDialog
+ * @prop {() => void} userChoseQRScan
+ * @prop {() => void} userChosePasteFromClipboard
+ * @prop {boolean} showingQRScanner
  * @prop {() => void} onRequestCloseQRScanner
+ * @prop {import('react-native-qrcode-scanner').RNQRCodeScannerProps['onRead']} onQRRead
  */
 
 /**
@@ -103,6 +107,18 @@ export default class ChatsView extends React.PureComponent {
    */
   onPressRequest = requestID => {
     this.props.onPressRequest(requestID)
+  }
+
+  ////////////////////////////////////////////////////////////////////////////////
+
+  addDialogChoiceToHandler = {
+    'Scan QR': () => {
+      this.props.userChoseQRScan()
+    },
+
+    'Paste from Clipboard': () => {
+      this.props.userChosePasteFromClipboard()
+    },
   }
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -262,13 +278,24 @@ export default class ChatsView extends React.PureComponent {
       sentRequests,
 
       onPressAdd,
-
       showingAddDialog,
-      showingQRScanner,
-
       onRequestCloseAddDialog,
+
+      showingQRScanner,
+      onQRRead,
+
       onRequestCloseQRScanner,
     } = this.props
+
+    if (showingQRScanner) {
+      return (
+        <QRCodeScanner
+          onRead={onQRRead}
+          showMarker
+          topContent={<Text>Point your Camera to the QR Code</Text>}
+        />
+      )
+    }
 
     const items = [...chats, ...receivedRequests, ...sentRequests]
 
@@ -352,6 +379,13 @@ export default class ChatsView extends React.PureComponent {
           message={ACCEPT_REQUEST_DIALOG_TEXT}
           onRequestClose={this.props.onPressIgnoreRequest}
           visible={!!acceptingRequest}
+        />
+
+        <ShockDialog
+          choiceToHandler={this.addDialogChoiceToHandler}
+          message=""
+          onRequestClose={onRequestCloseAddDialog}
+          visible={showingAddDialog}
         />
       </React.Fragment>
     )
