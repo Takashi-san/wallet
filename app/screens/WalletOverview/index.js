@@ -15,7 +15,7 @@ import {
   Linking,
 } from 'react-native'
 import EntypoIcons from 'react-native-vector-icons/Entypo'
-import QRCodeScanner from 'react-native-qrcode-scanner'
+import QRCodeScanner from '../../components/QRScanner'
 /**
  * @typedef {import('react-navigation').NavigationScreenProp<{}, Params>} Navigation
  */
@@ -456,6 +456,13 @@ export default class WalletOverview extends React.PureComponent {
     })
   }
 
+  closeShockUserQRScanner = () => {
+    this.setState({
+      displayingPreShockUserQRScan: true,
+      scanningShockUserQR: false,
+    })
+  }
+
   getShockUserRawDataFromClipboard = () => {
     Clipboard.getString().then(_data => {
       /** @type {string} */
@@ -480,7 +487,9 @@ export default class WalletOverview extends React.PureComponent {
     'Get raw data from clipboard': this.getShockUserRawDataFromClipboard,
   }
 
-  /** @type {import('react-native-qrcode-scanner').RNQRCodeScannerProps['onRead']} */
+  /**
+   * @param {{ data: any }} e
+   */
   onSuccessfulShockUserQRScan = e => {
     this.setState({
       scanningShockUserQR: false,
@@ -650,7 +659,16 @@ export default class WalletOverview extends React.PureComponent {
     })
   }
 
-  /** @type {import('react-native-qrcode-scanner').RNQRCodeScannerProps['onRead']} */
+  closeBTCQRScanner = () => {
+    this.setState({
+      displayingSendToBTCDialog: true,
+      scanningBTCAddressQR: false,
+    })
+  }
+
+  /**
+   * @param {{ data: any }} e
+   */
   onSuccessfulBTCQRScan = e => {
     this.setState({
       scanningBTCAddressQR: false,
@@ -753,13 +771,21 @@ export default class WalletOverview extends React.PureComponent {
     })
   }
 
+  closeLightningInvoiceQRScanner = () => {
+    this.setState({
+      scanningLightningInvoiceQR: false,
+    })
+  }
+
   onPressScanLightningInvoiceQR = () => {
     this.setState({
       scanningLightningInvoiceQR: true,
     })
   }
 
-  /** @type {import('react-native-qrcode-scanner').RNQRCodeScannerProps['onRead']} */
+  /**
+   * @param {{ data: any }} e
+   */
   onSuccessfulInvoiceQRScan = e => {
     this.setState({
       scanningLightningInvoiceQR: false,
@@ -1188,15 +1214,9 @@ export default class WalletOverview extends React.PureComponent {
 
     if (scanningBTCAddressQR) {
       return (
-        <QRCodeScanner
-          bottomContent={
-            <TouchableHighlight style={xstyles.buttonTouchable}>
-              <Text style={xstyles.buttonText}>OK. Got it!</Text>
-            </TouchableHighlight>
-          }
+        <QRCodeScanner         
           onRead={this.onSuccessfulBTCQRScan}
-          showMarker
-          topContent={<Text>Point your Camera to the QR Code</Text>}
+          onRequestClose={this.closeBTCQRScanner}
         />
       )
     }
@@ -1205,8 +1225,7 @@ export default class WalletOverview extends React.PureComponent {
       return (
         <QRCodeScanner
           onRead={this.onSuccessfulInvoiceQRScan}
-          showMarker
-          topContent={<Text>Point your Camera to the QR Code</Text>}
+          onRequestClose={this.closeLightningInvoiceQRScanner}
         />
       )
     }
@@ -1215,8 +1234,7 @@ export default class WalletOverview extends React.PureComponent {
       return (
         <QRCodeScanner
           onRead={this.onSuccessfulShockUserQRScan}
-          showMarker
-          topContent={<Text>Point your Camera to the QR Code</Text>}
+          onRequestClose={this.closeShockUserQRScanner}
         />
       )
     }
