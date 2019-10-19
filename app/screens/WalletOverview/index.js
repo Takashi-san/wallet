@@ -520,11 +520,17 @@ export default class WalletOverview extends React.PureComponent {
       sendingInvoiceToShockUser: true,
     })
 
-    ContactAPI.Actions.sendReqWithInitialMsg(
+    const requestSending = ContactAPI.Actions.sendReqWithInitialMsg(
       QRShockUserInfo.hAddr,
       QRShockUserInfo.pk,
       '$$__SHOCKWALLET__INVOICE__' + invoice,
     )
+
+    const timeout = new Promise(res => {
+      setTimeout(res, 10000)
+    })
+
+    Promise.race([requestSending, timeout])
       .then(() => {
         this.closeAllReceiveDialogs()
 
