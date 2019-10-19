@@ -45,9 +45,7 @@ export const connectNodeToLND = (alias, password) =>
       jitter: JitterTypes.Full,
       retry(e, attemptNumber) {
         console.warn(
-          `retrying connectNodeToLND, error messages: ${
-            e.message
-          }, attempt number ${attemptNumber} out of 10`,
+          `retrying connectNodeToLND, error messages: ${e.message}, attempt number ${attemptNumber} out of 10`,
         )
 
         return true
@@ -85,11 +83,15 @@ export const unlockWallet = async (alias, password) => {
   if (res.ok) {
     if (typeof body.authorization !== 'string') {
       throw new TypeError("typeof body.authorization !== 'string'")
-    } else {
-      return {
-        publicKey: body.user.publicKey,
-        token: body.authorization,
-      }
+    }
+
+    if (typeof body.user.publicKey !== 'string') {
+      throw new TypeError("typeof body.user.publicKey !== 'string'")
+    }
+
+    return {
+      publicKey: body.user.publicKey,
+      token: body.authorization,
     }
   } else {
     if (body.errorMessage === 'LND is down') {
