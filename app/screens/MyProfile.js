@@ -160,22 +160,24 @@ export default class MyProfile extends React.PureComponent {
           />
         )}
 
-        {handshakeAddr === null && (
-          <React.Fragment>
-            <Text>
-              No Handshake Address. A handshake address is necessary for being
-              contacted by other users.
-            </Text>
-            <Pad amount={10} />
+        {handshakeAddr === null &&
+          displayName !== null &&
+          displayName.length > 0 && (
+            <React.Fragment>
+              <Text>
+                No Handshake Address. A handshake address is necessary for being
+                contacted by other users.
+              </Text>
+              <Pad amount={10} />
 
-            <View style={{ maxWidth: '75%' }}>
-              <ShockButton
-                title="Press to Generate a New One"
-                onPress={this.genHandAddr}
-              />
-            </View>
-          </React.Fragment>
-        )}
+              <View style={{ maxWidth: '75%' }}>
+                <ShockButton
+                  title="Press to Generate a New One"
+                  onPress={this.genHandAddr}
+                />
+              </View>
+            </React.Fragment>
+          )}
 
         {handshakeAddr !== null && (
           <View style={styles.QRHolder}>
