@@ -7,7 +7,16 @@
     "android": "node node_modules/react-native/local-cli/cli.js run-android",
     "test": "jest",
     "build:debug": "rm -f android/app/src/main/assets/index.android.bundle && cd android && ./gradlew clean && cd .. && react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res && cd android && ./gradlew assembleDebug",
-    "build:release": "rm -f android/app/src/main/assets/index.android.bundle && cd android && ./gradlew clean && cd .. && react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res && cd android && ./gradlew assembleRelease"
+    "build:release:delete-old-bundle": "rm -f android/app/src/main/assets/index.android.bundle",
+    "build:release:clean": "cd android && ./gradlew clean && cd ..",
+    "build:release:bundle": "react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res",
+    "build:release:delete-bad-res": "rm -rf android/app/src/main/res/drawable-*",
+    "build:release:assemble": "cd android && ./gradlew assembleRelease && cd ..",
+    "build:release:pre-sign": "cp android/app/build/outputs/apk/release/app-release-unsigned.apk apk-signed-do-not-use.apk",
+    "build:release:sign": "jarsigner -verbose -storepass 123456 -keystore android/my-upload-key.keystore apk-signed-do-not-use.apk my-key-alias",
+    "build:release:align": "zipalign -f -v 4 apk-signed-do-not-use.apk apk-aligned-use.apk",
+    "build:release:post-align": "rm apk-signed-do-not-use.apk",
+    "build:release": "npm run build:release:delete-old-bundle && npm run build:release:clean && npm run build:release:bundle && npm run build:release:delete-bad-res && npm run build:release:assemble && npm run build:release:pre-sign && npm run build:release:sign && npm run build:release:align && npm run build:release:post-align"
   },
   "dependencies": {
     "axios": "^0.19.0",
