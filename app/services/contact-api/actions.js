@@ -134,6 +134,14 @@ export const sendHandshakeRequest = (handshakeAddress, recipientPublicKey) => {
     handshakeAddress,
     recipientPublicKey,
   })
+
+  // issue#31
+  const { token } = authData
+  setTimeout(() => {
+    socket.emit(Event.ON_SENT_REQUESTS, {
+      token,
+    })
+  }, 500)
 }
 
 /**
@@ -198,9 +206,12 @@ export const sendReqWithInitialMsg = async (
   console.warn(`res in sendreqwithinitialmsg: ${JSON.stringify(res)}`)
 
   // issue#31
-  socket.emit(Event.ON_SENT_REQUESTS, {
-    token: authData.token,
-  })
+  const { token } = authData
+  setTimeout(() => {
+    socket.emit(Event.ON_SENT_REQUESTS, {
+      token,
+    })
+  }, 500)
 
   if (!res.ok) {
     throw new Error(res.msg)
