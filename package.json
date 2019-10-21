@@ -7,7 +7,13 @@
     "android": "node node_modules/react-native/local-cli/cli.js run-android",
     "test": "jest",
     "build:debug": "rm -f android/app/src/main/assets/index.android.bundle && cd android && ./gradlew clean && cd .. && react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res && cd android && ./gradlew assembleDebug",
-    "build:release": "rm -f android/app/src/main/assets/index.android.bundle && cd android && ./gradlew clean && cd .. && react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res && cd android && ./gradlew assembleRelease"
+    "build:release:delete-old-bundle": "rm -f android/app/src/main/assets/index.android.bundle",
+    "build:release:clean": "cd android && ./gradlew clean && cd ..",
+    "build:release:bundle": "react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res",
+    "build:release:delete-bad-res": "rm -rf android/app/src/main/res/drawable-*",
+    "build:release:assemble": "cd android && ./gradlew assembleRelease && cd ..",
+    "build:release:post-assemble": "cp android/app/build/outputs/apk/release/app-release.apk APK-RELEASE.apk",
+    "build:release": "npm run build:release:delete-old-bundle && npm run build:release:clean && npm run build:release:bundle && npm run build:release:delete-bad-res && npm run build:release:assemble && npm run build:release:post-assemble"
   },
   "dependencies": {
     "axios": "^0.19.0",
@@ -37,7 +43,7 @@
     "react-native-vector-icons": "^4.6.0",
     "react-navigation": "^2.18.3",
     "scheduler": "0.16.1",
-    "socket.io-client": "^2.1.1",
+    "socket.io-client": "2.1.1",
     "tslib": "^1.9.3",
     "uuid": "^3.3.2"
   },

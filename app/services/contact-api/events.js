@@ -518,7 +518,12 @@ export const setupEvents = () => {
   Object.values(Event).forEach(e => {
     Socket.socket.on(e, res => {
       console.warn(`res for event: ${e}: ${JSON.stringify(res)}`)
-      if (res.msg === 'Token expired.') {
+
+      if (
+        res.msg === 'Token expired.' ||
+        res.msg === 'NOT_AUTH' ||
+        res.msg === 'secret or public key must be provided'
+      ) {
         _authData = null
 
         authListeners.forEach(l => {
@@ -533,7 +538,11 @@ export const setupEvents = () => {
   Object.values(Action).forEach(a => {
     Socket.socket.on(a, res => {
       console.warn(`res for action: ${a}: ${JSON.stringify(res)}`)
-      if (res.msg === 'Token expired.') {
+      if (
+        res.msg === 'Token expired.' ||
+        res.msg === 'NOT_AUTH' ||
+        res.msg === 'secret or public key must be provided'
+      ) {
         _authData = null
 
         authListeners.forEach(l => {

@@ -2,7 +2,11 @@
  * @format
  */
 
+import debounce from 'lodash/debounce'
+import once from 'lodash/once'
+
 import Action from './action'
+import Event from './event'
 import { _authData as authData } from './events'
 import { socket } from './socket'
 
@@ -150,4 +154,55 @@ export const sendMessage = (recipientPublicKey, body) => {
     recipientPublicKey,
     body,
   })
+}
+
+/**
+ * @param {string} handshakeAddress
+ * @param {string} recipientPublicKey
+ * @param {string} initialMsg
+ * @throws {Error} Forwards an error if any from the API.
+ * @returns {Promise<void>}
+ */
+export const sendReqWithInitialMsg = async (
+  handshakeAddress,
+  recipientPublicKey,
+  initialMsg,
+) => {
+  if (!socket.connected) {
+    throw new Error('NOT_CONNECTED')
+  }
+
+  if (authData === null) {
+    throw new Error('NOT_AUTH')
+  }
+
+  socket.emit(Action.SEND_HANDSHAKE_REQUEST_WITH_INITIAL_MSG, {
+    token: authData.token,
+    handshakeAddress,
+    recipientPublicKey,
+    initialMsg,
+  })
+
+  const res = await new Promise(resolve => {
+    socket.on(
+      Action.SEND_HANDSHAKE_REQUEST_WITH_INITIAL_MSG,
+      debounce(
+        once(res => {
+          resolve(res)
+        }),
+        1000,
+      ),
+    )
+  })
+
+  console.warn(`res in sendreqwithinitialmsg: ${JSON.stringify(res)}`)
+
+  // issue#31
+  socket.emit(Event.ON_SENT_REQUESTS, {
+    token: authData.token,
+  })
+
+  if (!res.ok) {
+    throw new Error(res.msg)
+  }
 }

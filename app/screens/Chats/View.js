@@ -5,6 +5,8 @@ import React from 'react'
 import { FlatList, Text, View } from 'react-native'
 import moment from 'moment'
 import { Divider, Icon } from 'react-native-elements'
+import Ionicons from 'react-native-vector-icons/Ionicons'
+import QRCodeScanner from '../../components/QRScanner'
 /**
  * @typedef {import('react-navigation').NavigationScreenProp<{}>} Navigation
  */
@@ -63,6 +65,15 @@ const keyExtractor = item => {
  *
  * @prop {() => void} onPressAcceptRequest
  * @prop {() => void} onPressIgnoreRequest
+ *
+ * @prop {() => void} onPressAdd
+ * @prop {boolean} showingAddDialog
+ * @prop {() => void} onRequestCloseAddDialog
+ * @prop {() => void} userChoseQRScan
+ * @prop {() => void} userChosePasteFromClipboard
+ * @prop {boolean} showingQRScanner
+ * @prop {() => void} onRequestCloseQRScanner
+ * @prop {(e: { data: string }) => void} onQRRead
  */
 
 /**
@@ -100,6 +111,18 @@ export default class ChatsView extends React.PureComponent {
 
   ////////////////////////////////////////////////////////////////////////////////
 
+  addDialogChoiceToHandler = {
+    'Scan QR': () => {
+      this.props.userChoseQRScan()
+    },
+
+    'Paste from Clipboard': () => {
+      this.props.userChosePasteFromClipboard()
+    },
+  }
+
+  ////////////////////////////////////////////////////////////////////////////////
+
   /**
    * @param {API.Schema.Chat} chat
    * @returns {React.ReactElement<any> | null}
@@ -108,7 +131,9 @@ export default class ChatsView extends React.PureComponent {
     const lastMsg = chat.messages[chat.messages.length - 1]
 
     if (typeof lastMsg === 'undefined') {
-      throw new TypeError()
+      throw new TypeError(
+        "<ChatsView/>->chatRenderer() typeof lastMsg === 'undefined'",
+      )
     }
 
     const lastMsgTimestamp = lastMsg.timestamp
@@ -239,8 +264,7 @@ export default class ChatsView extends React.PureComponent {
       return this.receivedRequestRenderer(item)
     }
 
-    console.warn('unknown kind of item found')
-    console.warn(JSON.stringify(item))
+    console.warn(`unknown kind of item found: ${JSON.stringify(item)}`)
 
     return null
   }
@@ -249,9 +273,28 @@ export default class ChatsView extends React.PureComponent {
     const {
       acceptingRequest,
       chats,
+
       receivedRequests,
       sentRequests,
+
+      onPressAdd,
+      showingAddDialog,
+      onRequestCloseAddDialog,
+
+      showingQRScanner,
+      onQRRead,
+
+      onRequestCloseQRScanner,
     } = this.props
+
+    if (showingQRScanner) {
+      return (
+        <QRCodeScanner
+          onRead={onQRRead}
+          onRequestClose={onRequestCloseQRScanner}
+        />
+      )
+    }
 
     const items = [...chats, ...receivedRequests, ...sentRequests]
 
@@ -270,7 +313,9 @@ export default class ChatsView extends React.PureComponent {
         const lastMsg = sortedMessages[sortedMessages.length - 1]
 
         if (typeof lastMsg === 'undefined') {
-          throw new TypeError()
+          throw new TypeError(
+            "<ChatsView />->render()->API.Schema.isChat(a) typeof lastMsg === 'undefined'",
+          )
         }
 
         at = lastMsg.timestamp
@@ -286,7 +331,9 @@ export default class ChatsView extends React.PureComponent {
         const lastMsg = sortedMessages[sortedMessages.length - 1]
 
         if (typeof lastMsg === 'undefined') {
-          throw new TypeError()
+          throw new TypeError(
+            "<ChatsView />->render()->API.Schema.isChat(b) : typeof lastMsg === 'undefined' ",
+          )
         }
 
         bt = lastMsg.timestamp
@@ -300,6 +347,24 @@ export default class ChatsView extends React.PureComponent {
     return (
       <React.Fragment>
         <FlatList
+          ListHeaderComponent={() => (
+            <View
+              style={{
+                justifyContent: 'flex-end',
+                flexDirection: 'row',
+                paddingLeft: SCREEN_PADDING,
+                paddingRight: SCREEN_PADDING,
+                paddingTop: 12,
+              }}
+            >
+              <Ionicons
+                name="ios-add"
+                color={Colors.BLUE_LIGHT}
+                size={48}
+                onPress={onPressAdd}
+              />
+            </View>
+          )}
           ItemSeparatorComponent={Divider}
           ListEmptyComponent={NoChatsOrRequests}
           data={items}
@@ -313,6 +378,13 @@ export default class ChatsView extends React.PureComponent {
           message={ACCEPT_REQUEST_DIALOG_TEXT}
           onRequestClose={this.props.onPressIgnoreRequest}
           visible={!!acceptingRequest}
+        />
+
+        <ShockDialog
+          choiceToHandler={this.addDialogChoiceToHandler}
+          message=""
+          onRequestClose={onRequestCloseAddDialog}
+          visible={showingAddDialog}
         />
       </React.Fragment>
     )
