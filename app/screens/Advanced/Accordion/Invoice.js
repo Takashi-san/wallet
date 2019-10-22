@@ -3,6 +3,12 @@ import { View, Text, StyleSheet, Image } from "react-native";
 import Moment from "moment";
 import paymentIcon from "../../../assets/images/payment-icon.png"
 
+const INVOICE_STATES = [
+  "Open",
+  "Settled",
+  "Cancelled",
+  "Accepted"
+];
 export default class Invoice extends Component {
   state = {
     open: false
@@ -23,7 +29,7 @@ export default class Invoice extends Component {
           <Image style={styles.transactionIcon} source={paymentIcon} resizeMode="contain" />
           <View style={styles.transactionHash}>
             <Text ellipsizeMode="tail" numberOfLines={1} style={styles.transactionHashText}>{data.r_preimage}</Text>
-            <Text>Payment</Text>
+            <Text>Invoice State: {INVOICE_STATES[parseInt(data.state)]}</Text>
           </View>
         </View>
         <View style={styles.transactionValue}>

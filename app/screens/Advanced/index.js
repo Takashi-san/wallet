@@ -3,6 +3,7 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 import LinearGradient from "react-native-linear-gradient";
 import EntypoIcons from 'react-native-vector-icons/Entypo';
 import Http from "axios";
+import Big from "big.js";
 import BasicDialog from "../../components/BasicDialog";
 import ShockInput from "../../components/ShockInput";
 import IGDialogBtn from "../../components/IGDialogBtn";
@@ -12,6 +13,7 @@ import Transaction from "./Accordion/Transaction";
 import Channel from "./Accordion/Channel";
 import Invoice from "./Accordion/Invoice";
 import Peer from "./Accordion/Peer";
+import {balance, USDExchangeRate} from "../../services/wallet";
 
 export const ADVANCED_SCREEN = "ADVANCED_SCREEN";
 export default class AdvancedScreen extends Component {
@@ -34,6 +36,9 @@ export default class AdvancedScreen extends Component {
       totalPages: 0 
     },
     channels: [],
+    confirmedBalance: "0",
+    unconfirmedBalance: "0",
+    USDRate: null,
     addPeerOpen: false,
     addChannelOpen: false,
     peerPublicKey: "",
@@ -46,7 +51,44 @@ export default class AdvancedScreen extends Component {
     //   headerLeft: renderLeftHeader(() => {console.log('rendering left header')}),
     //   headerRight: renderRightHeader(() => {console.log('rendering right header')}),
     // });
+    this.getUserBalance();
     this.fetchData();
+  }
+
+  getUserBalance = async () => {
+    try {
+      const [walletBalance, USDRate] = await Promise.all([await balance(), USDExchangeRate()]);
+      console.log(walletBalance, USDRate);
+      this.setState({
+        USDRate,
+        confirmedBalance: walletBalance.confirmed_balance,
+        unconfirmedBalance: walletBalance.unconfirmed_balance
+      });
+    } catch(err) {
+      console.error(err);
+    }
+  }
+
+  convertBTCToUSD = () => {
+    const { confirmedBalance, unconfirmedBalance, USDRate } = this.state;
+    if (USDRate !== null) {
+      const parsedConfirmedBalance = new Big(confirmedBalance);
+      const parsedUnconfirmedBalance = new Big(unconfirmedBalance);
+      const parsedUSDRate = new Big(USDRate);
+      const satoshiUnit = new Big(0.00000001);
+      const confirmedBalanceUSD = parsedConfirmedBalance.times(satoshiUnit).times(parsedUSDRate).toFixed(2);
+      const unconfirmedBalanceUSD = parsedUnconfirmedBalance.times(satoshiUnit).times(parsedUSDRate).toFixed(2);
+      
+      return {
+        confirmedBalanceUSD,
+        unconfirmedBalanceUSD
+      };
+    }
+
+    return {
+      confirmedBalanceUSD: 0,
+      unconfirmedBalanceUSD: 0
+    }
   }
 
   fetchData = async () => {
@@ -163,17 +205,22 @@ export default class AdvancedScreen extends Component {
       addChannelOpen,
       peerPublicKey,
       channelPublicKey,
-      host
+      host,
+      balance,
+      USDRate,
+      confirmedBalance,
+      unconfirmedBalance
     } = this.state;
+    const { confirmedBalanceUSD, unconfirmedBalanceUSD } = this.convertBTCToUSD();
     return (
         <View style={styles.container}>
           <LinearGradient start={{x: 0, y: 0}} end={{x: 1, y: 0}} colors={["#194B93", "#4285B9"]} style={styles.statsHeader}>
             <View style={styles.nav}>
               <View style={styles.navAvatarContainer}>
                 <Image style={styles.navAvatar} />
-                <View style={styles.avatarNotifications}>
+                {/* <View style={styles.avatarNotifications}>
                   <Text style={styles.avatarNotificationsText}>2</Text>
-                </View>
+                </View> */}
               </View>
 
               <Text style={styles.navText}>Channels</Text>
@@ -187,8 +234,8 @@ export default class AdvancedScreen extends Component {
                   <EntypoIcons name="flash" color="#F5A623" size={20} />
                 </View>
                 <View style={styles.statTextContainer}>
-                  <Text style={styles.statTextPrimary}>4,000 sats</Text>
-                  <Text style={styles.statTextSecondary}>3,262 USD</Text>
+                  <Text style={styles.statTextPrimary}>{USDRate ? confirmedBalance.replace(/(\d)(?=(\d{3})+$)/g, "$1,") : "Loading..."} sats</Text>
+                  <Text style={styles.statTextSecondary}>{USDRate ? confirmedBalanceUSD.replace(/\d(?=(\d{3})+\.)/g, '$&,') : "Loading..."} USD</Text>
                 </View>
               </View>
               <View style={styles.stat}>
@@ -196,8 +243,8 @@ export default class AdvancedScreen extends Component {
                   <EntypoIcons name="link" color="#F5A623" size={20} />
                 </View>
                 <View style={styles.statTextContainer}>
-                  <Text style={styles.statTextPrimary}>4,000 sats</Text>
-                  <Text style={styles.statTextSecondary}>3,262 USD</Text>
+                  <Text style={styles.statTextPrimary}>{USDRate ? unconfirmedBalance.replace(/(\d)(?=(\d{3})+$)/g, "$1,") : "Loading..."} sats</Text>
+                  <Text style={styles.statTextSecondary}>{USDRate ? unconfirmedBalanceUSD.replace(/\d(?=(\d{3})+\.)/g, '$&,') : "Loading..."} USD</Text>
                 </View>
               </View>
             </View>
