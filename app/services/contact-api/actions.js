@@ -129,7 +129,7 @@ export const sendHandshakeRequest = (handshakeAddress, recipientPublicKey) => {
     throw new Error('NOT_AUTH')
   }
 
-  socket.emit(Action.SEMD_HANDSHAKE_REQUEST, {
+  socket.emit(Action.SEND_HANDSHAKE_REQUEST, {
     token: authData.token,
     handshakeAddress,
     recipientPublicKey,
